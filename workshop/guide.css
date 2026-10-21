@@ -106,3 +106,21 @@ tr:nth-child(2n) td { background: var(--subtle); }
 .frame { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
 .frame iframe { position: absolute; top: 0; left: 0; width: 1280px; height: 1600px; border: 0; transform-origin: 0 0; transform: scale(var(--k, 0.28)); }
 @media (max-width: 860px) { .compare { grid-template-columns: minmax(0, 1fr); } }
+
+/* Store controls */
+.ctl-now { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 8px; margin: 0 0 16px; }
+.ctl-now div { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; background: var(--subtle); }
+.ctl-now dt { font-size: 13px; color: var(--muted); }
+.ctl-now dd { margin: 2px 0 0; font-weight: 600; }
+.ctl fieldset { border: 1px solid var(--border); border-radius: 6px; margin: 0 0 12px; padding: 8px 16px 12px; }
+.ctl legend { font-weight: 600; padding: 0 4px; }
+.ctl label { display: block; padding: 4px 0; }
+.ctl label input { margin-right: 6px; }
+.ctl .ctl-sub { font-size: 14px; color: var(--muted); padding: 6px 0 2px; }
+.ctl input[type=text], .ctl input[type=date], .ctl select { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; max-width: 100%; }
+.ctl-hint { font-size: 14px; color: var(--muted); margin: 6px 0; }
+.ctl-go a { display: inline-block; text-decoration: none !important; background: #1f883d; color: #fff; font-weight: 600; padding: 8px 16px; border-radius: 6px; }
+.ctl-go a:hover { background: #1a7f37; text-decoration: none; }
+.ctl-linkrow { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.ctl-linkrow code { flex: 1 1 280px; font-family: var(--mono); font-size: 13px; background: var(--subtle); border: 1px solid var(--border); border-radius: 6px; padding: 8px; overflow-wrap: anywhere; }
+.ctl-copy { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--subtle); cursor: pointer; }
