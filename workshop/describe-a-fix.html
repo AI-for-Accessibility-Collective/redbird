@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Describe a fix - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Describe a fix">
+<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix" aria-current="page">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
+  <p class="group">Store</p>
+  <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Build<span aria-hidden="true">/</span><a href="describe-a-fix" aria-current="page">Describe a fix</a></nav>
+<h1>Describe a fix</h1>
+<p class="lede">When no adapter does what a person needs, describe the fix in plain words, and AI writes a new adapter for it. You'll make one for Sam that lets a screen reader read the star ratings. This takes about 20 minutes.</p>
+
+<h2 id="the-problem">The problem</h2>
+<p>On Redbird, each product's rating is a picture of stars. A screen reader skips the picture and only reads the number of ratings, like "(1,203)", so Sam can't tell a 3-star charger from a 5-star one. No adapter in the toolkit fixes this yet.</p>
+
+<h2 id="write-the-adapter">Write the adapter</h2>
+<ol>
+  <li>Open the <a href="../search?q=charger&amp;issues=on&amp;try=none&amp;profile=sam&amp;workshop=on" target="_blank" rel="noopener">search results for "charger"<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</li>
+  <li>In the Workshop panel, open the <b>Build</b> tab and select <b>Describe a fix</b>.</li>
+  <li>Press <b>Point at it on the page</b>, then click the stars under any product. This tells the AI which part of the page you mean. With the keyboard, Tab to the part and press Enter.</li>
+  <li>In <b>What should change on the page?</b>, type: "Read the star ratings out as numbers, like 4.6 out of 5 stars, 1,203 ratings."</li>
+  <li>Press <b>Write the adapter</b>. It takes about half a minute, and then the page reloads with your adapter on.</li>
+</ol>
+
+<h2 id="check-that-it-worked">Check that it worked</h2>
+<ol>
+  <li>Under <b>Your adapter</b>, press <b>See them</b>. The Changes tab lists each change, with the name a screen reader reads before and after.</li>
+  <li>Press a change to outline it on the page. The stars look the same as before, since this change is only for the screen reader.</li>
+  <li>If you can, turn on VoiceOver with Command-F5 and move to the stars.</li>
+</ol>
+
+<h2 id="change-it">Change it</h2>
+<p>AI usually gets close but not exactly right the first time. For example, it might read the rating but leave out the number of ratings. Write what's wrong under <b>Change something</b> and press <b>Ask for the change</b>. The AI changes the code, and the page reloads.</p>
+<ul>
+  <li>If your adapter breaks, its card says what went wrong. Press <b>Ask the AI to fix it</b>.</li>
+  <li>To undo the last change, press <b>Go back to the last version</b>.</li>
+  <li>To read or edit the code yourself, open <b>See the code</b>. It's JavaScript with an <code>enable()</code> that makes the change and a <code>disable()</code> that puts the page back.</li>
+</ul>
+
+<h2 id="use-it-in-a-skill">Use it in a skill</h2>
+<p>Once you have an adapter, the Engineer can pick it too. In <b>Make a skill</b>, describe a need it helps with. Your adapter can then show up in the recipe, named <code>mine</code>, next to the toolkit's own adapters.</p>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>You have one adapter at a time in this browser. Pressing <b>Write a new adapter</b> replaces it, and pressing <b>Go back to the last version</b> brings the old one back.</p></div>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#the-problem">The problem</a></li><li><a href="#write-the-adapter">Write the adapter</a></li><li><a href="#check-that-it-worked">Check that it worked</a></li><li><a href="#change-it">Change it</a></li><li><a href="#use-it-in-a-skill">Use it in a skill</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

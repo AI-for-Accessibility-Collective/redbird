@@ -1,4 +1,45 @@
 {
   "cleanUrls": true,
-  "functions": { "api/ai.js": { "maxDuration": 30 } }
+  "functions": {
+    "api/ai.js": {
+      "maxDuration": 60
+    }
+  },
+  "redirects": [
+    {
+      "source": "/workshop/real-arrival-dates(\\.html)?",
+      "destination": "/workshop/example-adapters#real-arrival-dates",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/swatch-names(\\.html)?",
+      "destination": "/workshop/example-adapters#swatch-names",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/calm-urgency(\\.html)?",
+      "destination": "/workshop/example-adapters#calm-urgency",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/reading-level(\\.html)?",
+      "destination": "/workshop/example-adapters#reading-level",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/compare(\\.html)?",
+      "destination": "/workshop/tour",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/toolkit(\\.html)?",
+      "destination": "/workshop/framework",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/ideas(\\.html)?",
+      "destination": "/workshop/build-your-own",
+      "permanent": false
+    }
+  ]
 }

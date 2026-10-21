@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Write your own adapter - Redbird workshop</title>
+<title>Write an adapter by hand - Redbird workshop</title>
 <meta property="og:site_name" content="Redbird workshop">
-<meta property="og:title" content="Write your own adapter">
+<meta property="og:title" content="Write an adapter by hand">
 <meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
 <meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -22,15 +22,15 @@
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Guides</p><ul class="sub"><li><a href="real-arrival-dates">Turn business days into dates</a></li><li><a href="swatch-names">Name the color choices</a></li><li><a href="calm-urgency">Hide pressure messages</a></li><li><a href="reading-level">Rewrite hard text</a></li><li><a href="first-adapter" aria-current="page">Write your own adapter</a></li></ul><p class="group">Go further</p><ul class="sub"><li><a href="compare">One store, three people</a></li><li><a href="toolkit">Run the toolkit on the store</a></li><li><a href="agents">Where an agent should stop</a></li><li><a href="ideas">Pick an issue to fix</a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter" aria-current="page">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
   <p class="group">Store</p>
   <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Guides<span aria-hidden="true">/</span><a href="first-adapter" aria-current="page">Write your own adapter</a></nav>
-<h1>Write your own adapter</h1>
-<p class="lede">Redbird turns off the keyboard focus outline, so when you press Tab you can't see where you are. In this guide, you write an adapter that puts it back, right in the browser.</p>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Reference<span aria-hidden="true">/</span><a href="first-adapter" aria-current="page">Write an adapter by hand</a></nav>
+<h1>Write an adapter by hand</h1>
+<p class="lede">For people who code. Redbird turns off the keyboard focus outline, so when you press Tab you can't see where you are. In this guide, you write an adapter that puts it back, right in the browser.</p>
 
 <h2 id="see-the-issue">See the issue</h2>
 <ol>
@@ -49,7 +49,7 @@
 
 <h2 id="write-the-adapter">Write the adapter</h2>
 <ol>
-  <li>Open the <a href="../?issues=20&amp;try=mine&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">store with the code box<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. The code box is in the panel in the bottom-left corner, with a template in it. If it already has code from an earlier guide, click <b>Start over</b>.</li>
+  <li>Open the <a href="../?issues=20&amp;try=mine&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">store with issue 20 and your adapter on<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. In the Workshop panel, open the <b>Build</b> tab, select <b>Describe a fix</b>, and open <b>See the code</b>. If you haven't made an adapter yet, it has a template in it.</li>
   <li>Replace everything in the code box with this code. <code>enable()</code> adds a style rule that draws a blue outline around whatever has the focus, and <code>disable()</code> removes it.
 <div class="code"><div class="code-head"><span>JavaScript</span><button type="button" class="copy" aria-label="Copy the JavaScript code"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/></svg><span aria-hidden="true">Copy</span></button></div><pre tabindex="0" data-copy><code>// Focus Ring: puts back a thick outline around whatever has the keyboard focus.
 export const FocusRing = {
@@ -86,9 +86,9 @@ export const FocusRing = {
 <h2 id="check-that-it-works">Check that it works</h2>
 <ol>
   <li>Click the search box and press Tab a few times. A thick blue outline now moves with the focus.</li>
-  <li>In the panel, deselect <b>your adapter</b>. The outline goes away.</li>
+  <li>In the panel's <b>Setup</b> tab, deselect <b>your adapter</b>. The outline goes away.</li>
 </ol>
-<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>If the panel says "Didn’t load" under your adapter, the error message is shown right below it. The most common one is a missing comma or bracket.</p></div>
+<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>If your adapter has an error, the Build tab shows it under <b>Your adapter</b>. The most common one is a missing comma or bracket. You can also press <b>Ask the AI to fix it</b>.</p></div>
 
 <h2 id="read-the-profile">Read the profile</h2>
 <p>Sam's profile has <code>"vision"</code> in <code>supportAreas</code>. Sam is blind and won't see the outline, but <code>"vision"</code> also covers people with low vision, who rely on a thick one. Make the outline twice as thick for anyone with <code>"vision"</code>.</p>
@@ -105,7 +105,7 @@ export const FocusRing = {
 </ol>
 
 <h2 id="keep-your-adapter">Keep your adapter</h2>
-<p>The code box only saves in this browser. To keep your adapter:</p>
+<p>The code box only saves in this browser. To share it, press <b>Copy link</b> under your adapter. To keep it as a file:</p>
 <ol>
   <li>Clone the <a href="https://github.com/AI-for-Accessibility-Collective/redbird" target="_blank" rel="noopener">redbird repository<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</li>
   <li>Save your code as <code>workshop/adapters/focus-ring.js</code>.</li>
@@ -113,11 +113,8 @@ export const FocusRing = {
   <li>Open <code>http://localhost:8000/?issues=20&amp;try=focus-ring</code>.</li>
 </ol>
 <p>Adapters here have the same four parts as the ones in the AI for Accessibility Toolkit, so yours can also go into the toolkit's <code>tools/adapters/</code> folder.</p>
-
-<h2 id="next-steps">Next steps</h2>
-<p>To see the toolkit's own adapters fix the store, see <a href="toolkit">Run the toolkit on the store</a>. To pick an issue to build an adapter for, see <a href="ideas">Pick an issue to fix</a>.</p>
 </main>
-<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#see-the-issue">See the issue</a></li><li><a href="#the-four-parts-of-an-adapter">The four parts of an adapter</a></li><li><a href="#write-the-adapter">Write the adapter</a></li><li><a href="#check-that-it-works">Check that it works</a></li><li><a href="#read-the-profile">Read the profile</a></li><li><a href="#keep-your-adapter">Keep your adapter</a></li><li><a href="#next-steps">Next steps</a></li></ul></nav>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#see-the-issue">See the issue</a></li><li><a href="#the-four-parts-of-an-adapter">The four parts of an adapter</a></li><li><a href="#write-the-adapter">Write the adapter</a></li><li><a href="#check-that-it-works">Check that it works</a></li><li><a href="#read-the-profile">Read the profile</a></li><li><a href="#keep-your-adapter">Keep your adapter</a></li></ul></nav>
 </div>
 </div>
 <script src="guide.js"></script>

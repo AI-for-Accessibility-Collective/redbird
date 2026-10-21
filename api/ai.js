@@ -11,6 +11,10 @@ const MODEL = 'gemini-3.5-flash';
 const MAX_TEXT = 6000;       // characters of page text per request
 const MAX_IMAGE = 4000000;   // characters of base64 image data (about 3 MB, under Vercel's 4.5 MB request limit)
 const MAX_NOTE = 600;        // characters of custom instructions from a workshop adapter
+const MAX_DESC = 1500;       // characters of a need or a fix described in the Build tab
+const MAX_PAGE = 14000;      // characters of the shortened page markup sent with a fix
+const MAX_CODE = 16000;      // characters of an adapter sent back for a change
+const builders = require('./_builders.js');
 
 // Prompts follow the toolkit extension's background.js, so adapters behave the same here.
 const TASKS = {
@@ -50,6 +54,29 @@ const TASKS = {
   linkText: ({ linkText, href, context }) => ({
     text: `This link says "${clip(linkText, 200)}" and goes to ${clip(href, 300)}. Nearby text: ${clip(context, 800)}\n` +
       'Write better link text (2 to 6 words) that says where it goes. Return only the text.',
+  }),
+  // The Build tab. These answers are longer, so they get more room and a little time to think.
+  buildSkill: (b) => ({
+    long: true,
+    text: builders.buildSkill({
+      need: clip(b.need, MAX_DESC), person: clip(b.person, MAX_NOTE), catalog: clip(b.catalog, 8000),
+      settings: clip(b.settings, 1500), previous: clip(b.previous, 4000), feedback: clip(b.feedback, MAX_NOTE),
+    }),
+  }),
+  writeAdapter: (b) => ({
+    long: true,
+    text: builders.writeAdapter({
+      description: clip(b.description, MAX_DESC), name: clip(b.name, 80), person: clip(b.person, MAX_NOTE),
+      snapshot: clip(b.snapshot, MAX_PAGE), target: clip(b.target, 3000), url: clip(b.url, 300),
+    }),
+  }),
+  reviseAdapter: (b) => ({
+    long: true,
+    text: builders.reviseAdapter({
+      code: clip(b.code, MAX_CODE), description: clip(b.description, MAX_DESC), feedback: clip(b.feedback, MAX_NOTE),
+      error: clip(b.error, 600), person: clip(b.person, MAX_NOTE), snapshot: clip(b.snapshot, MAX_PAGE),
+      target: clip(b.target, 3000), url: clip(b.url, 300),
+    }),
   }),
   columnHeader: ({ sampleData }) => ({
     text: `These are values from one table column: ${clip(JSON.stringify(sampleData), 1500)}\nReturn a short column header (1 to 3 words) only.`,
@@ -93,7 +120,9 @@ module.exports = async function handler(req, res) {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } } }),
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: built.long
+        ? { temperature: 0.2, maxOutputTokens: 16384, thinkingConfig: { thinkingBudget: 2048 } }
+        : { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } } }),
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(502).json({ error: 'AI request failed (' + r.status + ')' });

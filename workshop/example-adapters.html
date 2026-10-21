@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Example adapters - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Example adapters">
+<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters" aria-current="page">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
+  <p class="group">Store</p>
+  <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Reference<span aria-hidden="true">/</span><a href="example-adapters" aria-current="page">Example adapters</a></nav>
+<h1>Example adapters</h1>
+<p class="lede">Four adapters written for Redbird, to read if you want to see how an adapter works or start yours from one. Each one fixes a problem the toolkit didn't cover yet.</p>
+
+<p>Each section has a link to the store with the problem on, the same page with the adapter fixing it, and the code. To change an example, press <b>Copy it into your adapter</b>. The example becomes your adapter, and you can edit it in the Build tab under <b>Describe a fix</b>, in <b>See the code</b>. If you already had an adapter, <b>Go back to the last version</b> brings it back.</p>
+
+<h2 id="real-arrival-dates">real-arrival-dates</h2>
+<p>Redbird says "5–7 business days" instead of a date, so you have to count the days yourself, skipping weekends. That is hard for people with memory or attention differences and slow with a screen reader. This adapter finds the business-day counts, works out the dates from the store's "today", and writes them in, like "arrives Tue, Nov 3 – Thu, Nov 5". It reads the profile's <code>concreteDates</code> need.</p>
+<ul>
+  <li><a href="../search?q=charger&amp;issues=31&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">The problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../search?q=charger&amp;issues=31&amp;try=real-arrival-dates&amp;profile=sam&amp;workshop=on" target="_blank" rel="noopener">Fixed, for Sam<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../search?q=charger&amp;issues=31&amp;try=mine&amp;from=real-arrival-dates&amp;profile=sam&amp;workshop=on" target="_blank" rel="noopener">Copy it into your adapter<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="adapters/real-arrival-dates.js" target="_blank" rel="noopener">The code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li>
+</ul>
+
+<h2 id="swatch-names">swatch-names</h2>
+<p>The colors on product pages are plain colored circles with no names, and the keyboard skips them, so a blind shopper can't tell which color they're picking. This adapter finds small, round, empty elements filled with one color, names each one from the closest color in a short list, and turns clickable ones into radio buttons you can move between with the arrow keys. It doesn't change how anything looks.</p>
+<ul>
+  <li><a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">The problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=swatch-names&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">Fixed<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=mine&amp;from=swatch-names&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">Copy it into your adapter<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="adapters/swatch-names.js" target="_blank" rel="noopener">The code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li>
+</ul>
+
+<h2 id="calm-urgency">calm-urgency</h2>
+<p>Countdown timers, "Only 2 left in stock" and "14 other people have them in their carts" are built to make people hurry, and for someone with anxiety or ADHD they can lead to rushing and buying the wrong thing. This adapter finds these messages by their wording and stops anything blinking. Then it follows the profile's <code>urgency</code> need. With <code>label</code>, it dims each message and adds a short plain note, and with <code>hide</code>, it takes the message off the page and out of what a screen reader reads.</p>
+<ul>
+  <li><a href="../product?id=pebble-20w-2pack&amp;issues=24&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">The problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=pebble-20w-2pack&amp;issues=24&amp;try=calm-urgency&amp;profile=sam&amp;workshop=on" target="_blank" rel="noopener">Labeled, for Sam<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=pebble-20w-2pack&amp;issues=24&amp;try=calm-urgency&amp;profile=mark&amp;workshop=on" target="_blank" rel="noopener">Hidden, for Mark<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=pebble-20w-2pack&amp;issues=24&amp;try=mine&amp;from=calm-urgency&amp;profile=mark&amp;workshop=on" target="_blank" rel="noopener">Copy it into your adapter<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="adapters/calm-urgency.js" target="_blank" rel="noopener">The code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li>
+</ul>
+
+<h2 id="reading-level">reading-level</h2>
+<p>Product descriptions are long sentences full of marketing words. This adapter scores each paragraph with the Flesch-Kincaid grade formula, and asks an AI model to rewrite the ones well above the profile's <code>readingLevel</code>, with a button to show the original. It's the only example that uses AI, through <code>options.rewrite(text, instructions)</code>, and your own adapters can use it the same way.</p>
+<ul>
+  <li><a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=none&amp;profile=none&amp;workshop=on#desc" target="_blank" rel="noopener">The problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=reading-level&amp;profile=dario&amp;workshop=on#desc" target="_blank" rel="noopener">Fixed, for Dario<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=mine&amp;from=reading-level&amp;profile=dario&amp;workshop=on#desc" target="_blank" rel="noopener">Copy it into your adapter<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> · <a href="adapters/reading-level.js" target="_blank" rel="noopener">The code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li>
+</ul>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#real-arrival-dates">real-arrival-dates</a></li><li><a href="#swatch-names">swatch-names</a></li><li><a href="#calm-urgency">calm-urgency</a></li><li><a href="#reading-level">reading-level</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

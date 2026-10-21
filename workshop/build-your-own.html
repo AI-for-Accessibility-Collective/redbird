@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Build your own - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Build your own">
+<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own" aria-current="page">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
+  <p class="group">Store</p>
+  <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Build<span aria-hidden="true">/</span><a href="build-your-own" aria-current="page">Build your own</a></nav>
+<h1>Build your own</h1>
+<p class="lede">Build a fix for the need your group chose in the morning, with the same two builders. Plan for about 40 minutes.</p>
+
+<h2 id="start-from-your-card-game">Start from your card game</h2>
+<p>Have these three things from the morning sessions:</p>
+<ul>
+  <li><b>Who it's for</b>: the ability profile. Write it in the Build tab's <b>Who are you building for?</b> box.</li>
+  <li><b>What to change</b>: the adaptations you settled on, and the pages they're on.</li>
+  <li><b>How you'll check it</b>: your verification plan. You'll use it in <a href="test-and-share">Test it and share it</a>.</li>
+</ul>
+
+<h2 id="skill-or-adapter">Skill or adapter?</h2>
+<ol>
+  <li>Try <b>Make a skill</b> first. Describe the need and see which adapters the Engineer picks.</li>
+  <li>If the adapters do the job, try the skill, change it until it's right, and save it.</li>
+  <li>If the Engineer says no adapter does this, or its adapters don't quite fit, press <b>Describe it as a fix</b> and have AI write a new adapter.</li>
+  <li>A fix can also be both, e.g., a skill that turns on your adapter together with two of the toolkit's.</li>
+</ol>
+<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>Describe one change at a time, and say where on the page it is. For example, "Let me add more time to the checkout timer" works better than "Make checkout easier". Use <b>Point at it on the page</b> whenever you can.</p></div>
+
+<h2 id="no-scenario-yet">No scenario yet?</h2>
+<p>Pick one of these problems. No adapter in the toolkit fixes them yet, so each one needs a fix you describe. Each link opens the store with only that problem turned on.</p>
+<div class="table-wrap"><table class="ideas">
+  <tr><th scope="col">Problem</th><th scope="col">Who it gets in the way of</th><th scope="col">Try it</th></tr>
+  <tr><td>"Add to cart" is a clickable box, not a button, so the keyboard skips it.</td><td>Keyboard and screen reader users</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=3&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 3<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>Prices are split into three pieces, so a screen reader reads "dollar 18 99".</td><td>Screen reader users</td><td><a href="../search?q=charger&amp;issues=5&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 5<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>"Sponsored" is faint text inside an image, so ads look like normal results.</td><td>People with low vision, screen reader users, anyone in a hurry</td><td><a href="../search?q=charger&amp;issues=7&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 7<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>The price filter is a slider you can only drag with a mouse.</td><td>Keyboard users, people with tremors</td><td><a href="../search?q=charger&amp;issues=18&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 18<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>Checkout holds your cart for 5 minutes and counts down, with no way to get more time. Add something to your cart and check out to see it.</td><td>Screen reader users, people with motor or cognitive disabilities</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=19&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 19<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>"Add to cart" on search results only shows up while the mouse is over a product.</td><td>Keyboard, screen reader and touch screen users</td><td><a href="../search?q=charger&amp;issues=21&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 21<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>Product photos only switch when the mouse is over a thumbnail, and the thumbnails can't be reached with the keyboard.</td><td>Keyboard and screen reader users</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=22&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 22<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>Product titles are stuffed with keywords, so six chargers look almost the same.</td><td>Screen reader users, people with dyslexia or ADHD</td><td><a href="../search?q=charger&amp;issues=25&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 25<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>The return policy is one long legal sentence.</td><td>People with dyslexia or cognitive disabilities, people reading in a second language</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=28&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 28<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>A ticked box at checkout says "Uncheck this box if you do not wish to not receive Redbird offers".</td><td>People with cognitive disabilities, anyone reading quickly</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=29&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 29<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>Payment errors are system codes, like "Error 402: AVS mismatch". Type a wrong card number at checkout to see one.</td><td>People with cognitive disabilities, anyone</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=30&amp;try=none&amp;workshop=on" target="_blank" rel="noopener">Issue 30<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+</table></div>
+<p>For all 36 problems and which ones the toolkit already fixes, see <a href="https://github.com/AI-for-Accessibility-Collective/redbird/blob/main/ISSUES.md" target="_blank" rel="noopener">ISSUES.md<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. To change the store's settings one at a time, use <a href="controls">Store controls</a>.</p>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#start-from-your-card-game">Start from your card game</a></li><li><a href="#skill-or-adapter">Skill or adapter?</a></li><li><a href="#no-scenario-yet">No scenario yet?</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

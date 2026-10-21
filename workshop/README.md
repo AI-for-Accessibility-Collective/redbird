@@ -2,7 +2,7 @@
 
 This folder lets you run an adapter on Redbird without installing the extension. You write one JavaScript file, open a store page with `?try=` and the file's name, and the adapter runs on that page.
 
-For step-by-step walkthroughs of the four examples and of writing your first adapter, open the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
+For the workshop itself (touring the store, making a skill, describing a fix for AI to write, and testing it), open the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
 
 The store has to be opened from a web address, not as a file. Use the live site, or run `python3 tools/serve.py` in the repository folder and open `http://localhost:8000`. The AI parts (rewriting text, describing photos, naming buttons) only work on the live site, because that's where the Gemini key is. On your own computer, adapters fall back to what they can do without AI.
 
@@ -18,6 +18,8 @@ The store has to be opened from a web address, not as a file. Use the live site,
 | `?try=none` | stop running them |
 
 The adapters and profile you pick are saved in your browser until you change them. A panel in the bottom-left corner shows the profile and has a switch for each adapter, so you can compare the page with and without it.
+
+The panel's Build tab makes fixes without writing code, using the same two builders as the toolkit's extension. "Make a skill" sends a need to the toolkit's Engineer prompt, which picks existing adapters and writes a SKILL.md. "Describe a fix" sends a description and a shortened copy of the page to the Adapter Builder's prompt, and the adapter it writes runs as `?try=mine`. Both prompts are in `api/_builders.js`. Skills and adapters are saved in the browser, and their share links carry them after the `#`.
 
 ## The four examples
 
