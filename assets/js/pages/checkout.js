@@ -34,8 +34,8 @@
     return o.days[0] === o.days[1] ? RB.dayLong(a) : RB.dayLong(a) + ' – ' + RB.dayLong(b);
   }
   function shipLabel(o) {
-    if (on(33)) {
-      // Issue 33: business-day ranges and fine print instead of a date.
+    if (on(31)) {
+      // Issue 31: business-day ranges and fine print instead of a date.
       return o.id === 'std'
         ? 'Standard Shipping (' + o.days[0] + (o.days[0] === o.days[1] ? '' : '–' + o.days[1]) + ' business days, excluding weekends and holidays, subject to carrier availability) FREE'
         : 'Expedited Shipping (' + o.days[1] + ' business days*) ' + money(o.fee);
@@ -46,7 +46,7 @@
   // ── Page ──────────────────────────────────────────────────────────────────
   var html = '<div class="co-layout"><div>';
   if (swapped) {
-    html += '<p class="notice-quiet">' + (on(34) ? '1 OOS item was substituted.' : 'Some items in your order were updated.') + '</p>';
+    html += '<p class="notice-quiet">' + (on(32) ? '1 OOS item was substituted.' : 'Some items in your order were updated.') + '</p>';
   }
   if (soldOut.length) {
     var gone = RB.byId(soldOut[0].id), alt = RB.byId(gone.swapTo);
@@ -57,14 +57,14 @@
   }
 
   html += '<section class="co-step">' + h(2, '<span class="n">1</span> Delivery address') +
-    '<p style="margin:0">Sam Rivera<br>123 Bryant Street, Apt 4<br>Palo Alto, CA 94301</p></section>';
+    '<p style="margin:0">Jeff Pesos<br>508 Aria Lane<br>Palo Alto, CA 94301</p></section>';
 
   html += '<section class="co-step">' + h(2, '<span class="n">2</span> Delivery speed') + '<fieldset id="speed">' +
-    (on(12) ? '' : '<legend class="sr-only">Choose a delivery speed</legend>') + '</fieldset><div id="items"></div></section>';
+    (on(11) ? '' : '<legend class="sr-only">Choose a delivery speed</legend>') + '</fieldset><div id="items"></div></section>';
 
   html += '<section class="co-step">' + h(2, '<span class="n">3</span> Payment method') +
-    '<fieldset>' + (on(12) ? '' : '<legend class="sr-only">Choose how to pay</legend>') +
-    '<label class="ship-opt"><input type="radio" name="pay" value="saved" checked><span>Visa ending in 4242<br><span class="fine">Expires 08/2028. Billing ZIP 94301</span></span></label>' +
+    '<fieldset>' + (on(11) ? '' : '<legend class="sr-only">Choose how to pay</legend>') +
+    '<label class="ship-opt"><input type="radio" name="pay" value="saved" checked><span>Visa ending in 7319<br><span class="fine">Expires 08/2028. Billing ZIP 94301</span></span></label>' +
     '<label class="ship-opt"><input type="radio" name="pay" value="new"><span>Add a new credit or debit card</span></label></fieldset>' +
     '<div class="card-form" id="new-card" hidden>' +
     '<label style="grid-column:1/-1">Name on card<input id="cc-name" autocomplete="cc-name"></label>' +
@@ -74,23 +74,23 @@
     '<div id="pay-error"></div></section>';
 
   html += '<section class="co-step">' + h(2, '<span class="n">4</span> Review') + '<div id="terms"></div>';
-  // Issue 31: a checked box with a double negative.
-  html += on(31)
+  // Issue 29: a checked box with a double negative.
+  html += on(29)
     ? '<label class="check-row"><input type="checkbox" id="offers" checked><span>Uncheck this box if you do not wish to not receive Redbird offers and partner promotions.</span></label>'
     : '<label class="check-row"><input type="checkbox" id="offers"><span>Email me Redbird deals and offers.</span></label>';
   html += '</section></div>';
 
-  html += '<aside class="order-sum"' + (on(12) ? '' : ' aria-label="Order summary"') + '>' +
+  html += '<aside class="order-sum"' + (on(11) ? '' : ' aria-label="Order summary"') + '>' +
     '<button type="button" class="btn btn-buy btn-block" id="place">Place your order</button>' +
-    '<p class="fine" style="margin:0 0 12px">By placing your order, you agree to Redbird’s conditions of use.</p>' +
+    '<p class="fine" style="margin:0 0 12px">By placing your order, you agree to Redbird’s <a href="help#terms">conditions of use</a>.</p>' +
     h(2, 'Order summary') + '<table id="sum"></table><div id="place-error"></div></aside></div>';
 
   var main = RB.mount(html, { title: 'Checkout', noHeader: true });
   document.getElementById('rb-top').innerHTML =
-    '<' + (on(12) ? 'div' : 'header') + ' class="co-header"><div class="wrap">' +
+    '<' + (on(11) ? 'div' : 'header') + ' class="co-header"><div class="wrap">' +
     '<a class="logo" href="./"' + (on(2) ? '' : ' aria-label="Redbird home"') + ' style="color:var(--cardinal)">' + RB.BIRD_ON_LIGHT + '<span aria-hidden="true">redbird</span></a>' +
-    h(1, 'Checkout') + (on(20) ? '<span class="hold-timer" id="hold">Your cart is held for 5:00</span>' : '<span></span>') +
-    '</div></' + (on(12) ? 'div' : 'header') + '>';
+    h(1, 'Checkout') + (on(19) ? '<span class="hold-timer" id="hold">Your cart is held for 5:00</span>' : '<span></span>') +
+    '</div></' + (on(11) ? 'div' : 'header') + '>';
 
   var speed = 'std';
   function lines() { return items.map(RB.lineOf); }
@@ -105,19 +105,19 @@
 
   function render() {
     var t = totals();
-    main.querySelector('#speed').innerHTML = (on(12) ? '' : '<legend class="sr-only">Choose a delivery speed</legend>') + t.opts.map(function (o) {
+    main.querySelector('#speed').innerHTML = (on(11) ? '' : '<legend class="sr-only">Choose a delivery speed</legend>') + t.opts.map(function (o) {
       return '<label class="ship-opt"><input type="radio" name="speed" value="' + o.id + '"' + (o.id === t.opt.id ? ' checked' : '') + '><span>' + shipLabel(o) + '</span></label>';
     }).join('');
     main.querySelector('#items').innerHTML = t.lines.map(function (l, i) {
       var it = l.item;
       return '<div class="co-item">' + RB.imgTag(l.p, i, '', true, it.color) + '<div><b>' + esc(RB.titleOf(l.p)) + '</b><br>' + money(l.unit) + ' × ' + it.qty +
         (it.color ? ' · ' + esc(it.color) : '') + (it.size ? ' · Size ' + esc(it.size) : '') +
-        (it.subscribe ? '<br>' + (on(34) ? 'S&amp;S: every 6 mo.' : 'Subscribe &amp; Save: sent again every 6 months') : '') +
+        (it.subscribe ? '<br>' + (on(32) ? 'S&amp;S: every 6 mo.' : 'Subscribe &amp; Save: sent again every 6 months') : '') +
         (l.plan ? '<br>2-year protection plan: ' + money(l.plan) + ' each' : '') + '</div></div>';
     }).join('');
     var subs = t.lines.some(function (l) { return l.item.subscribe; });
-    main.querySelector('#terms').innerHTML = !subs ? '' : on(30)
-      // Issue 30: the subscription terms are one long legal sentence.
+    main.querySelector('#terms').innerHTML = !subs ? '' : on(28)
+      // Issue 28: the subscription terms are one long legal sentence.
       ? '<p class="policy">By enrolling in Subscribe &amp; Save you authorize Redbird to charge your selected payment method on a recurring basis at the then-current price, which may change, for each scheduled shipment until you cancel, which you may do at any time prior to the processing of a scheduled shipment through Your Account, provided that cancellations received after processing has begun shall take effect beginning with the subsequent shipment, and you acknowledge that discounts are subject to change without notice.</p>'
       : '<ul class="policy"><li>Subscribe &amp; Save sends this item again every 6 months and charges your card each time.</li><li>You can cancel any time in Your account.</li><li>The price can change. We email you before each delivery.</li></ul>';
     var row = function (k, v, cls) { return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + k + '</td><td>' + v + '</td></tr>'; };
@@ -150,7 +150,7 @@
     render();
   });
 
-  // ── Payment errors (issue 32) ─────────────────────────────────────────────
+  // ── Payment errors (issue 30) ─────────────────────────────────────────────
   var ERRORS = {
     number: ['ERR_PAN_INVALID (E1203): Instrument validation failed.', 'That card number doesn’t look right. Check the 16 digits on the front of your card.'],
     expired: ['Error 054: EXP_DATE_INVALID.', 'This card has expired. Check the date, or use a different card.'],
@@ -161,8 +161,8 @@
   };
   function showError(where, key) {
     var box = main.querySelector(where);
-    box.innerHTML = '<p class="error-box"' + (on(9) ? '' : ' role="alert" tabindex="-1"') + '>' + ERRORS[key][on(32) ? 0 : 1] + '</p>';
-    if (!on(9)) box.firstChild.focus();
+    box.innerHTML = '<p class="error-box"' + (on(8) ? '' : ' role="alert" tabindex="-1"') + '>' + ERRORS[key][on(30) ? 0 : 1] + '</p>';
+    if (!on(8)) box.firstChild.focus();
   }
   function luhn(n) {
     var sum = 0;
@@ -174,7 +174,7 @@
     return sum % 10 === 0;
   }
   function checkCard() {
-    if (main.querySelector('input[name=pay]:checked').value === 'saved') return { ok: true, label: 'Visa ending in 4242' };
+    if (main.querySelector('input[name=pay]:checked').value === 'saved') return { ok: true, label: 'Visa ending in 7319' };
     var num = main.querySelector('#cc-num').value.replace(/\D/g, '');
     var exp = main.querySelector('#cc-exp').value.match(/^(\d{1,2})\s*\/\s*(\d{2})$/);
     var zip = main.querySelector('#cc-zip').value.trim();
@@ -182,7 +182,9 @@
     var now = RB.today();
     if (!exp || Number(exp[1]) < 1 || Number(exp[1]) > 12 || new Date(2000 + Number(exp[2]), Number(exp[1]), 1) <= now) return { error: 'expired' };
     if (zip !== '94301') return { error: 'zip' };
-    return { ok: true, label: 'Card ending in ' + num.slice(-4) };
+    // The card's brand from its first digit, the way it shows on the order.
+    var brand = { 3: 'American Express', 4: 'Visa', 5: 'Mastercard', 6: 'Discover' }[num[0]] || 'Card';
+    return { ok: true, label: brand + ' ending in ' + num.slice(-4) };
   }
 
   var expired = false;
@@ -195,7 +197,7 @@
     if (card.error) return showError('#pay-error', card.error);
     var t = totals();
     var order = {
-      id: 'RB-' + String(Math.floor(100000000 + Math.random() * 899999999)).replace(/(\d{3})(\d{3})(\d{3})/, '$1-$2-$3'),
+      id: '508-1990' + String(Math.floor(100 + Math.random() * 900)) + '-2018' + String(Math.floor(100 + Math.random() * 900)),
       placed: new Date().toISOString(),
       today: RB.isoDate(RB.today()),
       lines: t.lines.map(function (l) {
@@ -204,7 +206,7 @@
       delivery: { id: t.opt.id, fee: t.opt.fee, days: t.opt.days, first: RB.isoDate(RB.addBusinessDays(t.opt.days[0])), last: RB.isoDate(RB.addBusinessDays(t.opt.days[1])) },
       goods: t.goods, plans: t.plans, shipping: t.ship, tax: t.tax, total: Math.round(t.total * 100) / 100,
       payment: card.label,
-      offers: on(31) ? main.querySelector('#offers').checked : main.querySelector('#offers').checked,
+      offers: on(29) ? main.querySelector('#offers').checked : main.querySelector('#offers').checked,
       swapped: swapped,
     };
     var orders = RB.store('redbird:orders') || [];
@@ -214,8 +216,8 @@
     location.href = 'order?id=' + order.id;
   };
 
-  // ── Cart hold timer (issue 20): counts down from 5 minutes with no way to extend ──
-  if (on(20)) {
+  // ── Cart hold timer (issue 19): counts down from 5 minutes with no way to extend ──
+  if (on(19)) {
     var end = Date.now() + 5 * 60 * 1000;
     var tick = setInterval(function () {
       var s = Math.max(0, Math.round((end - Date.now()) / 1000));

@@ -46,30 +46,35 @@
       cache[p.id] = {
         name: words(p.name + ' ' + p.brand),
         title: words(p.title),
-        other: words(p.cat + ' ' + (p.about || []).join(' ') + ' ' + (p.specs || []).map(function (s) { return s[2]; }).join(' ')),
+        dept: words(p.cat),
+        other: words((p.about || []).join(' ') + ' ' + (p.specs || []).map(function (s) { return s[2]; }).join(' ')),
       };
     }
     return cache[p.id];
   }
-  // How well one query word matches a product: 0 means not at all.
+  // How well one query word matches a product: 0 means not at all. strong means it matched the
+  // name, title or department, not just a passing mention in the description.
   function wordScore(w, f, exact) {
     var alts = [w];
     if (SYNONYMS[w]) alts.push(SYNONYMS[w]);
-    var best = 0;
+    var best = 0, strong = false;
     alts.forEach(function (a) {
-      [['name', 3], ['title', 2], ['other', 1]].forEach(function (pair) {
+      [['name', 3], ['title', 2], ['dept', 2], ['other', 1]].forEach(function (pair) {
         f[pair[0]].forEach(function (hw) {
-          if (hw === a) best = Math.max(best, pair[1]);
-          else if (a.length >= 3 && hw.indexOf(a) === 0) best = Math.max(best, pair[1] - 0.5);
-          else if (a.length >= 4 && hw.length === a.length + 1 && hw.indexOf(a) === 1) best = Math.max(best, pair[1] - 1);
+          var s = 0;
+          if (hw === a) s = pair[1];
+          else if (a.length >= 3 && hw.indexOf(a) === 0) s = pair[1] - 0.5;
+          else if (a.length >= 4 && hw.length === a.length + 1 && hw.indexOf(a) === 1) s = pair[1] - 1;
+          if (s > 0 && pair[0] !== 'other') strong = true;
+          best = Math.max(best, s);
         });
       });
     });
-    if (best || exact || w.length < 5) return { score: best, typo: null };
+    if (best || exact || w.length < 5) return { score: best, typo: null, strong: strong };
     // Only when nothing matched: the typed word with one letter off, in the name or title.
     var typo = null;
     f.name.concat(f.title).forEach(function (hw) { if (!typo && oneOff(w, hw)) typo = hw; });
-    return { score: typo ? 1 : 0, typo: typo };
+    return { score: typo ? 1 : 0, typo: typo, strong: !!typo };
   }
 
   // opts.exact turns off typo fixing (the "Search instead for" link).
@@ -78,15 +83,19 @@
     if (!qs.length) return { results: products.map(function (p) { return { p: p, score: 0 }; }), corrected: null };
     var fixes = {};
     var results = products.map(function (p) {
-      var f = fieldsOf(p), total = 0;
+      var f = fieldsOf(p), total = 0, strong = false;
       for (var i = 0; i < qs.length; i++) {
         var r = wordScore(qs[i], f, opts && opts.exact);
         if (!r.score) return null;
         if (r.typo) fixes[qs[i]] = r.typo;
+        if (r.strong) strong = true;
         total += r.score;
       }
-      return { p: p, score: total };
+      return { p: p, score: total, strong: strong };
     }).filter(Boolean);
+    // A product found only through its description (a desk lamp that "lights a book") is left out
+    // when other products match by name, title or department.
+    if (results.some(function (r) { return r.strong; })) results = results.filter(function (r) { return r.strong; });
     results.sort(function (a, b) { return b.score - a.score || b.p.reviews - a.p.reviews; });
     var corrected = Object.keys(fixes).length ? qs.map(function (w) { return fixes[w] || w; }).join(' ') : null;
     return { results: results, corrected: corrected };
@@ -102,7 +111,7 @@
     };
     var out = POPULAR.filter(starts);
     (window.RB_CATALOG || []).forEach(function (p) {
-      var name = p.name.split(',')[0].toLowerCase();
+      var name = p.name.split(p.cat === 'books' ? ':' : ',')[0].toLowerCase();
       if (starts(name) && out.indexOf(name) === -1) out.push(name);
     });
     return out.slice(0, 8);
