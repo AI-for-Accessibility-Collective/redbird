@@ -1,0 +1,12 @@
+{
+  "name": "Sam, blind, uses a screen reader",
+  "supportAreas": ["vision"],
+  "freeText": "I'm blind and shop with VoiceOver. I need to know which color I'm picking, and the actual day something arrives, not a count of business days.",
+  "fields": {
+    "readingLevel": null,
+    "needs": [
+      { "dimension": "concreteDates", "value": true, "strength": "preference", "unit": "boolean" },
+      { "dimension": "urgency", "value": "label", "strength": "preference", "unit": "enum" }
+    ]
+  }
+}

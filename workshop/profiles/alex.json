@@ -1,0 +1,12 @@
+{
+  "name": "Alex, dyslexia, reads at about grade 6",
+  "supportAreas": ["reading", "cognitive"],
+  "freeText": "Long sentences and technical words take me a long time. Short, plain sentences at about a sixth grade level work best. I like to see the original if I want to check something.",
+  "fields": {
+    "readingLevel": 6,
+    "needs": [
+      { "dimension": "concreteDates", "value": true, "strength": "preference", "unit": "boolean" },
+      { "dimension": "urgency", "value": "label", "strength": "preference", "unit": "enum" }
+    ]
+  }
+}
