@@ -18,7 +18,7 @@
       var p = l.p, it = l.item;
       var url = 'product?id=' + p.id;
       html += '<div class="line" data-i="' + i + '">';
-      html += '<a href="' + url + '"' + (on(1) ? '' : ' tabindex="-1" aria-hidden="true"') + '>' + RB.imgTag(p, i, '', true) + '</a><div>';
+      html += '<a href="' + url + '"' + (on(1) ? '' : ' tabindex="-1" aria-hidden="true"') + '>' + RB.imgTag(p, i, '', true, it.color) + '</a><div>';
       html += h(2, '<a href="' + url + '">' + esc(RB.titleOf(p)) + '</a>');
       html += on(23) && p.stock <= 5
         ? '<div class="stock-low">Only ' + p.stock + ' left in stock - order soon.</div>'

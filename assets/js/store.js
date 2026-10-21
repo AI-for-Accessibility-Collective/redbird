@@ -102,13 +102,18 @@
   // ── Images ────────────────────────────────────────────────────────────────
   // Issue 1: alt text is missing, a camera file name, or just "product image".
   var BAD_ALTS = [null, 'IMG_2931.jpg', 'product image', null, 'DSC00418.webp'];
+  // The photo for a chosen color, when there is one (cart, checkout and orders show the color you picked).
+  function photoOf(p, color) {
+    var x = (window.RB_IMAGES || {})[p.id];
+    return (color && x && x.colors && x.colors[color]) || imgSrc(p);
+  }
   // decorative: the product's name is already written next to the photo (in the same link or row),
   // so the clean store gives the photo empty alt text instead of repeating the name.
-  function imgTag(p, i, extra, decorative) {
+  function imgTag(p, i, extra, decorative, color) {
     var alt;
     if (on(1)) alt = BAD_ALTS[(i || 0) % BAD_ALTS.length];
     else alt = decorative ? '' : p.name;
-    return '<img src="' + imgSrc(p) + '"' + (alt === null ? '' : ' alt="' + esc(alt) + '"') +
+    return '<img src="' + photoOf(p, color) + '"' + (alt === null ? '' : ' alt="' + esc(alt) + '"') +
       ' loading="lazy" width="400" height="400"' + (extra || '') + '>';
   }
 
@@ -171,17 +176,13 @@
     cart: '<svg viewBox="0 0 40 34" aria-hidden="true"><path d="M2 5h6l4.5 18h19L36 10H11" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="15" cy="29" r="2.6" fill="#fff"/><circle cx="29" cy="29" r="2.6" fill="#fff"/></svg>',
     pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-7.2 7-12.2A7 7 0 0 0 5 9.8C5 14.8 12 22 12 22Z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="#fff"/></svg>',
     menu: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
-    pinDark: '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px"><path d="M12 22s7-7.2 7-12.2A7 7 0 0 0 5 9.8C5 14.8 12 22 12 22Z" fill="none" stroke="#565959" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="#565959"/></svg>',
+    searchGrey: '<svg viewBox="0 0 24 24" aria-hidden="true" class="sug-icon"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#8a8f8f" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="#8a8f8f" stroke-width="2.4" stroke-linecap="round"/></svg>',
+        pinDark: '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px"><path d="M12 22s7-7.2 7-12.2A7 7 0 0 0 5 9.8C5 14.8 12 22 12 22Z" fill="none" stroke="#565959" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="#565959"/></svg>',
     heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.3C1.6 7.2 3.8 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.4 0 5.6 3.2 4.4 6.7C19.5 15.4 12 20 12 20Z" fill="none" stroke="#8c1515" stroke-width="2"/></svg>',
   };
-  var BIRD = '<svg viewBox="0 0 48 48" aria-hidden="true">' +
-    '<path d="M26 14 29 3l5 12Z" fill="currentColor"/>' +
-    '<circle cx="31" cy="19" r="8" fill="currentColor"/>' +
-    '<ellipse cx="22" cy="30" rx="13" ry="9.5" transform="rotate(-24 22 30)" fill="currentColor"/>' +
-    '<path d="M12 33 2 44l14-6Z" fill="currentColor"/>' +
-    '<path d="M33 15.5c3 0 6 1.6 6.5 4.6-1.5 2.4-4.6 3.4-7.5 2.4Z" fill="#1d1d1d"/>' +
-    '<path d="M38.5 17.5 46 20.5l-7.4 2.4Z" fill="#e8c766"/>' +
-    '<circle cx="35" cy="18.8" r="1.4" fill="#fff"/></svg>';
+  // The Redbird mark: a cardinal in a round badge. BIRD is for dark backgrounds, BIRD_ON_LIGHT for white ones.
+  var BIRD = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="23.5" fill="#fff"/><g transform="translate(7.5 6.5) scale(.72)"><path d="M45.5 17 38.8 19.9C39 26 36.5 32.5 30 36c-4.5 2.3-10 2.6-14.5 1.8l-9 8-4.5-1.2 8.6-11.4c2-7.4 6.9-14.6 13.6-18 1.3-.8 2.6-1.6 3.4-2.6L26.3 2.6l8.9 8c1.5.6 2.7 1.8 3.4 3.5z" fill="#8c1515"/><path d="M17.5 26.5c4-4 10-5 14.5-2-2.2 4.5-8 7.3-13.5 6.5-2-.4-2.5-2.6-1-4.5z" fill="rgba(0,0,0,.22)"/><path d="M38.6 13.8c-2-1.2-5-1-6.6.8-1.2 1.6-1 4 .6 5.6 2 2 5 1.8 6.3-.2z" fill="#161616"/><path d="M38.4 14l7.2 3-7 3c-.8-2-.8-4-.2-6z" fill="#e8c766"/><circle cx="35.2" cy="16.4" r="1.1" fill="#fff"/></g></svg>';
+  var BIRD_ON_LIGHT = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="23.5" fill="#8c1515"/><g transform="translate(7.5 6.5) scale(.72)"><path d="M45.5 17 38.8 19.9C39 26 36.5 32.5 30 36c-4.5 2.3-10 2.6-14.5 1.8l-9 8-4.5-1.2 8.6-11.4c2-7.4 6.9-14.6 13.6-18 1.3-.8 2.6-1.6 3.4-2.6L26.3 2.6l8.9 8c1.5.6 2.7 1.8 3.4 3.5z" fill="#fff"/><path d="M17.5 26.5c4-4 10-5 14.5-2-2.2 4.5-8 7.3-13.5 6.5-2-.4-2.5-2.6-1-4.5z" fill="rgba(0,0,0,.14)"/><path d="M38.6 13.8c-2-1.2-5-1-6.6.8-1.2 1.6-1 4 .6 5.6 2 2 5 1.8 6.3-.2z" fill="#161616"/><path d="M38.4 14l7.2 3-7 3c-.8-2-.8-4-.2-6z" fill="#e8c766"/><circle cx="35.2" cy="16.4" r="1.1" fill="#fff"/></g></svg>';
 
   // ── Cart ──────────────────────────────────────────────────────────────────
   var CART_KEY = 'redbird:cart';
@@ -260,7 +261,8 @@
     html += (on(12) ? '' : '<label class="sr-only" for="rb-q">Search Redbird</label>');
     html += '<select name="cat"' + (on(2) ? '' : ' aria-label="Department"') + '><option value="">All</option>' +
       cats.map(function (c) { return '<option value="' + c.id + '"' + (c.id === curCat ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>';
-    html += '<input id="rb-q" name="q" value="' + q + '" placeholder="Search Redbird" autocomplete="off">';
+    html += '<input id="rb-q" name="q" value="' + q + '" placeholder="Search Redbird" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="rb-suggest">';
+    html += '<ul id="rb-suggest" class="suggest" role="listbox" aria-label="Search suggestions" hidden></ul>';
     // Issue 2: icon-only buttons with no name.
     html += '<button type="submit"' + (on(2) ? '' : ' aria-label="Search"') + '>' + ICON.search + '</button>';
     html += '</form>';
@@ -355,9 +357,50 @@
       document.body.appendChild(live);
     }
     renderCartCount(false);
+    wireSearch();
     wireAddButtons(main);
     if (opts.title) document.title = opts.title + ' | Redbird';
     return main;
+  }
+  // Suggestions under the search box, like real stores. Arrow keys move through them,
+  // Enter searches for the highlighted one, Escape closes the list.
+  function wireSearch() {
+    var input = document.getElementById('rb-q'), list = document.getElementById('rb-suggest');
+    if (!input || !window.RB_FIND) return;
+    var items = [], active = -1;
+    function close() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); active = -1; }
+    function show() {
+      items = window.RB_FIND.suggest(input.value);
+      if (!items.length) return close();
+      var typed = input.value.trim().toLowerCase();
+      list.innerHTML = items.map(function (s, i) {
+        var at = s.indexOf(typed), label = at === 0 ? esc(s.slice(0, typed.length)) + '<b>' + esc(s.slice(typed.length)) + '</b>' : esc(s);
+        return '<li id="rb-sug-' + i + '" role="option" aria-selected="false" data-i="' + i + '">' + ICON.searchGrey + '<span>' + label + '</span></li>';
+      }).join('');
+      list.hidden = false; input.setAttribute('aria-expanded', 'true');
+    }
+    function pick(i) {
+      active = i;
+      list.querySelectorAll('[role=option]').forEach(function (o, j) { o.setAttribute('aria-selected', String(j === i)); });
+      input.setAttribute('aria-activedescendant', 'rb-sug-' + i);
+    }
+    input.addEventListener('input', show);
+    input.addEventListener('keydown', function (e) {
+      if (list.hidden) { if (e.key === 'ArrowDown') { show(); if (items.length) pick(0); e.preventDefault(); } return; }
+      if (e.key === 'ArrowDown') { pick((active + 1) % items.length); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { pick((active - 1 + items.length) % items.length); e.preventDefault(); }
+      else if (e.key === 'Escape') { close(); e.preventDefault(); }
+      else if (e.key === 'Enter' && active >= 0) { input.value = items[active]; close(); }
+    });
+    list.addEventListener('mousedown', function (e) {
+      var li = e.target.closest('[role=option]');
+      if (!li) return;
+      e.preventDefault();
+      input.value = items[Number(li.getAttribute('data-i'))];
+      close();
+      input.form.submit();
+    });
+    input.addEventListener('blur', function () { setTimeout(close, 100); });
   }
   function wireAddButtons(root) {
     // The heart saves a product to your list (only in this page view; nothing is stored).
@@ -381,11 +424,11 @@
 
   window.RB = {
     on: on, esc: esc, money: money, byId: byId, param: param, store: store, h: h,
-    titleOf: titleOf, descOf: descOf, imgSrc: imgSrc, imgTag: imgTag,
+    titleOf: titleOf, descOf: descOf, imgSrc: imgSrc, photoOf: photoOf, imgTag: imgTag,
     today: today, isoDate: isoDate, addBusinessDays: addBusinessDays, dayLong: dayLong, dayShort: dayShort, shipDates: shipDates,
     deliveryHTML: deliveryHTML, starsHTML: starsHTML, priceHTML: priceHTML, listPriceHTML: listPriceHTML,
     badgeHTML: badgeHTML, sponsoredHTML: sponsoredHTML, addButton: addButton, cardHTML: cardHTML, cardDots: cardDots,
     cart: cart, lineOf: lineOf, couponOf: couponOf, boughtHTML: boughtHTML, renderCartCount: renderCartCount, say: say, addedToast: addedToast,
-    mount: mount, TAX_RATE: TAX_RATE, BIRD: BIRD, ICON: ICON,
+    mount: mount, TAX_RATE: TAX_RATE, BIRD: BIRD, BIRD_ON_LIGHT: BIRD_ON_LIGHT, ICON: ICON,
   };
 })();

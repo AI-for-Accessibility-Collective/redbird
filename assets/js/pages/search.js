@@ -6,16 +6,12 @@
   var dealsOnly = RB.param('deals') === '1';
   var catName = cat ? (RB_CATEGORIES.find(function (c) { return c.id === cat; }) || {}).name : '';
 
-  // "USB C", "USB-C", "usbc" and "Type-C" all mean the same thing to shoppers, so they match each other.
-  function norm(t) { return t.toLowerCase().replace(/\busb[\s-]?c\b|\btype[\s-]?c\b/g, 'usbc'); }
-  var words = norm(q).split(/\s+/).filter(Boolean);
-  var base = RB_CATALOG.filter(function (p) {
-    if (cat && p.cat !== cat) return false;
-    if (dealsOnly && !p.list) return false;
-    if (!words.length) return true;
-    var hay = norm(p.title + ' ' + p.name + ' ' + p.brand + ' ' + p.cat);
-    return words.every(function (w) { return hay.indexOf(w.replace(/s$/, '')) !== -1; });
-  });
+  // Matching and ranking live in find.js (shared with the suggestions under the search box).
+  var pool = RB_CATALOG.filter(function (p) { return (!cat || p.cat === cat) && (!dealsOnly || p.list); });
+  var found = RB_FIND.rank(q, pool, { exact: RB.param('exact') === '1' });
+  var base = found.results.map(function (r) { return r.p; });
+  var relevance = {};
+  found.results.forEach(function (r) { relevance[r.p.id] = r.score; });
   var brands = Array.from(new Set(base.map(function (p) { return p.brand; }))).sort();
   var maxPrice = Math.ceil(Math.max.apply(null, base.map(function (p) { return p.price; }).concat([10])));
   var state = { min: 0, max: maxPrice, stars4: false, fast: false, brands: [], connectors: [], sort: 'featured' };
@@ -75,7 +71,9 @@
       adItems.map(function (p, i) { return '<a href="product?id=' + p.id + '">' + RB.imgTag(p, i + 2, '', true) + esc(p.name.split(',')[0]) + '</a>'; }).join('') + '</div></div>';
   }
   var results = '<div><div class="results-head">' + h(1, 'Results for ' + label, '') +
-    '<p id="status"' + (on(9) ? '' : ' role="status"') + '></p></div>' + brandAd + '<div class="results-grid' + (asList ? ' as-list' : '') + '" id="grid"></div>' +
+    '<p id="status"' + (on(9) ? '' : ' role="status"') + '></p>' +
+    (found.corrected ? '<p class="fix-note">Showing results for <b><i>' + esc(found.corrected) + '</i></b>. Search instead for <a href="search?q=' + encodeURIComponent(q) + '&exact=1">' + esc(q) + '</a></p>' : '') +
+    '</div>' + brandAd + '<div class="results-grid' + (asList ? ' as-list' : '') + '" id="grid"></div>' +
     (on(11) ? '<p class="more-results"><a href="#">Click here</a> for more results</p>' : '') + '</div>';
 
   var main = RB.mount(bar + '<div class="results-layout">' + side + results + '</div>', { title: 'Results for ' + (q || catName || 'all') });
@@ -93,7 +91,7 @@
       low: function (a, b) { return a.price - b.price; },
       high: function (a, b) { return b.price - a.price; },
       rating: function (a, b) { return b.rating - a.rating; },
-      featured: function (a, b) { return (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0) || b.reviews - a.reviews; },
+      featured: function (a, b) { return (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0) || (relevance[b.id] || 0) - (relevance[a.id] || 0) || b.reviews - a.reviews; },
     };
     return list.slice().sort(sorters[state.sort]);
   }
@@ -101,7 +99,10 @@
     var list = filtered();
     main.querySelector('#grid').innerHTML = list.length
       ? list.map(function (p, i) { return RB.cardHTML(p, i); }).join('')
-      : '<div class="empty">No products match these filters. Try removing a filter.</div>';
+      : base.length
+        ? '<div class="empty">No products match these filters. Try removing a filter.</div>'
+        : '<div class="empty">' + h(2, 'No results for ' + label) + '<p>Try checking your spelling, or use fewer or more general words.</p>' +
+          '<p>Popular right now: ' + ['usb-c charger', 'headphones', 'hoodie', 'water bottle'].map(function (x) { return '<a href="search?q=' + encodeURIComponent(x) + '">' + x + '</a>'; }).join(', ') + '</p></div>';
     var n = list.length;
     main.querySelector('#count-line').innerHTML = (n > 1 ? '1–' + n + ' of ' + n + ' results' : n === 1 ? '1 result' : 'No results') + ' for <b class="q">' + label + '</b>';
     // Issue 9: with it on, the results change silently. The status line only updates for sighted users.

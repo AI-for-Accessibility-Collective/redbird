@@ -38,7 +38,7 @@ a { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; color: #08506f; }
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
-main p a, main li a { text-decoration: underline; }
+main p a:not(.btn), main li a:not(.btn) { text-decoration: underline; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
@@ -66,16 +66,27 @@ main p a, main li a { text-decoration: underline; }
 .hdr-box small { display: block; font-size: 12.5px; color: #f2d9d9; }
 .hdr-box b { font-size: 14.5px; font-weight: 700; }
 .logo { display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 4px; flex-shrink: 0; }
-.logo svg { width: 38px; height: 38px; }
+.logo svg { width: 40px; height: 40px; }
 .logo span {
   font-family: var(--serif); font-weight: 700; font-size: 27px; letter-spacing: -0.5px; line-height: 1;
 }
 .deliver { display: flex; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .deliver svg { width: 18px; height: 18px; margin-bottom: 2px; }
 .search {
-  flex: 1; display: flex; min-width: 220px; height: 42px; border-radius: 6px; overflow: hidden;
+  flex: 1; display: flex; min-width: 220px; height: 42px; border-radius: 6px; position: relative;
   background: #fff;
 }
+.search select { border-radius: 6px 0 0 6px; }
+.search button { border-radius: 0 6px 6px 0; }
+.suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 70; list-style: none; margin: 0; padding: 6px 0;
+  background: #fff; color: var(--ink); border-radius: 0 0 8px 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+}
+.suggest li { display: flex; align-items: center; gap: 10px; padding: 7px 14px; cursor: pointer; font-size: 15px; }
+.suggest li[aria-selected=true], .suggest li:hover { background: #eef2f3; }
+.suggest b { font-weight: 700; }
+.sug-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.fix-note { color: var(--ink) !important; font-size: 15px !important; }
 .search select {
   border: 0; background: #f0f0f0; color: #444; padding: 0 8px; font-size: 13px; max-width: 150px;
   border-right: 1px solid #ccc;
@@ -428,8 +439,33 @@ main p a, main li a { text-decoration: underline; }
 .order-sum .btn { margin-bottom: 12px; }
 .check-row { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin-top: 10px; }
 .check-row input { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--cardinal); }
-.done { max-width: 900px; margin: 30px auto; }
-.done .ok { color: var(--green); font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+.ok { color: var(--green); font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+.ord-wrap { max-width: 1200px; margin: 24px auto; padding: 0 20px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+.ord-main { min-width: 0; }
+.ord-thanks p { margin: 6px 0; }
+.ord-thanks hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+.ord-thanks :is(h1, .h1).ord-when { font-size: 20px; margin: 0 0 10px; }
+.ord-thumbs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ord-thumbs img { width: 96px; height: 96px; object-fit: contain; background: #f7f8f8; border-radius: 6px; }
+.ord-side :is(h2, .h2) { font-size: 18px; margin: 0 0 4px; }
+.ord-sum { width: 100%; border-collapse: collapse; font-size: 14.5px; margin: 8px 0; }
+.ord-sum td { padding: 3px 0; }
+.ord-sum td:last-child { text-align: right; }
+.ord-sum .total td { font-weight: 700; font-size: 17px; color: var(--deal); border-top: 1px solid var(--line); padding-top: 8px; }
+.ord-list { max-width: 980px; margin: 24px auto; padding: 0 20px; }
+.ord-list > :is(h1, .h1) { font-size: 28px; font-weight: 500; margin: 0 0 4px; }
+.ord-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); margin: 16px 0; overflow: hidden; }
+.ord-head { display: grid; grid-template-columns: auto auto auto 1fr; gap: 6px 36px; background: #f0f2f2; padding: 12px 18px; font-size: 13.5px; }
+.ord-head span { display: block; text-transform: uppercase; font-size: 11.5px; color: var(--muted); letter-spacing: .3px; }
+.ord-head .ord-num { text-align: right; }
+.ord-head a { text-decoration: underline; }
+.ord-body { display: grid; grid-template-columns: 1fr 220px; gap: 20px; padding: 16px 18px; }
+.ord-body :is(h2, .h2).ord-status { font-size: 18px; margin: 0 0 10px; }
+.ord-line { display: grid; grid-template-columns: 90px 1fr; gap: 14px; margin: 10px 0; }
+.ord-line > div { display: flex; flex-direction: column; align-items: flex-start; }
+.ord-line img { width: 90px; height: 90px; object-fit: contain; background: #f7f8f8; border-radius: 6px; }
+.ord-line .ord-again { margin-top: 8px; min-height: 30px; padding: 4px 14px; font-size: 13px; }
+.ord-actions .btn { margin-bottom: 8px; }
 
 /* ── Small pieces used across pages ─────────────────────────────────────── */
 .h1 { font-size: 2em; font-weight: 700; margin: .67em 0; }
@@ -448,8 +484,6 @@ main p a, main li a { text-decoration: underline; }
 }
 .added-toast img { width: 56px; height: 56px; object-fit: contain; background: #f7f8f8; border-radius: 4px; }
 .sponsored-img { width: 64px; height: 14px; }
-.done :is(h1, .h1) { font-size: 24px; margin: 0 0 6px; }
-.done :is(h2, .h2) { font-size: 18px; margin: 0 0 8px; }
 
 /* ── Reviews, questions, compare table, card extras ─────────────────────── */
 .h4 { font-weight: 700; }
@@ -500,7 +534,9 @@ main p a, main li a { text-decoration: underline; }
   .hero-copy p { display: none; }
   .search { order: 5; flex-basis: 100%; }
   .deliver, .hdr-orders { display: none; }
-  .results-layout, .cart-layout, .co-layout { grid-template-columns: 1fr; }
+  .results-layout, .cart-layout, .co-layout, .ord-wrap, .ord-body { grid-template-columns: 1fr; }
+  .ord-head { grid-template-columns: 1fr 1fr; }
+  .ord-head .ord-num { text-align: left; }
   .pdp { grid-template-columns: 1fr; }
   .gallery { position: static; }
   .home-tiles { margin-top: 16px; }

@@ -88,7 +88,7 @@
   var main = RB.mount(html, { title: 'Checkout', noHeader: true });
   document.getElementById('rb-top').innerHTML =
     '<' + (on(12) ? 'div' : 'header') + ' class="co-header"><div class="wrap">' +
-    '<a class="logo" href="./"' + (on(2) ? '' : ' aria-label="Redbird home"') + ' style="color:var(--cardinal)">' + RB.BIRD + '<span aria-hidden="true">redbird</span></a>' +
+    '<a class="logo" href="./"' + (on(2) ? '' : ' aria-label="Redbird home"') + ' style="color:var(--cardinal)">' + RB.BIRD_ON_LIGHT + '<span aria-hidden="true">redbird</span></a>' +
     h(1, 'Checkout') + (on(20) ? '<span class="hold-timer" id="hold">Your cart is held for 5:00</span>' : '<span></span>') +
     '</div></' + (on(12) ? 'div' : 'header') + '>';
 
@@ -110,7 +110,7 @@
     }).join('');
     main.querySelector('#items').innerHTML = t.lines.map(function (l, i) {
       var it = l.item;
-      return '<div class="co-item">' + RB.imgTag(l.p, i, '', true) + '<div><b>' + esc(RB.titleOf(l.p)) + '</b><br>' + money(l.unit) + ' × ' + it.qty +
+      return '<div class="co-item">' + RB.imgTag(l.p, i, '', true, it.color) + '<div><b>' + esc(RB.titleOf(l.p)) + '</b><br>' + money(l.unit) + ' × ' + it.qty +
         (it.color ? ' · ' + esc(it.color) : '') + (it.size ? ' · Size ' + esc(it.size) : '') +
         (it.subscribe ? '<br>' + (on(34) ? 'S&amp;S: every 6 mo.' : 'Subscribe &amp; Save: sent again every 6 months') : '') +
         (l.plan ? '<br>2-year protection plan: ' + money(l.plan) + ' each' : '') + '</div></div>';
