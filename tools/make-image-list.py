@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write assets/js/images.js: every extra photo in assets/img/gallery/, per product, with the
 alt text the store uses when planted issues are off. Run it after adding photos to
-assets/img/gallery/ or running make-infographics.py.
+assets/img/gallery/.
 
     python3 tools/make-image-list.py
 """
@@ -28,9 +28,8 @@ for p in catalog:
         'angle': f'{name}, ' + ('seen ' if angle.startswith('from') else '') + angle,
         'use': f'{name} {use}',
         'detail': f'Close-up of {detail}',
-        'info': f'Key features of the {name}: ' + ' '.join(f'{i}. {a}.' for i, a in enumerate(p['about'][:3], 1)),
     }
-    for kind in ('angle', 'use', 'detail', 'info'):
+    for kind in ('angle', 'use', 'detail'):
         if have(kind):
             entry['gallery'].append({'src': src(kind), 'alt': alts[kind]})
     for sw in (p.get('swatches') or [])[1:]:

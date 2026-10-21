@@ -6,7 +6,7 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/rb-20w-usbc-charger-angle.webp",
-    "alt": "Redbird Basics 20W USB-C wall charger, seen from a three-quarter side angle with the folding plug prongs flipped out"
+    "alt": "Redbird Basics 20W USB-C wall charger, seen from the back, showing the two flat plug prongs folded out"
    },
    {
     "src": "assets/img/gallery/rb-20w-usbc-charger-use.webp",
@@ -15,10 +15,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/rb-20w-usbc-charger-detail.webp",
     "alt": "Close-up of the single small oval USB-C port on the front face"
-   },
-   {
-    "src": "assets/img/gallery/rb-20w-usbc-charger-info.webp",
-    "alt": "Key features of the Redbird Basics 20W USB-C wall charger: 1. Charges a phone to 50% in about 30 minutes. 2. One USB-C port, folding plug. 3. Works with phones, tablets and earbuds that charge over USB-C."
    }
   ],
   "colors": {
@@ -48,10 +44,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/voltedge-20w-usbc-detail.webp",
     "alt": "Close-up of the USB-C port and the glowing blue edge"
-   },
-   {
-    "src": "assets/img/gallery/voltedge-20w-usbc-info.webp",
-    "alt": "Key features of the VoltEdge 20W USB-C charger: 1. 20 W from one USB-C port. 2. Ships from overseas, usually in 2 to 4 weeks. 3. Glossy black finish."
    }
   ],
   "colors": {},
@@ -66,14 +58,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/chargemate-20w-lightning-use.webp",
     "alt": "ChargeMate 20W charger with built-in Lightning cable plugged into a kitchen wall outlet with the Lightning cable connected to an older phone on the counter"
-   },
-   {
-    "src": "assets/img/gallery/chargemate-20w-lightning-detail.webp",
-    "alt": "Close-up of the Lightning connector at the end of the cable"
-   },
-   {
-    "src": "assets/img/gallery/chargemate-20w-lightning-info.webp",
-    "alt": "Key features of the ChargeMate 20W charger with built-in Lightning cable: 1. Built-in 6 ft cable with a Lightning plug (for older iPhones). 2. Does not have a USB-C plug. 3. 20 W."
    }
   ],
   "colors": {},
@@ -83,19 +67,15 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/kestrel-65w-gan-angle.webp",
-    "alt": "Kestrel 65W 3-port USB-C charger, seen from a three-quarter angle showing the side and the plug prongs"
+    "alt": "Hanker 65W 3-port USB-C charger, seen from a three-quarter angle showing the side and the plug prongs"
    },
    {
     "src": "assets/img/gallery/kestrel-65w-gan-use.webp",
-    "alt": "Kestrel 65W 3-port USB-C charger on a cafe table plugged into a power strip, charging a laptop and a phone at the same time"
+    "alt": "Hanker 65W 3-port USB-C charger on a cafe table plugged into a power strip, charging a laptop and a phone at the same time"
    },
    {
     "src": "assets/img/gallery/kestrel-65w-gan-detail.webp",
     "alt": "Close-up of the three ports, two USB-C and one USB-A"
-   },
-   {
-    "src": "assets/img/gallery/kestrel-65w-gan-info.webp",
-    "alt": "Key features of the Kestrel 65W 3-port USB-C charger: 1. Powerful enough for a laptop. 2. Two USB-C ports and one USB-A port. 3. Charges three devices at once."
    }
   ],
   "colors": {},
@@ -105,30 +85,26 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/kestrel-30w-dual-angle.webp",
-    "alt": "Kestrel 30W 2-port USB-C charger, seen from a three-quarter angle showing the side and the plug prongs"
+    "alt": "Hanker 30W 2-port USB-C charger, seen from a three-quarter angle showing the side and the plug prongs"
    },
    {
     "src": "assets/img/gallery/kestrel-30w-dual-use.webp",
-    "alt": "Kestrel 30W 2-port USB-C charger plugged into a wall outlet in a dorm room, with two cables going to a phone and earbuds case on a desk"
+    "alt": "Hanker 30W 2-port USB-C charger plugged into a wall outlet in a dorm room, with two cables going to a phone and earbuds case on a desk"
    },
    {
     "src": "assets/img/gallery/kestrel-30w-dual-detail.webp",
     "alt": "Close-up of the two USB-C ports"
-   },
-   {
-    "src": "assets/img/gallery/kestrel-30w-dual-info.webp",
-    "alt": "Key features of the Kestrel 30W 2-port USB-C charger: 1. Two USB-C ports. 2. Charges a phone and earbuds at the same time. 3. Slim, flat shape."
    }
   ],
   "colors": {},
   "reviews": [
    {
     "src": "assets/img/gallery/kestrel-30w-dual-review1.webp",
-    "alt": "Customer photo of the Kestrel 30W 2-port USB-C charger plugged into a hotel room wall outlet"
+    "alt": "Customer photo of the Hanker 30W 2-port USB-C charger plugged into a hotel room wall outlet"
    },
    {
     "src": "assets/img/gallery/kestrel-30w-dual-review2.webp",
-    "alt": "Customer photo of the Kestrel 30W 2-port USB-C charger next to a phone and earbuds on a bed"
+    "alt": "Customer photo of the Hanker 30W 2-port USB-C charger next to a phone and earbuds on a bed"
    }
   ]
  },
@@ -145,10 +121,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/pebble-20w-2pack-detail.webp",
     "alt": "Close-up of the USB-C port on one charger"
-   },
-   {
-    "src": "assets/img/gallery/pebble-20w-2pack-info.webp",
-    "alt": "Key features of the Pebble Power 20W USB-C charger, 2-pack: 1. Two chargers in the pack. 2. 20 W from one USB-C port each. 3. Rounded, pocket-friendly shape."
    }
   ],
   "colors": {},
@@ -176,10 +148,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/rb-usbc-cable-6ft-detail.webp",
     "alt": "Close-up of the braided fabric and the aluminum connector end"
-   },
-   {
-    "src": "assets/img/gallery/rb-usbc-cable-6ft-info.webp",
-    "alt": "Key features of the Redbird Basics USB-C to USB-C cable, 6 ft: 1. USB-C plug on both ends. 2. 6 feet long, braided so it does not tangle. 3. Carries up to 60 W."
    }
   ],
   "colors": {},
@@ -189,19 +157,15 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/kestrel-buds-angle.webp",
-    "alt": "Kestrel Buds wireless earbuds, with the case closed and both earbuds lying in front of it"
+    "alt": "Hanker Buds wireless earbuds, with the case closed and both earbuds lying in front of it"
    },
    {
     "src": "assets/img/gallery/kestrel-buds-use.webp",
-    "alt": "Kestrel Buds wireless earbuds worn in the ear of a person jogging outdoors, seen from the side"
+    "alt": "Hanker Buds wireless earbuds worn in the ear of a person jogging outdoors, seen from the side"
    },
    {
     "src": "assets/img/gallery/kestrel-buds-detail.webp",
     "alt": "Close-up of one earbud and its soft ear tip"
-   },
-   {
-    "src": "assets/img/gallery/kestrel-buds-info.webp",
-    "alt": "Key features of the Kestrel Buds wireless earbuds: 1. Noise cancelling. 2. Up to 8 hours per charge, 40 hours with the case. 3. Sweat resistant."
    }
   ],
   "colors": {},
@@ -220,10 +184,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/northloop-studio-headphones-detail.webp",
     "alt": "Close-up of the cushioned ear cup and the padded headband"
-   },
-   {
-    "src": "assets/img/gallery/northloop-studio-headphones-info.webp",
-    "alt": "Key features of the Northloop Studio over-ear headphones: 1. Soft foam ear cushions. 2. Up to 60 hours per charge. 3. Folds flat for travel."
    }
   ],
   "colors": {
@@ -255,10 +215,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/fernway-phone-case-detail.webp",
     "alt": "Close-up of the soft-touch silicone texture and the camera cutout edge"
-   },
-   {
-    "src": "assets/img/gallery/fernway-phone-case-info.webp",
-    "alt": "Key features of the Fernway slim silicone phone case: 1. Fits 6.1-inch phones. 2. Soft lining inside. 3. Raised edges protect the camera."
    }
   ],
   "colors": {
@@ -292,10 +248,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/pebble-10k-powerbank-detail.webp",
     "alt": "Close-up of the USB-C port and the small charge light"
-   },
-   {
-    "src": "assets/img/gallery/pebble-10k-powerbank-info.webp",
-    "alt": "Key features of the Pebble Power 10,000 mAh power bank: 1. Charges a phone about twice. 2. USB-C in and out. 3. Thin enough for a back pocket."
    }
   ],
   "colors": {},
@@ -314,13 +266,357 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/lumen-orb-speaker-detail.webp",
     "alt": "Close-up of the fabric mesh and the soft light ring"
-   },
-   {
-    "src": "assets/img/gallery/lumen-orb-speaker-info.webp",
-    "alt": "Key features of the Lumen Orb smart speaker: 1. Plays music around the whole room. 2. Works with voice commands. 3. Soft light ring shows the time."
    }
   ],
   "colors": {},
+  "reviews": []
+ },
+ "kestrel-20w-nano": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/kestrel-20w-nano-angle.webp",
+    "alt": "Hanker Nano 20W USB-C charger, seen from a three-quarter side angle with the US plug prongs folded out"
+   },
+   {
+    "src": "assets/img/gallery/kestrel-20w-nano-use.webp",
+    "alt": "Hanker Nano 20W USB-C charger plugged into a white wall outlet above a desk, with one USB-C cable running from the charger to a phone lying on the desk, connected at both ends"
+   },
+   {
+    "src": "assets/img/gallery/kestrel-20w-nano-detail.webp",
+    "alt": "Close-up of the single USB-C port on the front face"
+   }
+  ],
+  "colors": {
+   "Slate gray": "assets/img/gallery/kestrel-20w-nano-color-slate-gray.webp"
+  },
+  "reviews": []
+ },
+ "voltedge-45w-gan": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/voltedge-45w-gan-angle.webp",
+    "alt": "VoltEdge 45W 2-port charger, seen from the side, showing the fixed US plug prongs and the blue accent stripe"
+   },
+   {
+    "src": "assets/img/gallery/voltedge-45w-gan-use.webp",
+    "alt": "VoltEdge 45W 2-port charger plugged into a wall outlet in a home office, with nothing connected to it"
+   },
+   {
+    "src": "assets/img/gallery/voltedge-45w-gan-detail.webp",
+    "alt": "Close-up of the USB-C port and the USB-A port side by side"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "sparrowline-20w-usbc": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/sparrowline-20w-usbc-angle.webp",
+    "alt": "Sparrowline 20W USB-C charger, seen from the back, showing the two flat US plug prongs"
+   },
+   {
+    "src": "assets/img/gallery/sparrowline-20w-usbc-use.webp",
+    "alt": "Sparrowline 20W USB-C charger lying on a wooden desk next to a notebook, not plugged in"
+   },
+   {
+    "src": "assets/img/gallery/sparrowline-20w-usbc-detail.webp",
+    "alt": "Close-up of the smooth rounded edge and the USB-C port"
+   }
+  ],
+  "colors": {
+   "Black": "assets/img/gallery/sparrowline-20w-usbc-color-black.webp",
+   "Sky blue": "assets/img/gallery/sparrowline-20w-usbc-color-sky-blue.webp"
+  },
+  "reviews": []
+ },
+ "chargemate-20w-usbc-cord": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/chargemate-20w-usbc-cord-angle.webp",
+    "alt": "ChargeMate 20W charger with built-in USB-C cable, seen from above with the attached cable neatly coiled beside the charger"
+   },
+   {
+    "src": "assets/img/gallery/chargemate-20w-usbc-cord-use.webp",
+    "alt": "ChargeMate 20W charger with built-in USB-C cable plugged into a wall outlet beside a bed, with its attached cable running up to a phone lying on the nightstand and plugged into the phone"
+   },
+   {
+    "src": "assets/img/gallery/chargemate-20w-usbc-cord-detail.webp",
+    "alt": "Close-up of the USB-C plug at the end of the cable"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "rb-30w-usbc-charger": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/rb-30w-usbc-charger-angle.webp",
+    "alt": "Redbird Basics 30W USB-C wall charger, seen from a three-quarter angle with the US plug prongs folded out"
+   },
+   {
+    "src": "assets/img/gallery/rb-30w-usbc-charger-use.webp",
+    "alt": "Redbird Basics 30W USB-C wall charger tucked in the open front pocket of a laptop bag"
+   },
+   {
+    "src": "assets/img/gallery/rb-30w-usbc-charger-detail.webp",
+    "alt": "Close-up of the single USB-C port on the front face"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "rb-12w-usba-2pack": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/rb-12w-usba-2pack-angle.webp",
+    "alt": "Redbird Basics 12W USB-A wall charger, 2-pack, with one charger seen from the back showing the prongs and one from the front"
+   },
+   {
+    "src": "assets/img/gallery/rb-12w-usba-2pack-use.webp",
+    "alt": "Redbird Basics 12W USB-A wall charger, 2-pack with one charger plugged into a kitchen wall outlet, nothing connected to it"
+   },
+   {
+    "src": "assets/img/gallery/rb-12w-usba-2pack-detail.webp",
+    "alt": "Close-up of the rectangular USB-A port on one charger"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "sparrowline-3in1-station": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/sparrowline-3in1-station-angle.webp",
+    "alt": "Sparrowline 3-in-1 charging station, seen from the side, folded flat"
+   },
+   {
+    "src": "assets/img/gallery/sparrowline-3in1-station-use.webp",
+    "alt": "Sparrowline 3-in-1 charging station standing on a nightstand next to a lamp, with no devices on it"
+   },
+   {
+    "src": "assets/img/gallery/sparrowline-3in1-station-detail.webp",
+    "alt": "Close-up of the round magnetic phone pad"
+   }
+  ],
+  "colors": {
+   "Black": "assets/img/gallery/sparrowline-3in1-station-color-black.webp"
+  },
+  "reviews": []
+ },
+ "kestrel-48w-car-charger": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/kestrel-48w-car-charger-angle.webp",
+    "alt": "Hanker 48W 2-port car charger, seen from the end, showing the USB-C port, the USB-A port and the blue light ring"
+   },
+   {
+    "src": "assets/img/gallery/kestrel-48w-car-charger-use.webp",
+    "alt": "Hanker 48W 2-port car charger plugged into the 12 volt socket on a car dashboard, with nothing connected to it"
+   },
+   {
+    "src": "assets/img/gallery/kestrel-48w-car-charger-detail.webp",
+    "alt": "Close-up of the pull ring and the two ports"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "pebble-15w-wireless-pad": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/pebble-15w-wireless-pad-angle.webp",
+    "alt": "Pebble Power 15W wireless charging pad, seen from a low side angle showing how thin it is"
+   },
+   {
+    "src": "assets/img/gallery/pebble-15w-wireless-pad-use.webp",
+    "alt": "Pebble Power 15W wireless charging pad on a wooden nightstand next to a lamp, with one phone lying flat on top of it"
+   },
+   {
+    "src": "assets/img/gallery/pebble-15w-wireless-pad-detail.webp",
+    "alt": "Close-up of the soft rubber ring on top"
+   }
+  ],
+  "colors": {
+   "White": "assets/img/gallery/pebble-15w-wireless-pad-color-white.webp"
+  },
+  "reviews": []
+ },
+ "rb-usbc-lightning-cable-3ft": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/rb-usbc-lightning-cable-3ft-angle.webp",
+    "alt": "Redbird Basics USB-C to Lightning cable, 3 ft, uncoiled in a loose curve showing both ends"
+   },
+   {
+    "src": "assets/img/gallery/rb-usbc-lightning-cable-3ft-use.webp",
+    "alt": "Redbird Basics USB-C to Lightning cable, 3 ft lying loosely coiled on a wooden desk next to a notebook"
+   },
+   {
+    "src": "assets/img/gallery/rb-usbc-lightning-cable-3ft-detail.webp",
+    "alt": "Close-up of the braided white cable and its USB-C plug"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "sparrowline-usba-usbc-2pack": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/sparrowline-usba-usbc-2pack-angle.webp",
+    "alt": "Sparrowline USB-A to USB-C cables, 6 ft, 2-pack, with both cables uncoiled in loose curves side by side"
+   },
+   {
+    "src": "assets/img/gallery/sparrowline-usba-usbc-2pack-use.webp",
+    "alt": "Sparrowline USB-A to USB-C cables, 6 ft, 2-pack with one cable plugged into the USB-A port on a car center console and its other end plugged into a phone resting in the cup holder"
+   },
+   {
+    "src": "assets/img/gallery/sparrowline-usba-usbc-2pack-detail.webp",
+    "alt": "Close-up of the braided fabric and the rectangular USB-A plug"
+   }
+  ],
+  "colors": {
+   "Cardinal red": "assets/img/gallery/sparrowline-usba-usbc-2pack-color-cardinal-red.webp"
+  },
+  "reviews": []
+ },
+ "kestrel-240w-usbc-cable": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/kestrel-240w-usbc-cable-angle.webp",
+    "alt": "Hanker 240W USB-C to USB-C cable, 3 ft, uncoiled in a loose curve showing both ends"
+   },
+   {
+    "src": "assets/img/gallery/kestrel-240w-usbc-cable-use.webp",
+    "alt": "Hanker 240W USB-C to USB-C cable, 3 ft lying loosely coiled next to a closed laptop on a desk"
+   },
+   {
+    "src": "assets/img/gallery/kestrel-240w-usbc-cable-detail.webp",
+    "alt": "Close-up of the braided nylon and the dark gray aluminum plug"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "fernway-clear-magnetic-case": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/fernway-clear-magnetic-case-angle.webp",
+    "alt": "Fernway clear magnetic phone case, seen from the back at an angle, showing the magnet ring and the camera cutout"
+   },
+   {
+    "src": "assets/img/gallery/fernway-clear-magnetic-case-use.webp",
+    "alt": "Fernway clear magnetic phone case on a phone held in one hand on a city sidewalk, back side shown"
+   },
+   {
+    "src": "assets/img/gallery/fernway-clear-magnetic-case-detail.webp",
+    "alt": "Close-up of the clear back and the edge of the magnet ring"
+   }
+  ],
+  "colors": {
+   "Smoke": "assets/img/gallery/fernway-clear-magnetic-case-color-smoke.webp"
+  },
+  "reviews": []
+ },
+ "thornback-rugged-case": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/thornback-rugged-case-angle.webp",
+    "alt": "BadgerBox rugged Galaxy S24 case with kickstand, seen from the side with the kickstand folded out"
+   },
+   {
+    "src": "assets/img/gallery/thornback-rugged-case-use.webp",
+    "alt": "BadgerBox rugged Galaxy S24 case with kickstand on a phone standing sideways on its kickstand on a kitchen counter"
+   },
+   {
+    "src": "assets/img/gallery/thornback-rugged-case-detail.webp",
+    "alt": "Close-up of the ridged textured side grip"
+   }
+  ],
+  "colors": {
+   "Olive": "assets/img/gallery/thornback-rugged-case-color-olive.webp",
+   "Navy": "assets/img/gallery/thornback-rugged-case-color-navy.webp"
+  },
+  "reviews": []
+ },
+ "rb-screen-protector-3pack": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/rb-screen-protector-3pack-angle.webp",
+    "alt": "Redbird Basics glass screen protectors for iPhone 16, 3-pack, one protector lying in the black alignment frame"
+   },
+   {
+    "src": "assets/img/gallery/rb-screen-protector-3pack-use.webp",
+    "alt": "Redbird Basics glass screen protectors for iPhone 16, 3-pack applied to the screen of a phone lying face up on a wooden desk"
+   },
+   {
+    "src": "assets/img/gallery/rb-screen-protector-3pack-detail.webp",
+    "alt": "Close-up of the thin rounded glass edge"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "pebble-20k-powerbank": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/pebble-20k-powerbank-angle.webp",
+    "alt": "Pebble Power 20,000 mAh power bank, 3 ports, standing on its edge showing the three ports"
+   },
+   {
+    "src": "assets/img/gallery/pebble-20k-powerbank-use.webp",
+    "alt": "Pebble Power 20,000 mAh power bank, 3 ports inside an open backpack pocket, with nothing connected to it"
+   },
+   {
+    "src": "assets/img/gallery/pebble-20k-powerbank-detail.webp",
+    "alt": "Close-up of the digital percentage display"
+   }
+  ],
+  "colors": {
+   "White": "assets/img/gallery/pebble-20k-powerbank-color-white.webp"
+  },
+  "reviews": []
+ },
+ "northloop-air-earbuds": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/northloop-air-earbuds-angle.webp",
+    "alt": "Northloop Air wireless earbuds, with the case closed and both earbuds lying in front of it"
+   },
+   {
+    "src": "assets/img/gallery/northloop-air-earbuds-use.webp",
+    "alt": "Northloop Air wireless earbuds worn in the ear of a person walking outdoors in light rain, seen from the side"
+   },
+   {
+    "src": "assets/img/gallery/northloop-air-earbuds-detail.webp",
+    "alt": "Close-up of one earbud and its silicone ear tip"
+   }
+  ],
+  "colors": {
+   "White": "assets/img/gallery/northloop-air-earbuds-color-white.webp",
+   "Sage": "assets/img/gallery/northloop-air-earbuds-color-sage.webp"
+  },
+  "reviews": []
+ },
+ "northloop-pocket-speaker": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/northloop-pocket-speaker-angle.webp",
+    "alt": "Northloop Pocket waterproof Bluetooth speaker, seen from the side showing the carry strap"
+   },
+   {
+    "src": "assets/img/gallery/northloop-pocket-speaker-use.webp",
+    "alt": "Northloop Pocket waterproof Bluetooth speaker hanging by its strap from a backpack on a beach towel"
+   },
+   {
+    "src": "assets/img/gallery/northloop-pocket-speaker-detail.webp",
+    "alt": "Close-up of the fabric mesh and the rubber buttons on top"
+   }
+  ],
+  "colors": {
+   "Ocean blue": "assets/img/gallery/northloop-pocket-speaker-color-ocean-blue.webp",
+   "Cardinal red": "assets/img/gallery/northloop-pocket-speaker-color-cardinal-red.webp"
+  },
   "reviews": []
  },
  "hearth-oak-kettle": {
@@ -336,10 +632,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/hearth-oak-kettle-detail.webp",
     "alt": "Close-up of the oak handle and the thin gooseneck spout"
-   },
-   {
-    "src": "assets/img/gallery/hearth-oak-kettle-info.webp",
-    "alt": "Key features of the Hearth & Oak gooseneck electric kettle: 1. Holds 1 liter. 2. Set the exact water temperature. 3. Keeps water warm for an hour."
    }
   ],
   "colors": {
@@ -370,10 +662,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/hearth-oak-mug-set-detail.webp",
     "alt": "Close-up of the speckled glaze and the handle"
-   },
-   {
-    "src": "assets/img/gallery/hearth-oak-mug-set-info.webp",
-    "alt": "Key features of the Hearth & Oak speckled stoneware mugs, set of 4: 1. Four 14-ounce mugs. 2. Safe in the microwave and dishwasher. 3. Speckled cream glaze."
    }
   ],
   "colors": {},
@@ -401,10 +689,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/tidewell-french-press-detail.webp",
     "alt": "Close-up of the stainless steel mesh filter"
-   },
-   {
-    "src": "assets/img/gallery/tidewell-french-press-info.webp",
-    "alt": "Key features of the Tidewell glass French press, 34 oz: 1. Makes about 4 cups. 2. Heat-safe glass. 3. Fine filter keeps grounds out."
    }
   ],
   "colors": {},
@@ -423,10 +707,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/hearth-oak-skillet-detail.webp",
     "alt": "Close-up of the smooth seasoned cooking surface"
-   },
-   {
-    "src": "assets/img/gallery/hearth-oak-skillet-info.webp",
-    "alt": "Key features of the Hearth & Oak cast iron skillet, 10 in: 1. 10 inches across. 2. Ready to use, already seasoned. 3. Works on any stove and in the oven."
    }
   ],
   "colors": {},
@@ -445,10 +725,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/tidewell-towel-set-detail.webp",
     "alt": "Close-up of the plush cotton loops and the woven border"
-   },
-   {
-    "src": "assets/img/gallery/tidewell-towel-set-info.webp",
-    "alt": "Key features of the Tidewell cotton bath towels, set of 4: 1. Four bath towels. 2. Thick and soft. 3. Dry quickly."
    }
   ],
   "colors": {
@@ -471,10 +747,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/fernway-throw-blanket-detail.webp",
     "alt": "Close-up of the chunky knit loops"
-   },
-   {
-    "src": "assets/img/gallery/fernway-throw-blanket-info.webp",
-    "alt": "Key features of the Fernway chunky knit throw blanket: 1. 50 by 60 inches. 2. Chunky hand-knit look. 3. Machine washable on gentle."
    }
   ],
   "colors": {
@@ -505,10 +777,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/lumen-desk-lamp-detail.webp",
     "alt": "Close-up of the touch dimmer on the base"
-   },
-   {
-    "src": "assets/img/gallery/lumen-desk-lamp-info.webp",
-    "alt": "Key features of the Lumen dimmable LED desk lamp: 1. Five light colors, from warm to cool. 2. Dims with a touch. 3. Arm bends where you need it."
    }
   ],
   "colors": {},
@@ -527,13 +795,128 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/fernway-planter-detail.webp",
     "alt": "Close-up of the matte ceramic glaze and the drainage saucer"
-   },
-   {
-    "src": "assets/img/gallery/fernway-planter-info.webp",
-    "alt": "Key features of the Fernway ceramic planter with snake plant: 1. Comes with a live plant. 2. White ceramic pot, 6 inches. 3. Needs water about every two weeks."
    }
   ],
   "colors": {},
+  "reviews": []
+ },
+ "hearth-oak-dutch-oven": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/hearth-oak-dutch-oven-angle.webp",
+    "alt": "Hearth & Oak enameled Dutch oven, 5.5 qt, with the lid off and resting beside the pot"
+   },
+   {
+    "src": "assets/img/gallery/hearth-oak-dutch-oven-use.webp",
+    "alt": "Hearth & Oak enameled Dutch oven, 5.5 qt on a gas stove with soup simmering inside"
+   },
+   {
+    "src": "assets/img/gallery/hearth-oak-dutch-oven-detail.webp",
+    "alt": "Close-up of the smooth cream enamel inside the pot"
+   }
+  ],
+  "colors": {
+   "Cream": "assets/img/gallery/hearth-oak-dutch-oven-color-cream.webp",
+   "Slate": "assets/img/gallery/hearth-oak-dutch-oven-color-slate.webp"
+  },
+  "reviews": []
+ },
+ "tidewell-glass-containers": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/tidewell-glass-containers-angle.webp",
+    "alt": "Tidewell glass food containers with lids, set of 5, with the lids off and the containers nested inside each other"
+   },
+   {
+    "src": "assets/img/gallery/tidewell-glass-containers-use.webp",
+    "alt": "Tidewell glass food containers with lids, set of 5 on a refrigerator shelf, filled with leftovers, lids on"
+   },
+   {
+    "src": "assets/img/gallery/tidewell-glass-containers-detail.webp",
+    "alt": "Close-up of one snap-lock clip on a lid"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "wrenfield-percale-sheets": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/wrenfield-percale-sheets-angle.webp",
+    "alt": "Wrenfield cotton percale sheet set, queen, with the fitted sheet unfolded to show a deep pocket corner"
+   },
+   {
+    "src": "assets/img/gallery/wrenfield-percale-sheets-use.webp",
+    "alt": "Wrenfield cotton percale sheet set, queen on a neatly made bed in a bright bedroom"
+   },
+   {
+    "src": "assets/img/gallery/wrenfield-percale-sheets-detail.webp",
+    "alt": "Close-up of the crisp matte cotton weave and the hem stitching"
+   }
+  ],
+  "colors": {
+   "Sage green": "assets/img/gallery/wrenfield-percale-sheets-color-sage-green.webp",
+   "Slate": "assets/img/gallery/wrenfield-percale-sheets-color-slate.webp",
+   "Oatmeal": "assets/img/gallery/wrenfield-percale-sheets-color-oatmeal.webp"
+  },
+  "reviews": []
+ },
+ "tidewell-milk-frother": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/tidewell-milk-frother-angle.webp",
+    "alt": "Tidewell electric milk frother, with the jug lifted off its base and the lid beside it"
+   },
+   {
+    "src": "assets/img/gallery/tidewell-milk-frother-use.webp",
+    "alt": "Tidewell electric milk frother on a kitchen counter next to a mug of latte with foam on top"
+   },
+   {
+    "src": "assets/img/gallery/tidewell-milk-frother-detail.webp",
+    "alt": "Close-up of the magnetic whisk inside the jug"
+   }
+  ],
+  "colors": {
+   "Brushed steel": "assets/img/gallery/tidewell-milk-frother-color-brushed-steel.webp"
+  },
+  "reviews": []
+ },
+ "wrenfield-pillows-2pack": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/wrenfield-pillows-2pack-angle.webp",
+    "alt": "Wrenfield down-alternative pillows, queen, 2-pack, one pillow seen from the side, showing how thick it is"
+   },
+   {
+    "src": "assets/img/gallery/wrenfield-pillows-2pack-use.webp",
+    "alt": "Wrenfield down-alternative pillows, queen, 2-pack on a neatly made bed in a bright bedroom"
+   },
+   {
+    "src": "assets/img/gallery/wrenfield-pillows-2pack-detail.webp",
+    "alt": "Close-up of the stitched piping along the edge"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "lumen-arc-floor-lamp": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/lumen-arc-floor-lamp-angle.webp",
+    "alt": "Lumen arc LED floor lamp, seen from the side showing the curve of the arm"
+   },
+   {
+    "src": "assets/img/gallery/lumen-arc-floor-lamp-use.webp",
+    "alt": "Lumen arc LED floor lamp standing beside a sofa in a living room in the evening, its light shining over the sofa"
+   },
+   {
+    "src": "assets/img/gallery/lumen-arc-floor-lamp-detail.webp",
+    "alt": "Close-up of the dome shade"
+   }
+  ],
+  "colors": {
+   "Brass": "assets/img/gallery/lumen-arc-floor-lamp-color-brass.webp"
+  },
   "reviews": []
  },
  "saltgrass-hoodie": {
@@ -549,10 +932,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/saltgrass-hoodie-detail.webp",
     "alt": "Close-up of the kangaroo pocket and the ribbed cuff"
-   },
-   {
-    "src": "assets/img/gallery/saltgrass-hoodie-info.webp",
-    "alt": "Key features of the Saltgrass fleece pullover hoodie: 1. Soft brushed fleece inside. 2. Front pocket. 3. Relaxed fit."
    }
   ],
   "colors": {
@@ -585,10 +964,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/saltgrass-tee-3pack-detail.webp",
     "alt": "Close-up of the crew neck collar stitching"
-   },
-   {
-    "src": "assets/img/gallery/saltgrass-tee-3pack-info.webp",
-    "alt": "Key features of the Saltgrass crew-neck T-shirts, 3-pack: 1. One white, one gray, one navy. 2. 100% cotton. 3. Classic fit."
    }
   ],
   "colors": {},
@@ -607,10 +982,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/mesa-trail-runners-detail.webp",
     "alt": "Close-up of the knit upper and the cushioned sole"
-   },
-   {
-    "src": "assets/img/gallery/mesa-trail-runners-info.webp",
-    "alt": "Key features of the Mesa Trail lightweight running shoes: 1. Light, breathable mesh. 2. Cushioned sole. 3. Grippy tread."
    }
   ],
   "colors": {
@@ -641,10 +1012,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/saltgrass-rain-jacket-detail.webp",
     "alt": "Close-up of the waterproof zipper and the hood drawcord"
-   },
-   {
-    "src": "assets/img/gallery/saltgrass-rain-jacket-info.webp",
-    "alt": "Key features of the Saltgrass packable rain jacket: 1. Keeps you dry in the rain. 2. Folds into its own pocket. 3. Hood with a drawstring."
    }
   ],
   "colors": {
@@ -666,15 +1033,117 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/saltgrass-beanie-detail.webp",
     "alt": "Close-up of the ribbed wool knit"
-   },
-   {
-    "src": "assets/img/gallery/saltgrass-beanie-info.webp",
-    "alt": "Key features of the Saltgrass ribbed wool beanie: 1. Merino wool. 2. Warm but not itchy. 3. One size fits most."
    }
   ],
   "colors": {
    "Cardinal red": "assets/img/gallery/saltgrass-beanie-color-cardinal-red.webp",
    "Black": "assets/img/gallery/saltgrass-beanie-color-black.webp"
+  },
+  "reviews": []
+ },
+ "saltgrass-fleece-joggers": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/saltgrass-fleece-joggers-angle.webp",
+    "alt": "Saltgrass fleece joggers, laid flat from the back"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-fleece-joggers-use.webp",
+    "alt": "Saltgrass fleece joggers worn by a person stretching outdoors on a cool morning"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-fleece-joggers-detail.webp",
+    "alt": "Close-up of the drawstring waistband"
+   }
+  ],
+  "colors": {
+   "Black": "assets/img/gallery/saltgrass-fleece-joggers-color-black.webp",
+   "Navy": "assets/img/gallery/saltgrass-fleece-joggers-color-navy.webp",
+   "Forest green": "assets/img/gallery/saltgrass-fleece-joggers-color-forest-green.webp"
+  },
+  "reviews": []
+ },
+ "saltgrass-high-waist-leggings": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/saltgrass-high-waist-leggings-angle.webp",
+    "alt": "Saltgrass high-waist leggings with pockets, laid flat from the side showing the thigh pocket"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-high-waist-leggings-use.webp",
+    "alt": "Saltgrass high-waist leggings with pockets worn by a person doing yoga on a mat in a bright studio"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-high-waist-leggings-detail.webp",
+    "alt": "Close-up of the side pocket seam and the soft fabric"
+   }
+  ],
+  "colors": {
+   "Plum": "assets/img/gallery/saltgrass-high-waist-leggings-color-plum.webp",
+   "Dusty blue": "assets/img/gallery/saltgrass-high-waist-leggings-color-dusty-blue.webp",
+   "Olive": "assets/img/gallery/saltgrass-high-waist-leggings-color-olive.webp"
+  },
+  "reviews": []
+ },
+ "mesa-trail-hiking-boots": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/mesa-trail-hiking-boots-angle.webp",
+    "alt": "Mesa Trail waterproof hiking boots, seen from above showing the laces and the toe cap"
+   },
+   {
+    "src": "assets/img/gallery/mesa-trail-hiking-boots-use.webp",
+    "alt": "Mesa Trail waterproof hiking boots worn by a person hiking on a rocky dirt trail"
+   },
+   {
+    "src": "assets/img/gallery/mesa-trail-hiking-boots-detail.webp",
+    "alt": "Close-up of the deep rubber tread on the sole"
+   }
+  ],
+  "colors": {
+   "Gray / red": "assets/img/gallery/mesa-trail-hiking-boots-color-gray-red.webp"
+  },
+  "reviews": []
+ },
+ "saltgrass-puffer-vest": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/saltgrass-puffer-vest-angle.webp",
+    "alt": "Saltgrass packable puffer vest, packed into its own zipped chest pocket"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-puffer-vest-use.webp",
+    "alt": "Saltgrass packable puffer vest worn over a long sleeve shirt by a person on a forest trail"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-puffer-vest-detail.webp",
+    "alt": "Close-up of the quilted stitching and the zipper pull"
+   }
+  ],
+  "colors": {
+   "Sage": "assets/img/gallery/saltgrass-puffer-vest-color-sage.webp",
+   "Cardinal red": "assets/img/gallery/saltgrass-puffer-vest-color-cardinal-red.webp"
+  },
+  "reviews": []
+ },
+ "saltgrass-oxford-shirt": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/saltgrass-oxford-shirt-angle.webp",
+    "alt": "Saltgrass slim-fit oxford shirt, laid flat and unfolded, seen from the front"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-oxford-shirt-use.webp",
+    "alt": "Saltgrass slim-fit oxford shirt worn by a person working at an office desk"
+   },
+   {
+    "src": "assets/img/gallery/saltgrass-oxford-shirt-detail.webp",
+    "alt": "Close-up of the button-down collar points"
+   }
+  ],
+  "colors": {
+   "Light blue": "assets/img/gallery/saltgrass-oxford-shirt-color-light-blue.webp",
+   "Pink": "assets/img/gallery/saltgrass-oxford-shirt-color-pink.webp"
   },
   "reviews": []
  },
@@ -691,10 +1160,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/foxglove-bottle-24oz-detail.webp",
     "alt": "Close-up of the stainless steel lid and the carry loop"
-   },
-   {
-    "src": "assets/img/gallery/foxglove-bottle-24oz-info.webp",
-    "alt": "Key features of the Foxglove insulated water bottle, 24 oz: 1. Keeps drinks cold for 24 hours. 2. Does not leak. 3. Holds 24 ounces."
    }
   ],
   "colors": {
@@ -727,10 +1192,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/mesa-trail-daypack-detail.webp",
     "alt": "Close-up of the red zipper pulls and the side pocket"
-   },
-   {
-    "src": "assets/img/gallery/mesa-trail-daypack-info.webp",
-    "alt": "Key features of the Mesa Trail 22-liter daypack: 1. Fits a day\u2019s gear. 2. Water resistant. 3. Padded straps."
    }
   ],
   "colors": {},
@@ -758,10 +1219,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/foxglove-yoga-mat-detail.webp",
     "alt": "Close-up of the textured non-slip surface"
-   },
-   {
-    "src": "assets/img/gallery/foxglove-yoga-mat-info.webp",
-    "alt": "Key features of the Foxglove non-slip yoga mat: 1. 6 mm thick. 2. Does not slip. 3. Comes with a strap."
    }
   ],
   "colors": {
@@ -783,10 +1240,82 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/mesa-trail-lantern-detail.webp",
     "alt": "Close-up of the side buttons and the USB charging port"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "foxglove-tumbler-40oz": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/foxglove-tumbler-40oz-angle.webp",
+    "alt": "Stanwell insulated tumbler with handle, 40 oz, seen from the side with the lid off beside it"
    },
    {
-    "src": "assets/img/gallery/mesa-trail-lantern-info.webp",
-    "alt": "Key features of the Mesa Trail rechargeable camping lantern: 1. Bright enough for a tent. 2. Recharges over USB-C. 3. Lasts up to 20 hours."
+    "src": "assets/img/gallery/foxglove-tumbler-40oz-use.webp",
+    "alt": "Stanwell insulated tumbler with handle, 40 oz in a car cup holder"
+   },
+   {
+    "src": "assets/img/gallery/foxglove-tumbler-40oz-detail.webp",
+    "alt": "Close-up of the handle and the rotating lid"
+   }
+  ],
+  "colors": {
+   "Glacier white": "assets/img/gallery/foxglove-tumbler-40oz-color-glacier-white.webp",
+   "Plum": "assets/img/gallery/foxglove-tumbler-40oz-color-plum.webp",
+   "Black": "assets/img/gallery/foxglove-tumbler-40oz-color-black.webp"
+  },
+  "reviews": []
+ },
+ "mesa-trail-headlamp": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/mesa-trail-headlamp-angle.webp",
+    "alt": "Mesa Trail rechargeable LED headlamp, with the light on and glowing"
+   },
+   {
+    "src": "assets/img/gallery/mesa-trail-headlamp-use.webp",
+    "alt": "Mesa Trail rechargeable LED headlamp worn on the head of a person hiking a trail at dusk"
+   },
+   {
+    "src": "assets/img/gallery/mesa-trail-headlamp-detail.webp",
+    "alt": "Close-up of the tilt hinge and the button on top of the lamp"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "mesa-trail-trekking-poles": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/mesa-trail-trekking-poles-angle.webp",
+    "alt": "Mesa Trail folding trekking poles, pair, collapsed to their short length and laid side by side"
+   },
+   {
+    "src": "assets/img/gallery/mesa-trail-trekking-poles-use.webp",
+    "alt": "Mesa Trail folding trekking poles, pair held by a hiker walking up a rocky trail"
+   },
+   {
+    "src": "assets/img/gallery/mesa-trail-trekking-poles-detail.webp",
+    "alt": "Close-up of the cork grip and the wrist strap"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "foxglove-cork-yoga-blocks": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/foxglove-cork-yoga-blocks-angle.webp",
+    "alt": "Foxglove cork yoga blocks, 2-pack, stacked one on top of the other"
+   },
+   {
+    "src": "assets/img/gallery/foxglove-cork-yoga-blocks-use.webp",
+    "alt": "Foxglove cork yoga blocks, 2-pack on a yoga mat in a bright studio, one block under a person's hand in a standing pose"
+   },
+   {
+    "src": "assets/img/gallery/foxglove-cork-yoga-blocks-detail.webp",
+    "alt": "Close-up of the natural cork texture"
    }
   ],
   "colors": {},
@@ -796,19 +1325,15 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/book-orchard-at-dusk-angle.webp",
-    "alt": "The Orchard at Dusk, a novel by June Alcott, lying flat beside a pair of reading glasses"
+    "alt": "The Orchard at Dusk: A Novel, lying flat beside a pair of reading glasses"
    },
    {
     "src": "assets/img/gallery/book-orchard-at-dusk-use.webp",
-    "alt": "The Orchard at Dusk, a novel by June Alcott open on a cafe table next to a cup of coffee"
+    "alt": "The Orchard at Dusk: A Novel open on a cafe table next to a cup of coffee"
    },
    {
     "src": "assets/img/gallery/book-orchard-at-dusk-detail.webp",
     "alt": "Close-up of the cloth spine and the page edges"
-   },
-   {
-    "src": "assets/img/gallery/book-orchard-at-dusk-info.webp",
-    "alt": "Key features of the The Orchard at Dusk, a novel by June Alcott: 1. Hardcover, 352 pages. 2. A family story set on a California farm. 3. Book club guide in the back."
    }
   ],
   "colors": {},
@@ -818,19 +1343,15 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/book-small-habits-angle.webp",
-    "alt": "Small Habits, Big Days by Marcus Lee, lying flat on a desk with a pen"
+    "alt": "Small Habits, Big Days: The Science-Backed Guide to Lasting Change, lying flat on a desk with a pen"
    },
    {
     "src": "assets/img/gallery/book-small-habits-use.webp",
-    "alt": "Small Habits, Big Days by Marcus Lee held open by a reader sitting on a sofa"
+    "alt": "Small Habits, Big Days: The Science-Backed Guide to Lasting Change held open by a reader sitting on a sofa"
    },
    {
     "src": "assets/img/gallery/book-small-habits-detail.webp",
     "alt": "Close-up of the spine and the page edges"
-   },
-   {
-    "src": "assets/img/gallery/book-small-habits-info.webp",
-    "alt": "Key features of the Small Habits, Big Days by Marcus Lee: 1. Paperback, 240 pages. 2. Short chapters with exercises. 3. Plain, friendly writing."
    }
   ],
   "colors": {},
@@ -840,19 +1361,69 @@ window.RB_IMAGES = {
   "gallery": [
    {
     "src": "assets/img/gallery/book-bay-area-birds-angle.webp",
-    "alt": "Bay Area Birds, a field guide by Rosa Medina, lying flat beside binoculars"
+    "alt": "Bay Area Birds: A Field Guide to 200 Species, lying flat beside binoculars"
    },
    {
     "src": "assets/img/gallery/book-bay-area-birds-use.webp",
-    "alt": "Bay Area Birds, a field guide by Rosa Medina open on a park bench with binoculars beside it"
+    "alt": "Bay Area Birds: A Field Guide to 200 Species open on a park bench with binoculars beside it"
    },
    {
     "src": "assets/img/gallery/book-bay-area-birds-detail.webp",
     "alt": "Close-up of the spine and the page edges"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "book-weeknight-pantry": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/book-weeknight-pantry-angle.webp",
+    "alt": "The Weeknight Pantry: 100 Simple Dinners from What You Already Have, lying flat beside a wooden spoon"
    },
    {
-    "src": "assets/img/gallery/book-bay-area-birds-info.webp",
-    "alt": "Key features of the Bay Area Birds, a field guide by Rosa Medina: 1. Flexible cover, 288 pages. 2. A drawing and a map for each bird. 3. Fits in a jacket pocket."
+    "src": "assets/img/gallery/book-weeknight-pantry-use.webp",
+    "alt": "The Weeknight Pantry: 100 Simple Dinners from What You Already Have open on a kitchen counter next to a pot"
+   },
+   {
+    "src": "assets/img/gallery/book-weeknight-pantry-detail.webp",
+    "alt": "Close-up of the spine and the page edges"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "book-little-fox-moon": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/book-little-fox-moon-angle.webp",
+    "alt": "Little Fox Finds the Moon: A Bedtime Picture Book, lying open to a watercolor spread of the fox under the moon"
+   },
+   {
+    "src": "assets/img/gallery/book-little-fox-moon-use.webp",
+    "alt": "Little Fox Finds the Moon: A Bedtime Picture Book held open by a parent sitting on the edge of a child's bed"
+   },
+   {
+    "src": "assets/img/gallery/book-little-fox-moon-detail.webp",
+    "alt": "Close-up of the spine and the page edges"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "book-salt-and-signal": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/book-salt-and-signal-angle.webp",
+    "alt": "Salt and Signal: A Novel, lying flat beside a cup of tea"
+   },
+   {
+    "src": "assets/img/gallery/book-salt-and-signal-use.webp",
+    "alt": "Salt and Signal: A Novel held open by a reader sitting in a window seat"
+   },
+   {
+    "src": "assets/img/gallery/book-salt-and-signal-detail.webp",
+    "alt": "Close-up of the cream page edges and the corner of the stormy cover"
    }
   ],
   "colors": {},
@@ -871,10 +1442,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/grocery-coffee-beans-detail.webp",
     "alt": "Close-up of the roasted coffee beans"
-   },
-   {
-    "src": "assets/img/gallery/grocery-coffee-beans-info.webp",
-    "alt": "Key features of the Redbird Basics medium roast whole bean coffee, 12 oz: 1. Whole beans, grind them yourself. 2. Medium roast. 3. Notes of chocolate."
    }
   ],
   "colors": {},
@@ -893,10 +1460,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/grocery-granola-detail.webp",
     "alt": "Close-up of the clusters of oats and almonds"
-   },
-   {
-    "src": "assets/img/gallery/grocery-granola-info.webp",
-    "alt": "Key features of the Redbird Basics honey almond granola, 16 oz: 1. Crunchy oat clusters. 2. Honey and almonds. 3. Resealable bag."
    }
   ],
   "colors": {},
@@ -915,10 +1478,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/grocery-olive-oil-detail.webp",
     "alt": "Close-up of the golden green oil in the bottle"
-   },
-   {
-    "src": "assets/img/gallery/grocery-olive-oil-info.webp",
-    "alt": "Key features of the Redbird Basics extra virgin olive oil, 25.4 fl oz: 1. Extra virgin. 2. Dark glass bottle keeps it fresh. 3. Good for cooking and dressings."
    }
   ],
   "colors": {},
@@ -937,10 +1496,42 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/grocery-sparkling-water-detail.webp",
     "alt": "Close-up of one can with drops of condensation"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "grocery-green-tea": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/grocery-green-tea-angle.webp",
+    "alt": "Redbird Basics organic green tea, 100 bags, with the box open, showing the wrapped tea bags inside"
    },
    {
-    "src": "assets/img/gallery/grocery-sparkling-water-info.webp",
-    "alt": "Key features of the Redbird Basics lime sparkling water, 12 cans: 1. Twelve 12-ounce cans. 2. Lime flavor. 3. No sugar."
+    "src": "assets/img/gallery/grocery-green-tea-use.webp",
+    "alt": "Redbird Basics organic green tea, 100 bags beside a glass mug of green tea with a tea bag in it on a kitchen counter"
+   },
+   {
+    "src": "assets/img/gallery/grocery-green-tea-detail.webp",
+    "alt": "Close-up of one individually wrapped tea bag"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "meadowmill-almond-butter": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/meadowmill-almond-butter-angle.webp",
+    "alt": "Meadowmill creamy almond butter, 16 oz, with the lid off, showing the smooth almond butter"
+   },
+   {
+    "src": "assets/img/gallery/meadowmill-almond-butter-use.webp",
+    "alt": "Meadowmill creamy almond butter, 16 oz beside a slice of toast spread with almond butter on a breakfast plate"
+   },
+   {
+    "src": "assets/img/gallery/meadowmill-almond-butter-detail.webp",
+    "alt": "Close-up of the smooth creamy almond butter on a knife"
    }
   ],
   "colors": {},
@@ -959,10 +1550,6 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/cobble-blocks-set-detail.webp",
     "alt": "Close-up of the smooth wooden edges and the bright paint"
-   },
-   {
-    "src": "assets/img/gallery/cobble-blocks-set-info.webp",
-    "alt": "Key features of the Cobble Kids wooden building blocks, 100 pieces: 1. 100 wooden blocks. 2. Bright, child-safe paint. 3. For ages 3 and up."
    }
   ],
   "colors": {},
@@ -981,10 +1568,42 @@ window.RB_IMAGES = {
    {
     "src": "assets/img/gallery/cobble-puzzle-detail.webp",
     "alt": "Close-up of one puzzle piece shaped like a continent"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "cobble-shape-sorter": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/cobble-shape-sorter-angle.webp",
+    "alt": "Cobble Kids wooden shape sorter, with the lid off and the shapes spilling out"
    },
    {
-    "src": "assets/img/gallery/cobble-puzzle-info.webp",
-    "alt": "Key features of the Cobble Kids wooden world map puzzle, 48 pieces: 1. 48 large wooden pieces. 2. Each country is its own shape. 3. For ages 5 and up."
+    "src": "assets/img/gallery/cobble-shape-sorter-use.webp",
+    "alt": "Cobble Kids wooden shape sorter on a playroom rug"
+   },
+   {
+    "src": "assets/img/gallery/cobble-shape-sorter-detail.webp",
+    "alt": "Close-up of one star shape next to its matching hole"
+   }
+  ],
+  "colors": {},
+  "reviews": []
+ },
+ "pinwheel-hedgerow-game": {
+  "gallery": [
+   {
+    "src": "assets/img/gallery/pinwheel-hedgerow-game-angle.webp",
+    "alt": "Pinwheel Lane Hedgerow family board game, with the lid leaning against the box and the pieces inside"
+   },
+   {
+    "src": "assets/img/gallery/pinwheel-hedgerow-game-use.webp",
+    "alt": "Pinwheel Lane Hedgerow family board game with its tiles laid out mid-game on a family kitchen table"
+   },
+   {
+    "src": "assets/img/gallery/pinwheel-hedgerow-game-detail.webp",
+    "alt": "Close-up of a small wooden hedgehog token"
    }
   ],
   "colors": {},
