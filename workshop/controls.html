@@ -116,7 +116,7 @@
 <div class="table-wrap"><table>
   <tr><th scope="col">Setting</th><th scope="col">Values</th><th scope="col">What it does</th></tr>
   <tr><td><code>issues</code></td><td><code>on</code>, <code>agent</code>, <code>off</code>, or numbers like <code>6,24</code></td><td>Which planted problems are on. <code>agent</code> is all of them except the ones that move or change on their own (19, 24, 33, 34, 35) and the two "Add to cart" problems (3, 21).</td></tr>
-  <tr><td><code>workshop</code></td><td><code>on</code>, <code>off</code></td><td>Shows or hides the workshop panel. A link with <code>try</code> in it shows the panel too.</td></tr>
+  <tr><td><code>workshop</code></td><td><code>on</code>, <code>off</code></td><td>Shows or hides the workshop panel. It shows unless something hides it, e.g., an AI agent link.</td></tr>
   <tr><td><code>today</code></td><td>a date like <code>2026-11-02</code>, or <code>now</code></td><td>Pins the store's date, so delivery dates are the same on every run. <code>now</code> goes back to the real date.</td></tr>
   <tr><td><code>reset</code></td><td><code>1</code></td><td>Empties the cart and the order history.</td></tr>
   <tr><td><code>try</code></td><td>adapter names joined with commas, like <code>swatch-names,calm-urgency</code>, <code>mine</code>, or <code>none</code></td><td>Which adapters run on the store. <code>mine</code> is the one you write in <a href="first-adapter">Write your own adapter</a>.</td></tr>
@@ -141,7 +141,7 @@
   // What this browser has set now, read from the same storage the store uses.
   function showNow() {
     var issues = (get('redbird:issues') || 'on').toLowerCase();
-    var workshop = get('redbird:workshop') === 'on';
+    var workshop = get('redbird:workshop') !== 'off';
     var today = json('redbird:today');
     var profile = get('redbird:profile') || '';
     var tries = (get('redbird:try') || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s && s !== 'none'; });

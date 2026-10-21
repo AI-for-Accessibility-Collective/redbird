@@ -12,7 +12,7 @@
 //
 // What you pick is remembered in this browser, like ?issues=. Any ?try= link also turns the panel on.
 // The panel in the bottom-left corner has three tabs:
-//   Setup    every profile, every adapter and the planted problems, each with a switch
+//   Setup    every profile and every adapter, each with a switch (the other store settings are on workshop/controls)
 //   Changes  what each adapter changed, before and after, and what a screen reader hears
 //   Checks   the toolkit's auditors, and the spotlight that points out the planted problems
 // AI tasks (rewriting text, describing images, naming buttons) go to the store's own /api/ai,
@@ -46,7 +46,7 @@
       if (v) { if (isTop) localStorage.setItem('redbird:workshop', v); }
       else v = localStorage.getItem('redbird:workshop');
     } catch (e) {}
-    return v === 'on' && isTop;
+    return v !== 'off' && isTop;
   })();
   if (!names.length && !panelOn) return;
 
@@ -102,17 +102,20 @@
     'big-targets': { help: 'Makes small buttons and links bigger and easier to hit.' },
     'voice-commands': { help: 'Control the page by voice. Asks to use the microphone.' },
   };
+  // [name, unused, adapters]
   var GROUPS = [
-    ['Workshop examples', EXAMPLES.concat('mine')],
-    ['Automatic fixes', ['toolkit-fixes']],
-    ['Seeing and screen readers', ['live-region-announcer', 'skip-links', 'page-outline', 'spa-focus', 'language-tag', 'describe-on-demand',
-      'focus-locator', 'link-highlighter', 'visual-assist', 'magnifier', 'reflow-column', 'unpin-sticky', 'persistent-hover', 'dark-mode',
-      'color-blind', 'reduce-brightness', 'explore-a-chart', 'math-a11y']],
-    ['Reading', ['reading-ruler', 'bionic-reading', 'reader-mode', 'simplify-text', 'define-words', 'abbreviation-expand', 'translate-page',
-      'read-aloud', 'reading-spot']],
-    ['Focus and calm', ['focus-mode', 'motion-reducer', 'stop-auto-advance', 'dismiss-overlays', 'mute-sounds', 'flash-guard', 'confirm-actions']],
-    ['Hearing', ['show-captions', 'auto-transcriber', 'sound-visualizer']],
-    ['Hands and keyboard', ['keyboard-nav', 'big-targets', 'voice-commands']],
+    ['Workshop examples', '', EXAMPLES.concat('mine')],
+    ['Fix the whole page', '', ['toolkit-fixes']],
+    ['Screen readers', '', ['live-region-announcer', 'skip-links', 'page-outline',
+      'spa-focus', 'language-tag', 'describe-on-demand', 'explore-a-chart', 'math-a11y']],
+    ['Low vision and color', '', ['visual-assist', 'magnifier', 'focus-locator', 'link-highlighter',
+      'reflow-column', 'unpin-sticky', 'persistent-hover', 'dark-mode', 'color-blind', 'reduce-brightness']],
+    ['Reading', '', ['reading-ruler', 'bionic-reading', 'reader-mode', 'simplify-text', 'define-words',
+      'abbreviation-expand', 'translate-page', 'read-aloud', 'reading-spot']],
+    ['Attention and anxiety', '', ['focus-mode', 'motion-reducer', 'stop-auto-advance',
+      'dismiss-overlays', 'mute-sounds', 'flash-guard', 'confirm-actions']],
+    ['Hearing', '', ['show-captions', 'auto-transcriber', 'sound-visualizer']],
+    ['Keyboard and motor', '', ['keyboard-nav', 'big-targets', 'voice-commands']],
   ];
   // The workshop's three people, and the adapters each one gets on the side-by-side page.
   var PEOPLE = {
@@ -648,12 +651,12 @@
   function dock() {
     if (!dockStyle) {
       dockStyle = document.createElement('style');
-      dockStyle.textContent = 'html.ws-dock-left{padding-left:380px!important}html.ws-dock-right{padding-right:380px!important}' +
+      dockStyle.textContent = 'html.ws-dock-left{padding-left:340px!important}html.ws-dock-right{padding-right:340px!important}' +
         'html.ws-dock-wide.ws-dock-left{padding-left:540px!important}html.ws-dock-wide.ws-dock-right{padding-right:540px!important}';
       document.head.appendChild(dockStyle);
     }
     var need = (parseFloat(getComputedStyle(document.body).minWidth) || 0) || 900;
-    var on = ui.open && innerWidth - (box.classList.contains('ws-wide') ? 540 : 380) >= need && !!host.isConnected;
+    var on = ui.open && innerWidth - (box.classList.contains('ws-wide') ? 540 : 340) >= need && !!host.isConnected;
     document.documentElement.classList.toggle('ws-dock-left', on && ui.side === 'left');
     document.documentElement.classList.toggle('ws-dock-right', on && ui.side === 'right');
     document.documentElement.classList.toggle('ws-dock-wide', on && box.classList.contains('ws-wide'));
@@ -667,9 +670,9 @@
   function place() {
     var vv = window.visualViewport;
     if (!box || box.hasAttribute('data-dock') || !vv) { if (box) box.removeAttribute('style'); return; }
-    var w = Math.min(box.classList.contains('ws-wide') ? 600 : 380, vv.width - 24);
-    box.style.width = w + 'px';
-    box.style.maxHeight = Math.round(vv.height * 0.84) + 'px';
+    var w = ui.open ? Math.min(box.classList.contains('ws-wide') ? 600 : 360, vv.width - 24) : Math.min(box.offsetWidth, vv.width - 24);
+    if (ui.open) box.style.width = w + 'px'; else box.style.width = '';
+    box.style.maxHeight = Math.round(vv.height * 0.62) + 'px';
     box.style.right = box.style.bottom = 'auto';
     box.style.left = Math.round(ui.side === 'right' ? vv.offsetLeft + vv.width - w - 12 : vv.offsetLeft + 12) + 'px';
     box.style.top = Math.round(vv.offsetTop + vv.height - box.offsetHeight - 12) + 'px';
@@ -685,9 +688,10 @@
     root = host.attachShadow({ mode: 'open' });
     root.innerHTML = '<style>' + CSS + '</style>' +
       '<section class="ws-panel" aria-label="Workshop panel" data-side="' + ui.side + '">' +
-        '<div class="ws-top"><button type="button" class="ws-head" aria-expanded="' + ui.open + '">Workshop</button>' +
-        '<span class="ws-sub" id="ws-sub"></span>' +
-        '<button type="button" class="ws-icon" id="ws-side"></button></div>' +
+        '<div class="ws-top"><button type="button" class="ws-head" aria-expanded="' + ui.open + '">' +
+          '<span class="ws-title">Workshop</span> <span class="ws-sub" id="ws-sub"></span></button>' +
+        '<button type="button" class="ws-icon" id="ws-side"></button>' +
+        '<button type="button" class="ws-icon ws-fold" id="ws-fold"></button></div>' +
         '<div class="ws-main"' + (ui.open ? '' : ' hidden') + '>' +
           '<div class="ws-tabs" role="tablist" aria-label="Workshop panel">' +
             tab('setup', 'Setup') + tab('changes', 'Changes <span class="ws-count" id="ws-count"></span>') + tab('checks', 'Checks') +
@@ -699,7 +703,7 @@
           '</div>' +
           '<p class="ws-status" id="ws-status" role="status"></p>' +
           '<p class="ws-foot"><a href="' + base + '" target="_blank" rel="noopener">Guides<span class="ws-sr"> (opens in a new tab)</span></a> · ' +
-            '<button type="button" class="ws-link" id="ws-hide">Hide this panel</button></p>' +
+            '<a href="' + base + 'controls" target="_blank" rel="noopener">Store controls<span class="ws-sr"> (opens in a new tab)</span></a></p>' +
         '</div>' +
       '</section><div class="ws-marks" aria-hidden="true"></div>';
     document.body.appendChild(host);
@@ -707,6 +711,8 @@
     rendered = true;
     wire();
     showTab(ui.tab, false);
+    box.classList.toggle('ws-closed', !ui.open);
+    foldButton();
     sideButton();
     dock();
     toolkitProfiles().then(fillProfiles);
@@ -720,22 +726,18 @@
 
   function setupHTML() {
     var people = Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('');
-    var issues = (window.RB_ISSUES && RB_ISSUES.value) || 'on';
-    var custom = ['on', 'off', 'agent'].indexOf(issues) === -1;
     var html =
-      '<label class="ws-field"><span>Profile</span><select id="ws-prof"><option value="none">Nobody</option>' +
+      '<h3 class="ws-h">Shop as</h3>' +
+      '<label class="ws-field"><span class="ws-sr">Shop as</span><select id="ws-prof"><option value="none">Nobody in particular</option>' +
         '<optgroup label="Workshop people">' + people + '</optgroup><optgroup label="Toolkit profiles" id="ws-tkprof"></optgroup></select></label>' +
-      '<p class="ws-help" id="ws-prof-note"></p>' +
-      '<label class="ws-field"><span>Planted problems</span><select id="ws-issues">' +
-        '<option value="on">All 36</option><option value="agent">All but the moving ones (for AI agents)</option><option value="off">None</option>' +
-        (custom ? '<option value="' + esc(issues) + '">Only ' + esc(issues.split(',').join(', ')) + '</option>' : '') +
-      '</select></label>' +
+      '<p class="ws-help" id="ws-prof-note">Picking someone turns on the adapters that help them.</p>' +
       '<div class="ws-line"><h3 class="ws-h">Adapters</h3><button type="button" class="ws-link" id="ws-alloff">Turn all off</button></div>' +
-      '<p class="ws-help">Everything outside Workshop examples is the toolkit’s own code, loaded from its GitHub repo.</p>';
+      '<p class="ws-help">Switch one on to see it change the store. The Changes tab shows what it changed.</p>';
     GROUPS.forEach(function (g) {
-      var on = g[1].filter(function (n) { return names.indexOf(n) !== -1; }).length;
-      html += '<details class="ws-group"' + (on || g[0] === 'Workshop examples' ? ' open' : '') + '><summary>' + g[0] +
-        ' <span class="ws-gc" data-group="' + esc(g[0]) + '">' + (on ? on + ' on' : '') + '</span></summary>' + g[1].map(row).join('') + '</details>';
+      var on = g[2].filter(function (n) { return names.indexOf(n) !== -1; }).length;
+      html += '<details class="ws-group"' + (on || g === GROUPS[0] ? ' open' : '') + '><summary>' + g[0] +
+        ' <span class="ws-gc" data-group="' + esc(g[0]) + '">' + (on ? on + ' on' : '') + '</span></summary>' +
+        g[2].map(row).join('') + '</details>';
     });
     html += '<details class="ws-group"><summary>Only in the extension</summary>' +
       '<div class="ws-ad ws-flat"><p class="ws-name">Verification layer</p><p class="ws-help">Checks an AI agent’s work while it shops, and stops to ask you before it does anything you didn’t ask for. ' +
@@ -759,7 +761,7 @@
       '<label class="ws-field"><span>Show</span><select id="ws-filter"><option value="">Every adapter</option></select></label>' +
       '<div id="ws-chg"></div>' +
       '<h3 class="ws-h">What a screen reader hears</h3>' +
-      '<p class="ws-help">What the page reads out as it changes, like “Added to cart”. A sighted shopper sees the pop-up. A screen reader user only gets what’s read out.</p>' +
+      '<p class="ws-help">What the page reads out as it changes, e.g., “Added to cart”. Without it, a screen reader user doesn’t hear that anything changed.</p>' +
       '<ol class="ws-heard" id="ws-heard"></ol>';
   }
   function checksHTML() {
@@ -768,29 +770,27 @@
     return '<label class="ws-check"><input type="checkbox" id="ws-spot"' + (spot ? ' checked' : '') + '> Point out the planted problems</label>' +
       '<p class="ws-help">Puts a numbered badge on each planted problem on this page. A badge turns green once an adapter fixes it.</p>' +
       '<button type="button" class="ws-btn" id="ws-run">Run the toolkit’s checks</button>' +
-      '<p class="ws-help">The toolkit’s auditors and axe-core, the checks the extension runs before it fixes a page. Run them again after switching adapters on to compare.</p>' +
+      '<p class="ws-help">The same checks the extension runs before it fixes a page. Run them again after turning adapters on to compare.</p>' +
       '<div id="ws-res"></div>';
   }
 
   function wire() {
     var head = $('.ws-head'), main = $('.ws-main');
-    head.onclick = function () {
-      ui.open = head.getAttribute('aria-expanded') !== 'true';
-      head.setAttribute('aria-expanded', String(ui.open));
-      main.hidden = !ui.open;
+    var setOpen = function (open) {
+      ui.open = open;
+      head.setAttribute('aria-expanded', String(open));
+      main.hidden = !open;
+      box.classList.toggle('ws-closed', !open);
+      foldButton();
       saveUi();
       dock();
     };
+    head.onclick = function () { setOpen(!ui.open); };
+    $('#ws-fold').onclick = function () { setOpen(!ui.open); if (ui.open) head.focus(); };
     $('#ws-side').onclick = function () { ui.side = ui.side === 'left' ? 'right' : 'left'; box.setAttribute('data-side', ui.side); sideButton(); saveUi(); dock(); };
     addEventListener('resize', dock);
     if (window.visualViewport) { visualViewport.addEventListener('resize', place); visualViewport.addEventListener('scroll', place); }
     addEventListener('scroll', place, { passive: true });
-    $('#ws-hide').onclick = function () {
-      try { localStorage.setItem('redbird:workshop', 'off'); } catch (e) {}
-      setMarks(false);
-      host.remove();
-      dock();
-    };
     var tabs = root.querySelectorAll('[role=tab]');
     tabs.forEach(function (t, i) {
       t.onclick = function () { showTab(t.id.replace('ws-tab-', ''), true); };
@@ -810,8 +810,6 @@
       if (id === 'none') return go({ profile: 'none' });
       toolkitProfiles().then(function (all) { var b = bundleFor(id, all); go({ profile: id, try: b.length ? b.join(',') : 'none' }); });
     };
-    $('#ws-issues').value = (window.RB_ISSUES && RB_ISSUES.value) || 'on';
-    $('#ws-issues').onchange = function () { go({ issues: this.value }); };
     $('#ws-alloff').onclick = function () {
       var reload = names.indexOf('toolkit-fixes') !== -1 || names.indexOf('mine') !== -1;
       var was = names.slice();
@@ -859,6 +857,13 @@
     });
     document.addEventListener('ws-report', function () { refresh('toolkit-fixes'); });
   }
+  // Collapsed, the panel is just its title in the corner; the same button opens it again.
+  function foldButton() {
+    var b = $('#ws-fold');
+    b.textContent = ui.open ? '–' : '+';
+    b.setAttribute('aria-label', ui.open ? 'Collapse the workshop panel' : 'Open the workshop panel');
+    b.title = ui.open ? 'Collapse' : 'Open';
+  }
   function sideButton() {
     var b = $('#ws-side');
     b.textContent = ui.side === 'left' ? '→' : '←';
@@ -894,7 +899,7 @@
     var on = names.length;
     $('#ws-sub').textContent = (currentProfile ? currentProfile.name.split(',')[0] + ' · ' : '') + (on ? on + ' adapter' + (on === 1 ? '' : 's') + ' on' : 'no adapters on');
     GROUPS.forEach(function (g) {
-      var n = g[1].filter(function (x) { return names.indexOf(x) !== -1; }).length;
+      var n = g[2].filter(function (x) { return names.indexOf(x) !== -1; }).length;
       var el = root.querySelector('[data-group="' + g[0] + '"]');
       if (el) el.textContent = n ? n + ' on' : '';
     });
@@ -957,7 +962,7 @@
     });
     if (!shown.length) html = '<p class="ws-help">Nothing yet. Switch an adapter on in Setup and its changes show up here.</p>';
     var hidden = Track.list.filter(function (e) { return live(e) && e.type !== 'removed' && e.type !== 'style' && !box2(e.el); }).length;
-    if (hidden) html += '<p class="ws-help">' + hidden + ' of these change nothing you can see. Only a screen reader or the keyboard notices them.</p>';
+    if (hidden) html += '<p class="ws-help">' + hidden + ' of these only change what a screen reader or the keyboard gets, so they don’t show on the page.</p>';
     $('#ws-chg').innerHTML = html;
     renderHeard();
   }
@@ -1129,68 +1134,75 @@
     }).join('') + '</ul>' + (items.length > 30 ? '<p class="ws-help">and ' + (items.length - 30) + ' more</p>' : '') + '</details>';
   }
 
+  // GitHub's light look (Primer colors): white, grey borders, blue links and focus.
   var CSS =
-    '.ws-panel{position:fixed;left:12px;bottom:12px;z-index:2147483000;width:380px;max-width:calc(100vw - 24px);max-height:min(84vh,780px);' +
-      'display:flex;flex-direction:column;background:#1d1d1d;color:#f3f3f3;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.35);' +
-      'font:14px/1.4 "Source Sans 3",system-ui,sans-serif;text-align:left;letter-spacing:normal;word-spacing:normal}' +
+    '.ws-panel{position:fixed;left:12px;bottom:12px;z-index:2147483000;width:360px;max-width:calc(100vw - 24px);max-height:min(62vh,600px);' +
+      'display:flex;flex-direction:column;background:#fff;color:#1f2328;border:1px solid #d1d9e0;border-radius:6px;' +
+      'box-shadow:0 8px 24px rgba(140,149,159,.2);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;' +
+      'text-align:left;letter-spacing:normal;word-spacing:normal}' +
     '.ws-panel[data-side=right]{left:auto;right:12px}.ws-panel.ws-wide{width:600px}' +
-    '.ws-panel[data-dock]{top:0;bottom:0;left:0;width:380px;max-height:none;border-radius:0;box-shadow:2px 0 12px rgba(0,0,0,.25)}' +
-    '.ws-panel[data-dock][data-side=right]{left:auto;right:0;box-shadow:-2px 0 12px rgba(0,0,0,.25)}.ws-panel[data-dock].ws-wide{width:540px}' +
+    '.ws-panel[data-dock]{top:0;bottom:0;left:0;width:340px;max-height:none;border-radius:0;border-width:0 1px 0 0;box-shadow:none}' +
+    '.ws-panel[data-dock][data-side=right]{left:auto;right:0;border-width:0 0 0 1px}.ws-panel[data-dock].ws-wide{width:540px}' +
+    '.ws-panel.ws-closed{width:auto!important;max-width:min(360px,calc(100vw - 24px))}.ws-panel.ws-closed #ws-side{display:none}' +
     '*{box-sizing:border-box}[hidden]{display:none!important}' +
     'p,h3,ul,ol{margin:0;padding:0}' +
     'button,select,input,textarea{font:inherit;color:inherit;letter-spacing:normal}' +
-    ':focus-visible{outline:3px solid #e8c766;outline-offset:2px}' +
-    '.ws-top{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 4px}' +
-    '.ws-head{all:unset;cursor:pointer;padding:6px 10px;font-weight:700;border-radius:8px}' +
-    '.ws-head::after{content:" ▾" / "";font-weight:400;color:#bbb}.ws-head[aria-expanded=false]::after{content:" ▸" / ""}' +
-    '.ws-sub{flex:1;color:#bbb;font-size:13px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}' +
-    '.ws-icon{all:unset;cursor:pointer;padding:2px 9px;border-radius:6px;color:#ddd}.ws-icon:hover{background:#333}' +
+    ':focus-visible{outline:2px solid #0969da;outline-offset:-2px;border-radius:6px}' +
+    'a{color:#0969da;text-decoration:none}a:hover{text-decoration:underline}' +
+    '.ws-top{display:flex;align-items:center;gap:4px;padding:4px;border-bottom:1px solid #d1d9e0}.ws-closed .ws-top{border-bottom:0}' +
+    '.ws-head{all:unset;cursor:pointer;flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;padding:4px 8px;border-radius:6px;overflow:hidden}' +
+    '.ws-head:hover{background:#f6f8fa}.ws-title{font-weight:600}' +
+    '.ws-sub{color:#59636e;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}' +
+    '.ws-icon{all:unset;cursor:pointer;padding:2px 8px;border-radius:6px;color:#59636e;line-height:20px}.ws-icon:hover{background:#f6f8fa;color:#1f2328}' +
+    '.ws-fold{font-size:16px}' +
     '.ws-main{display:flex;flex-direction:column;min-height:0}' +
-    '.ws-tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid #3a3a3a}' +
-    '.ws-tab{all:unset;cursor:pointer;padding:7px 10px;color:#ccc;border-bottom:3px solid transparent;margin-bottom:-1px}' +
-    '.ws-tab[aria-selected=true]{color:#fff;font-weight:600;border-bottom-color:#e8c766}' +
-    '.ws-count{display:inline-block;min-width:1.4em;padding:0 5px;margin-left:2px;border-radius:999px;background:#e8c766;color:#2b2100;font-size:12px;font-weight:700;text-align:center}' +
+    '.ws-tabs{display:flex;gap:8px;padding:0 12px;border-bottom:1px solid #d1d9e0}' +
+    '.ws-tab{all:unset;cursor:pointer;padding:8px 2px;color:#59636e;border-bottom:2px solid transparent;margin-bottom:-1px}' +
+    '.ws-tab:hover{color:#1f2328}.ws-tab[aria-selected=true]{color:#1f2328;font-weight:600;border-bottom-color:#fd8c73}' +
+    '.ws-count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:2em;background:rgba(129,139,152,.12);color:#1f2328;font-size:12px;font-weight:500;line-height:18px;text-align:center}' +
     '.ws-count:empty{display:none}' +
-    '.ws-scroll{overflow:auto;padding:10px 14px 4px;min-height:0;flex:1}' +
+    '.ws-scroll{overflow:auto;padding:12px 16px 4px;min-height:0;flex:1}' +
     '.ws-pane > * + *{margin-top:8px}' +
-    '.ws-field{display:flex;align-items:center;gap:8px}.ws-field > span{min-width:7.5em;color:#ddd}' +
-    'select{flex:1;min-width:0;padding:4px 6px;border-radius:6px;border:1px solid #555;background:#2a2a2a}' +
-    '.ws-help,.ws-note{color:#bdbdbd;font-size:13px}.ws-note{color:#e8c766}' +
-    '.ws-err{color:#ffb4b4;font-size:13px}' +
-    'a{color:#e8c766}' +
+    '.ws-field{display:flex;align-items:center;gap:8px}.ws-field > span{min-width:7.5em;color:#1f2328}' +
+    'select{flex:1;min-width:0;padding:4px 8px;border-radius:6px;border:1px solid #d1d9e0;background:#f6f8fa;color:#1f2328}' +
+    '.ws-help,.ws-note{color:#59636e;font-size:12px}.ws-note{color:#9a6700}' +
+    '.ws-err{color:#d1242f;font-size:12px}' +
     '.ws-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px}' +
-    '.ws-h{font-size:14px;font-weight:700;margin-top:12px!important}' +
-    '.ws-link{all:unset;cursor:pointer;color:#e8c766;text-decoration:underline;font-size:13px}' +
-    '.ws-group{border-top:1px solid #333;padding:6px 0 2px}' +
-    '.ws-group > summary{cursor:pointer;font-weight:600;padding:2px 0}.ws-gc{color:#e8c766;font-weight:400;font-size:13px}' +
-    '.ws-ad{padding:5px 0 5px 4px}.ws-ad .ws-help{margin-left:25px}.ws-state{margin-left:25px}.ws-flat .ws-help{margin-left:0}' +
-    '.ws-check{display:flex;gap:8px;align-items:center;cursor:pointer}.ws-check input{width:16px;height:16px;margin:0;accent-color:#e8c766}' +
+    '.ws-h{font-size:14px;font-weight:600;margin-top:16px!important}.ws-pane > .ws-h:first-child{margin-top:0!important}' +
+    '.ws-link{all:unset;cursor:pointer;color:#0969da;font-size:12px}.ws-link:hover{text-decoration:underline}' +
+    '.ws-group{border:1px solid #d1d9e0;border-radius:6px;padding:0}.ws-group + .ws-group{margin-top:8px}' +
+    '.ws-group > summary{cursor:pointer;font-weight:600;padding:6px 12px;background:#f6f8fa;border-radius:6px}' +
+    '.ws-group[open] > summary{border-bottom:1px solid #d1d9e0;border-radius:6px 6px 0 0}' +
+    '.ws-gc{display:inline-block;padding:0 6px;margin-left:4px;border-radius:2em;background:rgba(129,139,152,.12);font-weight:500;font-size:12px}.ws-gc:empty{display:none}' +
+    '.ws-gwho{padding:6px 12px 0}' +
+    '.ws-ad{padding:6px 12px}.ws-ad + .ws-ad{border-top:1px solid #eff2f5}.ws-ad .ws-help{margin-left:24px}.ws-state{margin-left:24px}.ws-flat .ws-help{margin-left:0}' +
+    '.ws-check{display:flex;gap:8px;align-items:center;cursor:pointer}.ws-check input{width:16px;height:16px;margin:0;accent-color:#0969da}' +
     '.ws-name{font-weight:600}p.ws-name{margin-left:0}' +
-    '.ws-tag{display:inline-block;padding:0 6px;border-radius:999px;border:1px solid #777;color:#ddd;font-size:11.5px;font-weight:400;vertical-align:1px}' +
-    '.ws-btn{padding:6px 12px;border-radius:999px;border:0;background:#e8c766;color:#2b2100;font-weight:600;cursor:pointer}' +
-    '.ws-btn.ws-quiet{background:#444;color:#fff}' +
-    '.ws-mine{margin:6px 0 0 25px}.ws-mine textarea{display:block;width:100%;height:260px;margin:6px 0;padding:8px;border-radius:6px;border:0;' +
-      'font:12.5px/1.45 ui-monospace,Menlo,monospace;color:#111;background:#fafafa;resize:vertical}' +
+    '.ws-tag{display:inline-block;padding:0 7px;border-radius:2em;border:1px solid #d1d9e0;color:#59636e;font-size:12px;font-weight:500;line-height:18px}' +
+    '.ws-btn{padding:3px 12px;border-radius:6px;border:1px solid rgba(31,35,40,.15);background:#1f883d;color:#fff;font-weight:500;cursor:pointer}' +
+    '.ws-btn:hover{background:#1a7f37}.ws-btn.ws-quiet{background:#f6f8fa;color:#1f2328;border-color:#d1d9e0}.ws-btn.ws-quiet:hover{background:#eff2f5}' +
+    '.ws-mine{margin:6px 0 0 24px}.ws-mine textarea{display:block;width:100%;height:260px;margin:6px 0;padding:8px;border-radius:6px;border:1px solid #d1d9e0;' +
+      'font:12px/1.45 ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;color:#1f2328;background:#f6f8fa;resize:vertical}' +
     '.ws-list{list-style:none;margin-top:4px!important}.ws-list li{margin:2px 0}' +
-    '.ws-chg{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;padding:6px 8px 6px 34px;position:relative;border-radius:6px;background:#262626}' +
-    '.ws-chg:hover{background:#303030}.ws-chg:focus-visible{outline:3px solid #e8c766}' +
+    '.ws-chg{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;padding:6px 8px 6px 34px;position:relative;border:1px solid #d1d9e0;border-radius:6px;background:#fff}' +
+    '.ws-chg:hover{background:#f6f8fa}' +
     '.ws-res-line .ws-chg{padding-left:8px}' +
-    '.ws-num{position:absolute;left:8px;top:6px;font-size:12px;font-weight:700;color:#e8c766}' +
+    '.ws-num{position:absolute;left:8px;top:6px;font-size:12px;font-weight:600;color:#0969da}' +
     '.ws-css .ws-num{position:static;margin-right:6px}' +
-    '.ws-what{display:block}.ws-diff{display:block;color:#cfcfcf;font-size:12.5px;word-break:break-word}' +
-    '.ws-why{display:block;color:#9fd3a8;font-size:12px}' +
-    '.ws-css{padding:6px 8px;border-radius:6px;background:#262626}.ws-css summary{cursor:pointer}' +
-    '.ws-css pre{max-height:200px;overflow:auto;margin:6px 0 0;padding:6px;background:#111;border-radius:4px;font:11.5px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap}' +
-    '.ws-heard{list-style:none;font-size:13px}.ws-heard li{padding:4px 0;border-bottom:1px solid #2e2e2e}' +
-    '.ws-t{color:#999;font-variant-numeric:tabular-nums}.ws-who{color:#999;font-size:12px}' +
-    '.ws-res-line{font-size:13.5px}.ws-res-line summary{cursor:pointer}.ws-zero{color:#999}' +
-    '.ws-was{color:#9fd3a8;font-size:12px}' +
-    '.ws-status{padding:4px 14px 0;color:#e8c766;font-size:13px}.ws-status:empty{display:none}' +
-    '.ws-foot{padding:6px 14px 10px;font-size:13px;color:#999}' +
+    '.ws-what{display:block}.ws-diff{display:block;color:#59636e;font-size:12px;word-break:break-word}' +
+    '.ws-why{display:block;color:#1a7f37;font-size:12px}' +
+    '.ws-css{padding:6px 8px;border:1px solid #d1d9e0;border-radius:6px}.ws-css summary{cursor:pointer}' +
+    '.ws-css pre{max-height:200px;overflow:auto;margin:6px 0 0;padding:8px;background:#f6f8fa;border-radius:6px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}' +
+    '.ws-heard{list-style:none;font-size:13px}.ws-heard li{padding:4px 0;border-bottom:1px solid #eff2f5}' +
+    '.ws-t{color:#59636e;font-variant-numeric:tabular-nums}.ws-who{color:#59636e;font-size:12px}' +
+    '.ws-res-line{font-size:13px}.ws-res-line summary{cursor:pointer}.ws-zero{color:#59636e}' +
+    '.ws-was{color:#1a7f37;font-size:12px}' +
+    '.ws-status{padding:4px 16px 0;color:#59636e;font-size:12px}.ws-status:empty{display:none}' +
+    '.ws-foot{padding:8px 16px;font-size:12px;color:#59636e;border-top:1px solid #d1d9e0}' +
     '.ws-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
     '.ws-marks{position:fixed;inset:0;pointer-events:none;z-index:2147482000}' +
-    '.ws-mark{position:fixed;border:2px solid #f2b705;box-shadow:0 0 0 1px rgba(0,0,0,.6);border-radius:3px}' +
-    '.ws-mark span{position:absolute;left:-2px;top:-18px;padding:0 5px;background:#f2b705;color:#000;font:700 11px/16px system-ui,sans-serif;border-radius:3px 3px 3px 0}' +
-    '.ws-mark.ws-flash{border:3px solid #ff3d7f;box-shadow:0 0 0 3px rgba(255,61,127,.35)}.ws-mark.ws-flash span{background:#ff3d7f;color:#fff}' +
+    '.ws-mark{position:fixed;border:2px solid #0969da;border-radius:3px}' +
+    '.ws-mark span{position:absolute;left:-2px;top:-18px;padding:0 5px;background:#0969da;color:#fff;font:600 11px/16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border-radius:3px 3px 3px 0}' +
+    '.ws-mark.ws-flash{border:3px solid #bf3989;box-shadow:0 0 0 3px rgba(191,57,137,.25)}.ws-mark.ws-flash span{background:#bf3989}' +
     '@media (max-width:640px){.ws-panel{width:auto;right:12px}.ws-panel.ws-wide{width:auto}.ws-field{flex-wrap:wrap}}';
 })();
