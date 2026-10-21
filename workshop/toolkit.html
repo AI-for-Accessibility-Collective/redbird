@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Run the toolkit on the store - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Run the toolkit on the store">
+<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Guides</p><ul class="sub"><li><a href="real-arrival-dates">Turn business days into dates</a></li><li><a href="swatch-names">Name the color choices</a></li><li><a href="calm-urgency">Hide pressure messages</a></li><li><a href="reading-level">Rewrite hard text</a></li><li><a href="first-adapter">Write your own adapter</a></li></ul><p class="group">Go further</p><ul class="sub"><li><a href="compare">One store, three people</a></li><li><a href="toolkit" aria-current="page">Run the toolkit on the store</a></li><li><a href="agents">Where an agent should stop</a></li><li><a href="ideas">Pick an issue to fix</a></li></ul>
+  <p class="group">Store</p>
+  <ul class="sub"><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Go further<span aria-hidden="true">/</span><a href="toolkit" aria-current="page">Run the toolkit on the store</a></nav>
+<h1>Run the toolkit on the store</h1>
+<p class="lede">The workshop examples are small on purpose. The AI for Accessibility Toolkit has about 50 adapters, and most of them run on Redbird as they are. Each link on this page opens the store with an issue turned on and the toolkit's fix for it running.</p>
+
+<h2 id="run-the-automatic-fixes">Run the automatic fixes</h2>
+<p>In the browser extension, the toolkit first checks the page with axe-core, then fixes each problem it finds. Some of these fixes use AI. For example, it looks at product photos to write alt text, and names buttons that have no name.</p>
+<ol>
+  <li>Open the <a href="../product?id=rb-20w-usbc-charger&amp;issues=1,2,9,10,12&amp;try=toolkit-fixes" target="_blank" rel="noopener">Redbird Basics charger with the automatic fixes running<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. This turns on issues 1, 2, 9, 10 and 12.</li>
+  <li>Wait a few seconds while it describes the photos.</li>
+  <li>Turn on a screen reader, or right-click a product photo and click <b>Inspect</b>. Photos that had no alt text now have a description, and the icon buttons have names.</li>
+</ol>
+<p>Photos whose alt text is a file name, like "DSC00418.webp", are left as they are. The toolkit doesn't fix those yet. To build that fix, see <a href="ideas">Pick an issue to fix</a>.</p>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>These fixes change the page in place. Deselecting <b>toolkit-fixes</b> in the panel reloads the page without them.</p></div>
+
+<h2 id="try-one-adapter-at-a-time">Try one adapter at a time</h2>
+<p>Each link opens the page where the issue shows up.</p>
+<div class="table-wrap"><table>
+  <tr><th scope="col">Issue</th><th scope="col">What's wrong</th><th scope="col">Toolkit adapter</th></tr>
+  <tr><td>35</td><td>A deals ticker scrolls across the top of every page</td><td><a href="../?issues=35&amp;try=motion-reducer" target="_blank" rel="noopener">motion-reducer<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>34</td><td>The "Best sellers" row scrolls by itself</td><td><a href="../?issues=34&amp;try=stop-auto-advance" target="_blank" rel="noopener">stop-auto-advance<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>14</td><td>The header stays stuck to the top, which covers the page when zoomed in</td><td><a href="../?issues=14&amp;try=unpin-sticky" target="_blank" rel="noopener">unpin-sticky<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>17</td><td>Tiny quantity buttons and save buttons</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=17&amp;try=big-targets" target="_blank" rel="noopener">big-targets<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>16</td><td>The real arrival date only shows in a hover tooltip</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=16&amp;try=persistent-hover" target="_blank" rel="noopener">persistent-hover<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>23</td><td>The product page is crowded with ads</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=23&amp;try=focus-mode" target="_blank" rel="noopener">focus-mode<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>, <a href="../product?id=rb-20w-usbc-charger&amp;issues=23&amp;try=reader-mode" target="_blank" rel="noopener">reader-mode<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>33</td><td>The product video plays with sound by itself</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=33&amp;try=mute-sounds" target="_blank" rel="noopener">mute-sounds<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>32</td><td>Abbreviations nobody explains, like MSRP</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=32&amp;try=abbreviation-expand" target="_blank" rel="noopener">abbreviation-expand<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>8</td><td>Search results change with no announcement</td><td><a href="../search?q=charger&amp;issues=8&amp;try=live-region-announcer" target="_blank" rel="noopener">live-region-announcer<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>11</td><td>No real headings, landmarks or skip link</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=11&amp;try=page-outline" target="_blank" rel="noopener">page-outline<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>, <a href="../product?id=rb-20w-usbc-charger&amp;issues=11&amp;try=skip-links" target="_blank" rel="noopener">skip-links<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+  <tr><td>13</td><td>Fine print at 10 px</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=13&amp;try=magnifier" target="_blank" rel="noopener">magnifier<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td></tr>
+</table></div>
+
+<h2 id="run-several-at-once">Run several at once</h2>
+<p>To run more than one adapter, separate their names with commas in <code>try=</code>. For example, this runs <a href="../?issues=14,17,35&amp;try=motion-reducer,unpin-sticky,big-targets" target="_blank" rel="noopener">motion-reducer, unpin-sticky and big-targets on the home page<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</p>
+<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>Any adapter file name in the toolkit's <a href="https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit/tree/main/tools/adapters" target="_blank" rel="noopener">tools/adapters folder<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> works with <code>try=</code>.</p></div>
+
+<h2 id="next-steps">Next steps</h2>
+<p>To build an adapter for an issue the toolkit doesn't fix yet, see <a href="ideas">Pick an issue to fix</a>.</p>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#run-the-automatic-fixes">Run the automatic fixes</a></li><li><a href="#try-one-adapter-at-a-time">Try one adapter at a time</a></li><li><a href="#run-several-at-once">Run several at once</a></li><li><a href="#next-steps">Next steps</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

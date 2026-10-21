@@ -8,7 +8,7 @@
 //
 // Profile: reads the need "concreteDates". If the profile sets it to false, nothing changes.
 // Options: today, a Date to count from (the loader passes the store's own date).
-// Try it: search?q=charger&issues=33&try=real-arrival-dates
+// Try it: search?q=charger&issues=31&try=real-arrival-dates
 //
 // To move it into the toolkit: put it in tools/adapters/, swap say() for announce() from
 // '../utils/ai.js', and register it as docs/adding-to-the-catalog.md describes.

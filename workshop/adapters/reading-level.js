@@ -12,7 +12,7 @@
 //                                version calls Gemini with a key typed into the workshop panel.
 //   fallback(text)               used when rewrite gives nothing. On Redbird it returns the
 //                                store's own plain description, so the demo works offline.
-// Try it: product?id=rb-20w-usbc-charger&issues=29&try=reading-level&profile=alex
+// Try it: product?id=rb-20w-usbc-charger&issues=27&try=reading-level&profile=dario
 
 function syllables(word) {
   const w = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -50,13 +50,13 @@ export const ReadingLevel = {
     this.changed = new Map();
     const target = options.profile?.fields?.readingLevel ?? 8;
     const instructions = `Rewrite this text so a reader at a US grade ${target} reading level can follow it. ` +
-      'Keep every fact, number, name, date and condition. Use short sentences and everyday words. ' +
+      'Keep every fact, number, name, date and condition. Use short sentences and everyday words, and keep an adult tone. ' +
       'Reply with only the rewritten text.';
     const hard = [...document.body.querySelectorAll('p, li')].filter((el) => {
       const text = el.textContent.trim();
       return !el.closest('.ws-panel, nav, header, footer') && text.split(/\s+/).length >= 25 && gradeOf(text) > target + 2;
     });
-    say(hard.length ? `Rewriting ${hard.length} hard paragraph${hard.length === 1 ? '' : 's'} at grade ${target}` : 'No paragraphs above your reading level');
+    say(hard.length ? `Rewriting ${hard.length} hard paragraph${hard.length === 1 ? '' : 's'} at grade ${target}` : 'No paragraphs harder than your chosen level');
     for (const el of hard) {
       const text = el.textContent.trim();
       let plain = options.rewrite ? await options.rewrite(text, instructions) : null;

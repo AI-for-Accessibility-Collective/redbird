@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pick an issue to fix - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Pick an issue to fix">
+<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Guides</p><ul class="sub"><li><a href="real-arrival-dates">Turn business days into dates</a></li><li><a href="swatch-names">Name the color choices</a></li><li><a href="calm-urgency">Hide pressure messages</a></li><li><a href="reading-level">Rewrite hard text</a></li><li><a href="first-adapter">Write your own adapter</a></li></ul><p class="group">Go further</p><ul class="sub"><li><a href="compare">One store, three people</a></li><li><a href="toolkit">Run the toolkit on the store</a></li><li><a href="agents">Where an agent should stop</a></li><li><a href="ideas" aria-current="page">Pick an issue to fix</a></li></ul>
+  <p class="group">Store</p>
+  <ul class="sub"><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Go further<span aria-hidden="true">/</span><a href="ideas" aria-current="page">Pick an issue to fix</a></nav>
+<h1>Pick an issue to fix</h1>
+<p class="lede">No adapter in the toolkit fixes these issues yet. Pick one, start from the template, and open the store with that issue turned on.</p>
+
+<h2 id="ideas">Ideas</h2>
+<p>Each link opens the store with only that issue turned on. For how to start from the template, see <a href="first-adapter">Write your own adapter</a>.</p>
+<div class="table-wrap"><table class="ideas">
+  <tr><th scope="col">Idea</th><th scope="col">What it does</th><th scope="col">Issue</th><th scope="col">Difficulty</th></tr>
+  <tr><td>Real buttons</td><td>Turns the clickable <code>div</code>s that say "Add to cart" into real buttons</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=3&amp;try=none" target="_blank" rel="noopener">Issue 3<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Easy</td></tr>
+  <tr><td>Star reader</td><td>Adds "4.6 out of 5 stars" as text next to the star pictures</td><td><a href="../search?q=charger&amp;issues=4&amp;try=none" target="_blank" rel="noopener">Issue 4<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Easy</td></tr>
+  <tr><td>One price</td><td>Makes "$18.99" read as one price instead of three pieces</td><td><a href="../search?q=charger&amp;issues=5&amp;try=none" target="_blank" rel="noopener">Issue 5<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Easy</td></tr>
+  <tr><td>Show hidden buttons</td><td>Shows the "Add to cart" buttons that only appear when the mouse is over a product</td><td><a href="../search?q=charger&amp;issues=21&amp;try=none" target="_blank" rel="noopener">Issue 21<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Easy</td></tr>
+  <tr><td>Clickable photos</td><td>Turns the hover-only photo thumbnails into buttons</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=22&amp;try=none" target="_blank" rel="noopener">Issue 22<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Easy</td></tr>
+  <tr><td>Ad labels</td><td>Finds sponsored results and gives each one a clear "Ad" label</td><td><a href="../search?q=charger&amp;issues=7&amp;try=none" target="_blank" rel="noopener">Issue 7<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Medium</td></tr>
+  <tr><td>Price boxes</td><td>Swaps the drag-only price slider for min and max boxes</td><td><a href="../search?q=charger&amp;issues=18&amp;try=none" target="_blank" rel="noopener">Issue 18<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Medium</td></tr>
+  <tr><td>More time</td><td>Adds 10 minutes to the checkout timer, or stops it (add something to your cart and go to checkout to see it)</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=19&amp;try=none" target="_blank" rel="noopener">Issue 19<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Medium</td></tr>
+  <tr><td>Yes or no</td><td>Rewrites the double-negative checkbox at checkout as a plain yes-or-no question</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=29&amp;try=none" target="_blank" rel="noopener">Issue 29<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Medium</td></tr>
+  <tr><td>Friendly errors</td><td>Explains payment error codes in plain words (type a wrong card number at checkout to see one)</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=30&amp;try=none" target="_blank" rel="noopener">Issue 30<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Medium</td></tr>
+  <tr><td>Better alt text</td><td>The toolkit describes photos that have no alt text, but leaves alt text like "DSC00418.webp" or "product image" alone. Find those and describe them too (the toolkit's <code>findBadAltImages()</code> in <code>tools/auditors/missing-alt.js</code> already finds the file names)</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=1&amp;try=toolkit-fixes" target="_blank" rel="noopener">Issue 1<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Uses AI</td></tr>
+  <tr><td>Short titles</td><td>Cuts keyword-stuffed titles down to the brand, the product and one key fact</td><td><a href="../search?q=charger&amp;issues=25&amp;try=none" target="_blank" rel="noopener">Issue 25<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Uses AI</td></tr>
+  <tr><td>Plain bullets</td><td>Rewrites "About this item" as a few short, plain points</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=26&amp;try=none" target="_blank" rel="noopener">Issue 26<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Uses AI</td></tr>
+  <tr><td>Plain policy</td><td>Turns the long legal return policy into three answers: can I return it, by when, and who pays for shipping</td><td><a href="../product?id=rb-20w-usbc-charger&amp;issues=28&amp;try=none" target="_blank" rel="noopener">Issue 28<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></td><td>Uses AI</td></tr>
+</table></div>
+<p>For the full list of 36 issues, see <a href="https://github.com/AI-for-Accessibility-Collective/redbird/blob/main/ISSUES.md" target="_blank" rel="noopener">ISSUES.md<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. For bigger ideas that combine several fixes, see the <a href="https://github.com/AI-for-Accessibility-Collective/redbird/blob/main/workshop/README.md" target="_blank" rel="noopener">workshop README<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</p>
+
+<h2 id="profiles">Profiles</h2>
+<p>Adapters get the profile as <code>options.profile</code>. To load one, add <code>&amp;profile=</code> and its name to the address. These three are made up:</p>
+<ul>
+  <li><code>dario</code>: Dario Almondei has dyslexia and prefers short, plain text at about a 6th grade level (<a href="profiles/dario.json" target="_blank" rel="noopener">dario.json<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>)</li>
+  <li><code>mark</code>: Mark Sugarberg has ADHD and anxiety, and wants pressure messages hidden (<a href="profiles/mark.json" target="_blank" rel="noopener">mark.json<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>)</li>
+  <li><code>sam</code>: Sam Saltman is blind and shops with VoiceOver (<a href="profiles/sam.json" target="_blank" rel="noopener">sam.json<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>)</li>
+</ul>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#ideas">Ideas</a></li><li><a href="#profiles">Profiles</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

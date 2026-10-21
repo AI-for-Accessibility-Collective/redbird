@@ -8,7 +8,7 @@
 // Profile: reads the need "urgency".
 //   "label" (the default)  dims the message and adds a short plain note after it
 //   "hide"                 hides it from view and from screen readers
-// Try it: ?issues=23&try=calm-urgency&profile=riley
+// Try it: ?issues=24&try=calm-urgency&profile=mark
 
 const KINDS = [
   { kind: 'timer', test: /\b(ends in|deal ends|offer ends)\b[^\n]*\d{1,2}:\d{2}/i,
