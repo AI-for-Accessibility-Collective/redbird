@@ -6,6 +6,11 @@
 // That is hard for people with memory or attention differences, slow with a screen reader,
 // and easy for an AI agent to get wrong. This adapter does the counting.
 //
+// It only changes counts about shipping that start today. A count in a review ("mine took
+// 8 business days") or one that starts from another day ("within 10 business days of
+// receipt") stays as it is. Inside a sentence it keeps the store's words and adds the date
+// after them, so the sentence still reads right.
+//
 // Profile: reads the need "concreteDates". If the profile sets it to false, nothing changes.
 // Options: today, a Date to count from (the loader passes the store's own date).
 // Try it: search?q=charger&issues=31&try=real-arrival-dates
@@ -13,10 +18,15 @@
 // To move it into the toolkit: put it in tools/adapters/, swap say() for announce() from
 // '../utils/ai.js', and register it as docs/adding-to-the-catalog.md describes.
 
-const RANGE = /(?:est\.\s*)?(\d+)\s*[–-]\s*(\d+)\s+business days\*?/gi;
-const SINGLE = /(?:est\.\s*)?(\d+)\s+business days\*?/gi;
+// "5–7 business days", "5 to 7 business days", "est. 2 business days*"
+const COUNT = /(?:est\.\s*)?(\d+)(?:\s*(?:[–-]|to)\s*(\d+))?\s+business days\*?/gi;
 // Fine print that adds nothing once the date is worked out.
 const HEDGES = [/,?\s*excluding weekends and holidays/gi, /,?\s*subject to carrier availability/gi];
+// The paragraph, row or box around a count has to be about shipping (not refunds, say).
+const ABOUT_SHIPPING = /ship|deliver|arriv/i;
+// Counts that don't start today: in the past, or counted from another day.
+const PAST = /\btook\s+(about\s+)?$/i;
+const FROM_ANOTHER_DAY = /^\s*(of|after|from)\b/i;
 
 function need(options, dimension, fallback) {
   const n = (options.profile?.fields?.needs || []).find((x) => x.dimension === dimension);
@@ -24,6 +34,8 @@ function need(options, dimension, fallback) {
 }
 
 function say(text) {
+  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
+  if (window.RB_SAY) return window.RB_SAY(text);
   let live = document.getElementById('ws-live');
   if (!live) {
     live = Object.assign(document.createElement('div'), { id: 'ws-live' });
@@ -31,19 +43,29 @@ function say(text) {
     live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
     document.body.appendChild(live);
   }
-  live.textContent = text;
+  // Messages that come at the same moment (several adapters starting together) are read
+  // together, instead of the last one replacing the rest. The region is emptied first, so
+  // the same words said twice are read twice.
+  live.waiting = (live.waiting || []).concat(text);
+  clearTimeout(live.timer);
+  live.timer = setTimeout(() => {
+    const words = live.waiting.join('. ');
+    live.waiting = [];
+    live.textContent = '';
+    setTimeout(() => { live.textContent = words; }, 60);
+  }, 50);
 }
 
 export const RealArrivalDates = {
   enabled: false,
-  replaced: null, // span we added → the text node it replaced
+  changed: null, // text node → { was, now }: the store's words and ours
   observer: null,
 
   enable(options = {}) {
     if (this.enabled || need(options, 'concreteDates', true) === false) return;
     this.enabled = true;
     this.today = options.today ? new Date(options.today) : new Date();
-    this.replaced = new Map();
+    this.changed = new Map();
     const n = this.sweep(document.body);
     // Pages like this one change every second (countdown timers), so scan at most twice a second.
     let queued = false;
@@ -52,7 +74,7 @@ export const RealArrivalDates = {
       queued = true;
       setTimeout(() => { queued = false; if (this.enabled) this.sweep(document.body); }, 500);
     });
-    this.observer.observe(document.body, { childList: true, subtree: true });
+    this.observer.observe(document.body, { childList: true, characterData: true, subtree: true });
     say(n ? `Showing real arrival dates in ${n} place${n === 1 ? '' : 's'}` : 'Watching for shipping times to turn into dates');
   },
 
@@ -67,37 +89,40 @@ export const RealArrivalDates = {
   },
 
   rewrite(text) {
-    let out = text
-      .replace(RANGE, (_, a, b) => `arrives ${this.dateAfter(+a)} – ${this.dateAfter(+b)}`)
-      .replace(SINGLE, (_, a) => `arrives ${this.dateAfter(+a)}`);
+    let out = text.replace(COUNT, (count, a, b, at) => {
+      if (PAST.test(text.slice(0, at)) || FROM_ANOTHER_DAY.test(text.slice(at + count.length))) return count;
+      const when = `arrives ${this.dateAfter(+a)}${b ? ` – ${this.dateAfter(+b)}` : ''}`;
+      // On its own, in brackets or after a label, the date takes the count's place.
+      // In a sentence ("please allow 6–9 business days for delivery") it goes after it.
+      return /(^|[(:]\s*)$/.test(text.slice(0, at)) ? when : `${count} (${when})`;
+    });
     if (out !== text) for (const h of HEDGES) out = out.replace(h, '');
     return out;
   },
 
+  // Changes the words in place, so the page's layout and other adapters' changes stay as they are.
   sweep(root) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: (node) => (/business days/i.test(node.nodeValue) && !node.parentElement.closest('.ws-arrival, script, style')
-        ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
-    });
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-    for (const node of nodes) {
-      const span = document.createElement('span');
-      span.className = 'ws-arrival';
-      span.title = 'The store said: ' + node.nodeValue.trim();
-      span.textContent = this.rewrite(node.nodeValue);
-      node.replaceWith(span);
-      this.replaced.set(span, node);
+    let n = 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!/business days/i.test(node.nodeValue) || this.changed.get(node)?.now === node.nodeValue) continue;
+      const box = node.parentElement?.closest('p, li, table, div');
+      if (!box || !ABOUT_SHIPPING.test(box.textContent) || node.parentElement.closest('script, style')) continue;
+      const now = this.rewrite(node.nodeValue);
+      if (now === node.nodeValue) continue;
+      this.changed.set(node, { was: node.nodeValue, now });
+      node.nodeValue = now;
+      n++;
     }
-    return nodes.length;
+    return n;
   },
 
   disable() {
     if (!this.enabled) return;
     this.enabled = false;
     this.observer.disconnect();
-    for (const [span, node] of this.replaced) if (span.isConnected) span.replaceWith(node);
-    this.replaced.clear();
+    for (const [node, { was, now }] of this.changed) if (node.nodeValue === now) node.nodeValue = was;
+    this.changed.clear();
     say('Shipping times back to how the store wrote them');
   },
 

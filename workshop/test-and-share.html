@@ -7,7 +7,7 @@
 <title>Test it and share it - Redbird workshop</title>
 <meta property="og:site_name" content="Redbird workshop">
 <meta property="og:title" content="Test it and share it">
-<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
 <meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/img/favicon.svg">
@@ -16,54 +16,48 @@
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="g-top"><div class="in">
-  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
   <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
 </div></header>
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share" aria-current="page">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
-  <p class="group">Store</p>
-  <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share" aria-current="page">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Build<span aria-hidden="true">/</span><a href="test-and-share" aria-current="page">Test it and share it</a></nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Steps<span aria-hidden="true">/</span><a href="test-and-share" aria-current="page">5. Test it and share it</a></nav>
 <h1>Test it and share it</h1>
-<p class="lede">Check your fix against your verification plan, then share a link to it for the demos. This takes about 30 minutes.</p>
+<p class="lede">Check your fix against your verification plan, then share it for the demos. This takes about 30 minutes.</p>
 
-<h2 id="test-against-your-plan">Test against your plan</h2>
-<p>Go through each check in your verification plan. These are the ways to check on Redbird:</p>
+<h2 id="test-it">Test it</h2>
+<p>Go through the checks in your verification plan. These are the ways to check on Redbird:</p>
 <div class="table-wrap"><table>
   <tr><th scope="col">What to check</th><th scope="col">How</th></tr>
-  <tr><td>It changed what you wanted</td><td>In the <b>Changes</b> tab, read each change before and after. Press one to outline it on the page.</td></tr>
-  <tr><td>It didn't change anything else</td><td>Read the rest of the Changes list. Then switch your fix off and on in the <b>Setup</b> tab, and compare the page.</td></tr>
-  <tr><td>A screen reader gets it</td><td>Read <b>What a screen reader hears</b> at the bottom of the Changes tab, or turn on VoiceOver with Command-F5.</td></tr>
+  <tr><td>It changed what you wanted</td><td>Under your fix, open the list of changes and press each one to see it on the page.</td></tr>
+  <tr><td>It didn't break anything</td><td>Press <b>Turn off to compare</b>, then turn it back on, and look at the whole page.</td></tr>
+  <tr><td>A screen reader gets it</td><td>In <b>Audit</b>, open <b>What a screen reader hears</b>, or turn on VoiceOver with Command-F5.</td></tr>
   <tr><td>It works with only the keyboard</td><td>Put the mouse away and use Tab, Shift-Tab, Enter and the arrow keys.</td></tr>
-  <tr><td>The problems went away</td><td>In the <b>Checks</b> tab, press <b>Run the toolkit's checks</b> with your fix off, then again with it on. Each count shows what it was before. You can also select <b>Point out the planted problems</b> and see which badges turn green.</td></tr>
+  <tr><td>The problems went away</td><td>Turn on <b>Show accessibility problems on the page</b> at the top of the panel, and check that your problem's badge turns green.</td></tr>
   <tr><td>It works on other pages</td><td>Open the search results, another product and checkout, and check again.</td></tr>
 </table></div>
-<p>If a check fails, go back to the Build tab and say what's wrong, under <b>Not quite right?</b> for a skill or <b>Change something</b> for an adapter.</p>
+<p>If a check fails, open <b>Not right? Change it</b> under your fix, say what's wrong, and press <b>Change it</b>.</p>
 
 <h2 id="share-it">Share it</h2>
 <ol>
-  <li>In the Build tab, press <b>Copy link</b> under your skill in <b>Your skills</b>, or under your adapter.</li>
-  <li>Paste the link in the workshop chat.</li>
-  <li>When someone opens it, the panel shows your skill or adapter in their Build tab. A skill's adapters turn on right away. An adapter only runs after they read it and press <b>Run it as your adapter</b>.</li>
+  <li>Go to the page your fix changes. In the <b>Build your adapter</b> tab, under <b>Saved fixes</b>, press <b>Share</b> next to your fix. The link is copied.</li>
+  <li>Paste it in the workshop chat.</li>
+  <li>Your fix shows up in the <b>Build your adapter</b> tab of whoever opens the link. If the fix has an adapter AI wrote, that adapter only runs after the person opening the link reads its code and presses <b>Run it</b>.</li>
 </ol>
-<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>The link carries the whole skill or adapter, so nothing is uploaded and nobody needs an account. That's also why the link is long.</p></div>
 
-<h2 id="get-ready-for-the-demo">Get ready for the demo</h2>
-<ul>
-  <li>Say who the fix is for and what got in their way.</li>
-  <li>Show the page with your fix off, then on. The switch is in the Setup tab.</li>
-  <li>Show one check from your verification plan, e.g., what a screen reader hears now.</li>
-</ul>
-
-<h2 id="after-the-workshop">After the workshop</h2>
-<p>What you made uses the toolkit's own formats. A SKILL.md has the same shape as the toolkit's built-in skills in <a href="https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit/tree/main/toolkit/skills/builtin" target="_blank" rel="noopener">toolkit/skills/builtin<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>, and an adapter has the same <code>enable()</code> and <code>disable()</code> as the ones in <a href="https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit/tree/main/tools/adapters" target="_blank" rel="noopener">tools/adapters<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. To keep your adapter as a file, see <a href="first-adapter">Write an adapter by hand</a>.</p>
+<h2 id="for-the-demo-to-the-group">For the demo to the group</h2>
+<ol>
+  <li>Say who you built the fix for, and what on the page got in their way.</li>
+  <li>Press <b>Turn off to compare</b> under your fix, and show the page as the store has it. Then turn it back on and show what changed.</li>
+  <li>Show one check from your verification plan. For example, turn on VoiceOver and let the group hear what a screen reader says now.</li>
+</ol>
 </main>
-<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#test-against-your-plan">Test against your plan</a></li><li><a href="#share-it">Share it</a></li><li><a href="#get-ready-for-the-demo">Get ready for the demo</a></li><li><a href="#after-the-workshop">After the workshop</a></li></ul></nav>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#test-it">Test it</a></li><li><a href="#share-it">Share it</a></li><li><a href="#for-the-demo-to-the-group">For the demo to the group</a></li></ul></nav>
 </div>
 </div>
 <script src="guide.js"></script>

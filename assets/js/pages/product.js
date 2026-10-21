@@ -56,7 +56,15 @@
     if (on(22)) return '<div class="thumb' + (i === 0 ? ' is-on' : '') + '" data-shot="' + i + '"><img src="' + s.src + '" alt=""></div>';
     return '<button type="button" data-shot="' + i + '" aria-pressed="' + (i === 0) + '"' +
       (on(2) ? '' : ' aria-label="Show image ' + (i + 1) + ' of ' + shots.length + '"') + '><img src="' + s.src + '" alt=""></button>';
-  }).join('') + (p.video ? '<a class="thumb-video" href="#video"><img src="assets/video/' + p.id + '-poster.webp" alt=""><span aria-hidden="true">▶</span>VIDEO</a>' : '') + '</div><div class="main-img"><img id="main-img" src="' + shots[0].src + '"' + altAttr(shots[0].alt, 0) + ' width="520" height="520"></div>' + (on(22) ? '<p class="fine zoom-hint">Roll over image to zoom in</p>' : '') + '</div>';
+  }).join('') + (p.video ? (on(22)
+      ? '<div class="thumb-video" data-video><img src="assets/video/' + p.id + '-poster.webp" alt=""><span aria-hidden="true">▶</span>VIDEO</div>'
+      : '<button type="button" class="thumb-video" data-video aria-pressed="false" aria-label="Product video"><img src="assets/video/' + p.id + '-poster.webp" alt=""><span aria-hidden="true">▶</span>VIDEO</button>') : '') +
+    '</div><div class="main-img"><img id="main-img" src="' + shots[0].src + '"' + altAttr(shots[0].alt, 0) + ' width="520" height="520">' +
+    // The video plays in the same viewer as the photos. Issue 33: it's what the viewer shows first,
+    // and it starts by itself on a loop with no controls. Issue 36: no captions.
+    (p.video ? '<video id="pvid" src="assets/video/' + p.id + '.mp4" playsinline' + (on(33) ? ' autoplay loop' : ' controls') + ' poster="assets/video/' + p.id + '-poster.webp" hidden>' +
+      (on(36) ? '' : '<track kind="captions" src="assets/video/' + p.id + '.vtt" srclang="en" label="English" default>') + '</video>' : '') +
+    '</div>' + (on(22) ? '<p class="fine zoom-hint">Roll over image to zoom in</p>' : '') + '</div>';
 
   // ── Details column ────────────────────────────────────────────────────────
   var off = p.list ? Math.round((1 - p.price / p.list) * 100) : 0;
@@ -184,18 +192,11 @@
     lower += '<section class="pdp-section"><div class="h2" style="font-size:18px;font-weight:700;margin:0 0 8px">Sponsored products related to this item</div><div class="shelf-row">' +
       ads.map(function (x, i) { return '<a class="deal-card" href="product?id=' + x.id + '">' + RB.imgTag(x, i, '', true) + RB.sponsoredHTML() + '<div class="deal-name">' + esc(x.title) + '</div>' + RB.priceHTML(x.price) + '</a>'; }).join('') +
       '</div></section>' +
-      '<section class="pdp-section" style="padding:0"><a href="search?cat=home" style="display:block;position:relative">' +
+      '<section class="pdp-section" style="padding:0"><a class="ad-banner" href="search?cat=home" style="display:block;position:relative">' +
       '<img src="assets/img/banners/hero-cozy.webp" style="width:100%;height:180px;object-fit:cover">' +
       '<span style="position:absolute;left:30px;top:50%;transform:translateY(-50%);color:#fff;font:700 30px var(--serif);text-shadow:0 2px 10px #000">UP TO 40% OFF HOME • SHOP NOW ›</span></a></section>';
   }
 
-  if (p.video) {
-    lower += '<section class="pdp-section" id="video">' + h(2, 'Product video') + '<div class="video-box">' +
-      // Issue 33: plays by itself, with sound, on a loop. Issue 36: no captions.
-      '<video id="pvid" src="assets/video/' + p.id + '.mp4" playsinline' + (on(33) ? ' autoplay loop' : ' controls') + ' poster="assets/video/' + p.id + '-poster.webp">' +
-      (on(36) ? '' : '<track kind="captions" src="assets/video/' + p.id + '.vtt" srclang="en" label="English" default>') +
-      '</video></div></section>';
-  }
 
   // Product information: the product's own specs, then the rows every listing has (model number,
   // size and weight, date first available, reviews, Best Sellers Rank). Books get book details instead.
@@ -270,6 +271,7 @@
 
   // ── Behavior ──────────────────────────────────────────────────────────────
   function showShot(i) {
+    showVideo(false);
     main.querySelectorAll('[data-shot]').forEach(function (x) {
       var me = Number(x.getAttribute('data-shot')) === i;
       if (on(22)) x.classList.toggle('is-on', me); else x.setAttribute('aria-pressed', String(me));
@@ -278,6 +280,23 @@
     img.src = shots[i].src;
     var a = altAttr(shots[i].alt, i).match(/alt="([^"]*)"/);
     if (a) img.setAttribute('alt', a[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")); else img.removeAttribute('alt');
+  }
+  // The video thumbnail swaps the big photo for the video; a photo thumbnail swaps it back.
+  function showVideo(show) {
+    var v = main.querySelector('#pvid'), img = main.querySelector('#main-img'), t = main.querySelector('[data-video]');
+    if (!v) return;
+    v.hidden = !show;
+    img.hidden = show;
+    if (t) { if (on(22)) t.classList.toggle('is-on', show); else t.setAttribute('aria-pressed', String(show)); }
+    if (show) {
+      main.querySelectorAll('[data-shot]').forEach(function (x) { if (on(22)) x.classList.remove('is-on'); else x.setAttribute('aria-pressed', 'false'); });
+      if (on(33)) v.play().catch(function () {});
+    } else v.pause();
+  }
+  var vthumb = main.querySelector('[data-video]');
+  if (vthumb) {
+    if (!on(22)) vthumb.onclick = function () { showVideo(true); };
+    vthumb.onmouseenter = function () { showVideo(true); };
   }
   main.querySelectorAll('[data-shot]').forEach(function (b) {
     var i = Number(b.getAttribute('data-shot'));
@@ -381,12 +400,16 @@
     }, 1000);
   }
   var vid = main.querySelector('#pvid');
+  if (vid && on(33)) showVideo(true);
   if (vid && on(33)) {
-    // Issue 33: tries to play with sound. Browsers block that, so it plays muted and turns the sound on at the first click.
-    vid.muted = false;
+    // Issue 33: plays by itself on a loop, with no pause button. In a workshop room full of laptops
+    // it stays muted. Only when problem 33 is asked for by number (?issues=33) does it also try to
+    // play with sound: browsers block that, so it then turns the sound on at the first click.
+    var withSound = /(^|,)33(,|$)/.test(RB_ISSUES.value);
+    vid.muted = !withSound;
     vid.play().catch(function () {
-      vid.muted = true; vid.play();
-      document.addEventListener('click', function once() { vid.muted = false; document.removeEventListener('click', once); });
+      vid.muted = true; vid.play().catch(function () {});
+      if (withSound) document.addEventListener('click', function once() { vid.muted = false; document.removeEventListener('click', once); });
     });
   }
   // The question search filters the questions as you type.

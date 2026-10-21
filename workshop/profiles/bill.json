@@ -1,0 +1,19 @@
+{
+  "name": "Bill Grapes, older adult",
+  "supportAreas": [
+    "vision",
+    "motor"
+  ],
+  "freeText": "I'm 78. Small gray text is hard to read, and the little buttons are hard to hit. I worry about clicking the wrong thing and paying for something I didn't want.",
+  "fields": {
+    "readingLevel": null,
+    "needs": [
+      {
+        "dimension": "concreteDates",
+        "value": true,
+        "strength": "preference",
+        "unit": "boolean"
+      }
+    ]
+  }
+}

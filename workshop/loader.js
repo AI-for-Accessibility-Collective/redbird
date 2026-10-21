@@ -4,8 +4,7 @@
 //   ?try=motion-reducer                an adapter from the AI for Accessibility Toolkit itself
 //   ?try=toolkit-fixes                 the toolkit's automatic fixes (alt text, labels, contrast, ...)
 //   ?try=swatch-names,motion-reducer   several at once
-//   ?profile=sam                       a workshop person, from workshop/profiles/sam.json
-//   ?profile=lowVision                 one of the toolkit's own profiles (its tools/profiles/settings.json)
+//   ?profile=sam                       a workshop person (sam, mark, dario or bill), from workshop/profiles/
 //   ?try=mine                          your own adapter, typed into the panel (saved in this browser)
 //   ?try=none                          stop running them
 //   ?workshop=off                      hide the panel, for AI agent runs (?workshop=on shows it again)
@@ -23,7 +22,7 @@
   var base = document.currentScript.src.replace(/loader\.js.*$/, '');
   // The toolkit's adapters load straight from its GitHub repo, pinned to one version so the
   // workshop doesn't change under people. Bump the commit to pick up newer adapters.
-  var TOOLKIT = 'https://cdn.jsdelivr.net/gh/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit@a17a48483ef4c3e736273119b1e9b607aea9900d/tools/';
+  var TOOLKIT = 'https://cdn.jsdelivr.net/gh/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit@9176bd110abdccc46ce519fd3b0265eafd9ffd18/tools/';
   var AXE = 'https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js';
   // Libraries some toolkit adapters expect on the page, as the extension provides them.
   var NEEDS = { 'reader-mode': ['Readability', 'https://cdn.jsdelivr.net/npm/@mozilla/readability@0.5.0/Readability.js'] };
@@ -44,121 +43,152 @@
   var panelOn = (function () {
     var v = qs.get('workshop') || (qs.has('try') ? 'on' : null);
     try {
-      if (v) { if (isTop) localStorage.setItem('redbird:workshop', v); }
-      else v = localStorage.getItem('redbird:workshop');
+      if (v) {
+        if (isTop) localStorage.setItem('redbird:workshop', v);
+        if (v === 'off') sessionStorage.setItem('redbird:panel-off-tab', '1');
+      } else {
+        v = localStorage.getItem('redbird:workshop');
+        // Hidden only in the tab an agent link hid it in.
+        if (v === 'off' && !sessionStorage.getItem('redbird:panel-off-tab')) v = 'on';
+      }
     } catch (e) {}
     return v !== 'off' && isTop;
   })();
   if (!names.length && !panelOn) return;
+  if (panelOn && innerWidth >= 700) {
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem('redbird:panel') || '{}') || {}; } catch (e) {}
+    if (saved.dockW === 340) saved.dockW = 360; // the old default, too narrow for the tab names
+    var early = document.createElement('style');
+    early.id = 'ws-dock';
+    early.textContent = 'html{padding-' + (saved.side === 'right' ? 'right' : 'left') + ':' + Math.max(280, Math.min(saved.dockW || 360, 720, innerWidth - 360)) + 'px!important}';
+    (document.head || document.documentElement).appendChild(early);
+  }
 
   // ── What the panel offers ─────────────────────────────────────────────────
-  var EXAMPLES = ['real-arrival-dates', 'swatch-names', 'calm-urgency', 'reading-level'];
+  // Adapters written for this workshop, in workshop/adapters/. The featured ones are the examples:
+  // one for each kind of disability the workshop's shoppers have.
+  // no-surprise-extras and always-show-buttons are hidden for now: still here, but in no group or profile.
+  var EXAMPLES = ['real-arrival-dates', 'swatch-names', 'calm-urgency', 'reading-level', 'pause-moving-things', 'no-surprise-extras', 'always-show-buttons'];
+  var FEATURED = ['reading-level', 'pause-moving-things', 'swatch-names'];
   // help: one line on what it does. ai: it uses /api/ai. opts: extra options for enable().
   // arg: what enable() takes instead of the options object.
   var ADAPTERS = {
-    'real-arrival-dates': { help: 'Turns “2 business days” into the day it arrives.' },
-    'swatch-names': { help: 'Gives the color swatches names a screen reader can say.' },
-    'calm-urgency': { help: 'Labels or hides countdowns and “only 2 left” pressure.' },
-    'reading-level': { help: 'Rewrites product descriptions at the profile’s reading level.', ai: true },
-    mine: { help: 'The adapter you made in the Build tab.' },
-    'toolkit-fixes': { help: 'Finds problems with axe-core and fixes them: photo descriptions, button and field names, contrast, page structure.', ai: true },
-    'live-region-announcer': { help: 'Reads out updates like “Added to cart” that a screen reader would miss.' },
-    'skip-links': { help: 'Adds “Skip to main content” as the first thing you reach with Tab.' },
-    'page-outline': { help: 'Adds a list of the page’s headings to jump between.' },
-    'spa-focus': { help: 'Announces the new page when content changes without a reload.' },
-    'language-tag': { help: 'Marks text in another language so it’s pronounced right.' },
-    'describe-on-demand': { help: 'Press Alt+D to hear a description of whatever has focus.', ai: true },
-    'focus-locator': { help: 'Draws a strong ring around whatever has keyboard focus.' },
-    'link-highlighter': { help: 'Underlines links and makes them stand out.' },
-    'visual-assist': { help: 'Bigger text, more space between lines, a clearer focus ring.' },
-    magnifier: { help: 'A lens that enlarges the text under the pointer.' },
-    'reflow-column': { help: 'Puts the page in one column, so zooming in doesn’t scroll sideways.' },
-    'unpin-sticky': { help: 'Stops the header and bars from sticking to the screen.' },
-    'persistent-hover': { help: 'Keeps pop-up hints open until you press Escape.' },
-    'dark-mode': { help: 'Turns the page dark.' },
-    'color-blind': { help: 'Shifts colors so red and green are easier to tell apart.', arg: 'deuteranopia' },
-    'reduce-brightness': { help: 'Dims the page and mutes its colors.' },
-    'explore-a-chart': { help: 'Turns charts into tables you can read. This store has no charts.', ai: true },
-    'math-a11y': { help: 'Gives equations a name a screen reader can say. This store has no math.' },
-    'reading-ruler': { help: 'A band that follows the pointer and dims the lines around it.' },
-    'bionic-reading': { help: 'Bolds the start of each word.' },
-    'reader-mode': { help: 'Shows just the main text in a plain view.' },
-    'simplify-text': { help: 'Rewrites long paragraphs in plainer words.', ai: true },
-    'define-words': { help: 'Hover or focus a hard word to get a short definition.', ai: true },
-    'abbreviation-expand': { help: 'Spells out abbreviations like “PD” and “MSRP”.' },
+    'real-arrival-dates': { who: 'Screen reader users, people with memory or attention disabilities, and anyone who wants the real date', help: 'Turns “5–7 business days” into the dates it arrives.' },
+    'swatch-names': { who: 'Blind and low-vision shoppers', help: 'Gives the color circles names a screen reader can say, and lets the arrow keys pick one.' },
+    'calm-urgency': { who: 'People with anxiety or ADHD', help: 'Labels or hides countdowns and “only 2 left” messages.' },
+    'reading-level': { who: 'People with cognitive or reading disabilities', help: 'Rewrites hard product descriptions in short, plain sentences, with a button to show the original.', ai: true },
+    'pause-moving-things': { who: 'People with ADHD or anxiety, and people who get dizzy from motion', help: 'The deals bar, the banner and the product rows move by themselves, and the video plays on its own. This stops all of them, but you can still click or scroll through them yourself.' },
+    'no-surprise-extras': { who: 'Older adults, and anyone who might buy something they didn’t mean to', help: 'On product pages, the store ticks a paid protection plan and a repeat order for you. This turns both off, with a note saying what it changed.' },
+    'always-show-buttons': { who: 'People who can’t easily use a mouse, like keyboard and voice control users', help: 'In search results, “Add to cart” only shows up when the mouse is over a product, so the keyboard can’t reach it. This keeps the buttons showing.' },
+    mine: { help: 'The adapter you made in Build your adapter.' },
+    'toolkit-fixes': { help: 'Fixes what the audit finds: describes photos, names buttons and fields, fixes low contrast and the page structure.', ai: true },
+    'live-region-announcer': { help: 'Reads out updates a screen reader would otherwise miss, like “Added to cart”.' },
+    'skip-links': { help: 'Adds a “Skip to main content” link, so keyboard users don’t have to Tab through the whole header.' },
+    'page-outline': { help: 'Adds a list of the page’s headings, so you can jump straight to a section.' },
+    'spa-focus': { help: 'When part of the page changes without a new page loading, moves the focus there and says so.' },
+    'language-tag': { help: 'Marks text in another language, so a screen reader pronounces it right.' },
+    'describe-on-demand': { help: 'Press Alt+D to hear a description of whatever has the keyboard focus.', ai: true },
+    'focus-locator': { help: 'Draws a thick ring around whatever has the keyboard focus, so you can see where you are.' },
+    'link-highlighter': { help: 'Underlines every link and gives it a clear color.' },
+    'visual-assist': { help: 'Makes the text bigger, adds space between lines, and makes the focus ring easier to see.' },
+    magnifier: { help: 'Shows a lens that enlarges whatever is under the mouse.' },
+    'reflow-column': { help: 'Puts the page in one column, so zooming in never makes you scroll sideways.' },
+    'unpin-sticky': { help: 'Stops headers and bars from staying stuck on the screen when you scroll.' },
+    'persistent-hover': { help: 'Keeps pop-up hints open until you press Escape, instead of closing when the mouse moves.' },
+    'dark-mode': { help: 'Turns the page dark, with light text on a dark background.' },
+    'color-blind': { help: 'Shifts the page’s colors so red and green are easier to tell apart.', arg: 'deuteranopia' },
+    'reduce-brightness': { help: 'Dims the whole page and softens bright colors.' },
+    'explore-a-chart': { help: 'Turns a chart into a table you can read. This store has no charts.', ai: true },
+    'math-a11y': { help: 'Gives math a name a screen reader can read. This store has no math.' },
+    'bionic-reading': { help: 'Makes the first letters of each word bold, to guide the eye along the line.' },
+    'reader-mode': { help: 'Shows only the main text of the page, in a plain layout.' },
+    'simplify-text': { help: 'Rewrites long paragraphs in plainer words, keeping every fact.', ai: true },
+    'define-words': { help: 'Shows a short definition when you point at or focus a hard word.', ai: true },
+    'abbreviation-expand': { help: 'Spells out short forms, like MSRP and S&S.' },
     'translate-page': { help: 'Translates the page into Spanish.', ai: true, opts: { targetLang: 'Spanish' } },
-    'read-aloud': { help: 'Reads the page out loud. Switch it off to stop.' },
-    'reading-spot': { help: 'Remembers how far down you read and offers to jump back.' },
-    'focus-mode': { help: 'Dims ads and pop-ups and shows how far down the page you are.' },
-    'motion-reducer': { help: 'Stops animations, the moving ticker and autoplaying video.' },
-    'stop-auto-advance': { help: 'Pauses carousels and anything else that moves on its own.' },
+    'read-aloud': { help: 'Reads the page out loud. Turn it off to stop.' },
+    // The saved spot is kept per page, not per workshop link (those add ?issues=, ?try= and so on).
+    'reading-spot': { opts: { key: 'ai4a11y-spot:' + location.pathname + (function () {
+      var q = new URLSearchParams(location.search);
+      ['issues', 'workshop', 'profile', 'today', 'spotlight', 'try', 'from', 'reset', 'cart', 'need', 'new'].forEach(function (k) { q.delete(k); });
+      return q.toString() ? '?' + q : '';
+    })() }, help: 'Remembers how far down the page you read, and offers to take you back there.' },
+    'focus-mode': { help: 'Dims ads and pop-ups, and shows how far down the page you are.', opts: { hideDistractions: true } },
+    'motion-reducer': { help: 'Stops animations, the scrolling deals bar, and videos that play by themselves.' },
+    'stop-auto-advance': { help: 'Stops carousels and rows of products from moving on their own.' },
     'dismiss-overlays': { help: 'Closes cookie banners, sign-up pop-ups and promo bars.' },
-    'mute-sounds': { help: 'Mutes all audio and video.' },
-    'flash-guard': { help: 'Dims videos and GIFs that could flash.' },
-    'confirm-actions': { help: 'Asks for a second click before paying, deleting or sending.' },
+    'mute-sounds': { help: 'Turns off all sound from videos and audio.' },
+    'flash-guard': { help: 'Dims videos and animations that could flash.' },
+    'confirm-actions': { help: 'Asks “Are you sure?” before you pay, delete or send something.' },
     'show-captions': { help: 'Turns on captions for videos that have them.' },
-    'auto-transcriber': { help: 'Adds caption controls to videos.' },
-    'sound-visualizer': { help: 'Shows a sign on screen whenever the page plays sound.' },
-    'keyboard-nav': { help: 'Keyboard shortcuts and a clearer path through the page with Tab.' },
+    'auto-transcriber': { help: 'Adds a CC button to videos that turns their captions on and off.' },
+    'sound-visualizer': { help: 'Shows a sign on the screen whenever the page plays a sound.' },
+    'keyboard-nav': { help: 'Adds a skip link, a clear focus ring, and shortcuts: Alt+1 for the main content, Alt+H for the next heading.' },
     'big-targets': { help: 'Makes small buttons and links bigger and easier to hit.' },
-    'voice-commands': { help: 'Control the page by voice. Asks to use the microphone.' },
+    'voice-commands': { help: 'Lets you control the page by speaking. It asks to use the microphone.' },
   };
   // [name, unused, adapters]
   var GROUPS = [
-    ['Workshop examples', '', EXAMPLES.concat('mine')],
-    ['Fix the whole page', '', ['toolkit-fixes']],
-    ['Screen readers', '', ['live-region-announcer', 'skip-links', 'page-outline',
+    ['Workshop examples', '', FEATURED.concat('mine')],
+    ['Blind and screen reader users', '', ['live-region-announcer', 'skip-links', 'page-outline',
       'spa-focus', 'language-tag', 'describe-on-demand', 'explore-a-chart', 'math-a11y']],
-    ['Low vision and color', '', ['visual-assist', 'magnifier', 'focus-locator', 'link-highlighter',
+    ['Low vision and color blindness', '', ['visual-assist', 'magnifier', 'focus-locator', 'link-highlighter',
       'reflow-column', 'unpin-sticky', 'persistent-hover', 'dark-mode', 'color-blind', 'reduce-brightness']],
-    ['Reading', '', ['reading-ruler', 'bionic-reading', 'reader-mode', 'simplify-text', 'define-words',
+    ['Reading and understanding', '', ['real-arrival-dates', 'bionic-reading', 'reader-mode', 'simplify-text', 'define-words',
       'abbreviation-expand', 'translate-page', 'read-aloud', 'reading-spot']],
-    ['Attention and anxiety', '', ['focus-mode', 'motion-reducer', 'stop-auto-advance',
+    ['Attention, anxiety and motion', '', ['calm-urgency', 'focus-mode', 'motion-reducer', 'stop-auto-advance',
       'dismiss-overlays', 'mute-sounds', 'flash-guard', 'confirm-actions']],
-    ['Hearing', '', ['show-captions', 'auto-transcriber', 'sound-visualizer']],
-    ['Keyboard and motor', '', ['keyboard-nav', 'big-targets', 'voice-commands']],
+    ['Deaf and hard of hearing', '', ['show-captions', 'auto-transcriber', 'sound-visualizer']],
+    ['Motor and keyboard', '', ['keyboard-nav', 'big-targets', 'voice-commands']],
   ];
-  // The workshop's three people, and the adapters each one gets on the side-by-side page.
+  // The workshop's four people, and the few adapters each one gets. Each set is checked on the
+  // store's pages, so picking someone never breaks the page. (The toolkit's own profiles turn on
+  // eight or more adapters at once, which fight each other on a page like this one.)
   var PEOPLE = {
     sam: ['Sam Saltman, blind', ['toolkit-fixes', 'swatch-names', 'real-arrival-dates', 'live-region-announcer', 'skip-links']],
-    mark: ['Mark Sugarberg, ADHD and anxiety', ['calm-urgency', 'motion-reducer', 'stop-auto-advance', 'real-arrival-dates']],
-    dario: ['Dario Almondei, dyslexia', ['reading-level', 'abbreviation-expand', 'real-arrival-dates']],
+    dario: ['Dario Almondei, cognitive disability', ['reading-level', 'abbreviation-expand', 'calm-urgency', 'stop-auto-advance', 'real-arrival-dates']],
+    mark: ['Mark Sugarberg, ADHD and anxiety', ['calm-urgency', 'pause-moving-things', 'real-arrival-dates']],
+    bill: ['Bill Grapes, older adult', ['visual-assist', 'big-targets', 'confirm-actions', 'real-arrival-dates']],
   };
-  // The toolkit's profiles name settings, not adapters. This is the adapter each setting turns on.
-  // Voice commands stay off here, so picking a profile never asks for the microphone.
-  var SETTING = {
-    autoWcagFix: 'toolkit-fixes', autoFixLabels: 'toolkit-fixes', autoDescribe: 'toolkit-fixes', fixContrast: 'toolkit-fixes', fixLandmarks: 'toolkit-fixes',
-    announceUpdates: 'live-region-announcer', describeOnDemand: 'describe-on-demand', languageTag: 'language-tag', exploreChart: 'explore-a-chart',
-    spaFocus: 'spa-focus', skipLinks: 'skip-links', mathAccessible: 'math-a11y',
-    fontScale: 'visual-assist', lineHeight: 'visual-assist', letterSpacing: 'visual-assist', largeCursor: 'visual-assist', enhanceFocus: 'visual-assist',
-    highlightLinks: 'link-highlighter', unpinSticky: 'unpin-sticky', magnifier: 'magnifier', reflowColumn: 'reflow-column', focusLocator: 'focus-locator',
-    persistentHover: 'persistent-hover', showCaptions: 'show-captions', autoCaptions: 'show-captions', soundVisualizer: 'sound-visualizer',
-    keyboardNav: 'keyboard-nav', dismissOverlays: 'dismiss-overlays', bigTargets: 'big-targets', pageOutline: 'page-outline',
-    stopAutoAdvance: 'stop-auto-advance', confirmActions: 'confirm-actions', focusMode: 'focus-mode', hideDistractions: 'focus-mode',
-    showProgress: 'focus-mode', bionicReading: 'bionic-reading', readingRuler: 'reading-ruler', autoSimplify: 'simplify-text',
-    defineWords: 'define-words', rememberSpot: 'reading-spot', expandAbbreviations: 'abbreviation-expand', motionReducer: 'motion-reducer',
-    muteSounds: 'mute-sounds', reduceBrightness: 'reduce-brightness', darkMode: 'dark-mode', flashGuard: 'flash-guard',
+  // The toolkit's own 12 profiles (its tools/profiles/settings.json), each with the few adapters that
+  // work well together on this store. The full profiles turn on 8 or more at once, which fight.
+  // [name, the toolkit's description, adapters]
+  var TOOLKIT_PROFILES = {
+    blind: ['Blind', 'Optimized for screen reader users: structure, labels, descriptions', ['toolkit-fixes', 'live-region-announcer', 'skip-links', 'swatch-names', 'describe-on-demand']],
+    lowVision: ['Low vision', 'Larger text, spacing, enhanced focus, contrast fixes', ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates']],
+    colorBlind: ['Color blindness', 'Contrast fixes, photo descriptions, and a clear focus ring', ['toolkit-fixes', 'focus-locator']],
+    deaf: ['Deaf and hard of hearing', 'Captions on videos, and a sign on screen when the page plays a sound', ['auto-transcriber', 'sound-visualizer']],
+    motor: ['Motor disability', 'Bigger buttons and links, a clear focus ring, and a check before you pay', ['big-targets', 'focus-locator', 'skip-links', 'stop-auto-advance', 'confirm-actions']],
+    dyslexia: ['Dyslexia', 'More space between lines, and focus mode', ['visual-assist', 'focus-mode']],
+    adhd: ['ADHD', 'Reduced distractions, progress indicators, summaries for long content', ['focus-mode', 'stop-auto-advance', 'calm-urgency', 'reading-level']],
+    cognitive: ['Cognitive disability', 'Plain-language text, spelled-out abbreviations, and real dates', ['reading-level', 'abbreviation-expand', 'real-arrival-dates', 'calm-urgency', 'focus-mode', 'stop-auto-advance']],
+    olderAdult: ['Older adult', 'Bigger text and buttons, plain language, and a check before you pay', ['visual-assist', 'big-targets', 'reading-level', 'stop-auto-advance', 'confirm-actions']],
+    anxiety: ['Anxiety', 'Calm interface, reduced motion, progress indicators reduce uncertainty', ['calm-urgency', 'stop-auto-advance', 'real-arrival-dates', 'confirm-actions']],
+    sensory: ['Sensory processing', 'Overload prevention: no motion, fewer distractions', ['stop-auto-advance', 'reduce-brightness', 'calm-urgency', 'mute-sounds']],
+    photosensitive: ['Light sensitivity', 'Dark mode and reduced motion', ['dark-mode', 'reduce-brightness', 'stop-auto-advance']],
   };
-  var settingsReady = null;
-  function toolkitProfiles() {
-    settingsReady = settingsReady || fetch(TOOLKIT + 'profiles/settings.json')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { return (d && d.profiles) || {}; })
-      .catch(function () { return {}; });
-    return settingsReady;
+  // My profile: the one people make for themselves in the Profiles tab. The shoppers and the
+  // toolkit's profiles are made-up people, and this one is what the toolkit is for: a profile the
+  // person keeps using. It stays in this browser, and saves as a file the toolkit's browser
+  // extension can import (the toolkit's "aa-profile-blob" format).
+  var ME_KEY = 'redbird:me';
+  function myProfile() { try { var m = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return m && m.freeText ? m : null; } catch (e) { return null; } }
+  function isPerson(id) { return id === 'me' || !!(PEOPLE[id] || TOOLKIT_PROFILES[id]); }
+  function setOf(id) {
+    if (id === 'me') { var m = myProfile(); return m && m.adapters ? m.adapters.filter(function (n) { return ADAPTERS[n]; }) : []; }
+    return PEOPLE[id] ? PEOPLE[id][1] : TOOLKIT_PROFILES[id][2];
   }
-  function bundleFor(id, all) {
-    if (PEOPLE[id]) return PEOPLE[id][1];
-    var p = all[id], out = [];
-    if (p) Object.keys(p.tools).forEach(function (k) { var a = SETTING[k]; if (p.tools[k] && a && out.indexOf(a) === -1) out.push(a); });
-    return out;
+  function nameOf(id) { return id === 'me' ? 'My profile' : PEOPLE[id] ? PEOPLE[id][0] : TOOLKIT_PROFILES[id][0] + ' (toolkit profile)'; }
+  // A workshop shopper's profile is a file next to this one; a toolkit profile is its name and description.
+  function loadProfile(id) {
+    if (id === 'me') return Promise.resolve(myProfile());
+    if (TOOLKIT_PROFILES[id]) return Promise.resolve({ name: TOOLKIT_PROFILES[id][0], freeText: TOOLKIT_PROFILES[id][1], toolkit: true });
+    return fetch(base + 'profiles/' + id + '.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
-  var profile = !profileName ? Promise.resolve(null)
-    : PEOPLE[profileName] ? fetch(base + 'profiles/' + profileName + '.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    : toolkitProfiles().then(function (all) {
-      var p = all[profileName];
-      return p ? { name: p.name, description: p.description, tools: p.tools, toolkit: true } : null;
-    });
+  // My profile is the default: the person's own profile comes first, the made-up shoppers after.
+  if (!isPerson(profileName)) profileName = 'me';
+  var profile = loadProfile(profileName);
 
   // ── Small helpers ─────────────────────────────────────────────────────────
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -401,16 +431,45 @@
     toolkitReady = toolkitReady || import(TOOLKIT + 'utils/ai.js').then(function (m) { m.setAIProvider(provider); });
     return toolkitReady;
   }
-  function say(text) {
+  // Everything the adapters say goes through one polite live region. It goes on the page as soon
+  // as the loader runs: screen readers often miss the first message of a region that appears
+  // together with it. The region is emptied before each message, so the same words said twice
+  // are read twice, and messages that arrive together are read as one instead of the last one
+  // replacing the rest.
+  function liveRegion() {
     var live = document.getElementById('ws-live');
     if (!live) {
       live = Object.assign(document.createElement('div'), { id: 'ws-live' });
       live.setAttribute('aria-live', 'polite');
       live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
-      document.body.appendChild(live);
+      (document.body || document.documentElement).appendChild(live);
     }
-    live.textContent = text;
+    return live;
   }
+  // One queue for the whole page, kept on the region itself, so the workshop's example adapters
+  // (their say() helper does the same) and the toolkit's adapters never wipe each other's words.
+  // Messages that arrive together are read as one, and each stays up for a moment before the next.
+  var hushUntil = 0; // while a shopper or a fix switches many adapters at once, they don't each speak
+  function say(text, mine) {
+    text = squash(text);
+    if (!mine && Date.now() < hushUntil) return;
+    var live = liveRegion();
+    if (!text || (live.waiting || []).slice(-1)[0] === text) return;
+    // Whether everything waiting came from the panel itself, so the Audit tab's log says so.
+    live.panel = (!live.waiting || !live.waiting.length ? true : live.panel) && !!mine;
+    live.waiting = (live.waiting || []).concat(text);
+    clearTimeout(live.timer);
+    live.timer = setTimeout(function () {
+      var words = live.waiting.join('. ');
+      live.waiting = [];
+      if (live.panel) live.__wsWho = 'panel';
+      else if (live.__wsWho === 'panel') live.__wsWho = null;
+      live.textContent = '';
+      setTimeout(function () { live.textContent = words; live.until = Date.now() + 1200; }, 60);
+    }, Math.max(50, (live.until || 0) - Date.now()));
+  }
+  if (document.body) liveRegion(); else document.addEventListener('DOMContentLoaded', liveRegion);
+  window.RB_SAY = say;
 
   // ── The toolkit's automatic fixes ─────────────────────────────────────────
   // The extension runs axe-core, then hands each problem it finds to the toolkit's fix for that
@@ -446,9 +505,10 @@
               });
             });
             // Like the extension's second scan: large images with empty alt text get a description too.
-            audit.findEmptyAltImages().forEach(function (img) {
+            audit.findEmptyAltImages().concat(audit.findBadAltImages()).forEach(function (img) {
               var job = function () { return alt.generateImageAlt(img); };
-              job.el = img; job.kind = 'photo descriptions'; job.why = 'Large photo with an empty description';
+              job.el = img; job.kind = 'photo descriptions';
+              job.why = img.alt.trim() ? 'Photo with a useless description, like a file name' : 'Large photo with an empty description';
               jobs.push(job);
             });
             var done = {};
@@ -494,13 +554,14 @@
   // "mine" is the adapter typed into the panel. It starts as the template and is kept in this browser.
   var MY_KEY = 'redbird:my-adapter';
   // What the Build tab keeps in this browser.
-  var SKILLS_KEY = 'redbird:skills', PERSON_KEY = 'redbird:person', DRAFT_KEY = 'redbird:skill-draft', FIX_KEY = 'redbird:fix',
+  var SKILLS_KEY = 'redbird:fixes', PERSON_KEY = 'redbird:person', NEED_KEY = 'redbird:need', DRAFT_KEY = 'redbird:build',
     PREV_KEY = 'redbird:my-adapter-prev', SETTINGS_KEY = 'redbird:settings', NOTE_KEY = 'redbird:build-note';
   // Settings a skill can give an adapter: the keys, and what the Engineer is told about them.
   var SETTINGS = {
     'visual-assist': [['fontScale', 'lineHeight', 'letterSpacing', 'enhanceFocus'], 'fontScale (1 to 2, text size), lineHeight (1 to 2.5), letterSpacing (0 to 0.3, in em), enhanceFocus (true or false)'],
     'translate-page': [['targetLang'], 'targetLang (a language name, e.g. "Spanish")'],
     'color-blind': [['type'], 'type ("protanopia", "deuteranopia" or "tritanopia")'],
+    'calm-urgency': [['mode'], 'mode ("label" dims countdowns and low-stock messages and adds a short note, "hide" hides them)'],
   };
   var skillSettings = {};
   try { skillSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (e) {}
@@ -518,8 +579,8 @@
         if (old && old !== code) localStorage.setItem(PREV_KEY, old);
         localStorage.setItem(MY_KEY, code);
       } catch (e) {}
-      fix = { description: 'A copy of the ' + from + ' example', at: Date.now() };
-      keep(FIX_KEY, fix);
+      result = { name: from + '-copy', need: 'A copy of the ' + from + ' example', description: '', adapters: [{ id: 'mine', settings: {} }], md: '', code: code };
+      keep(DRAFT_KEY, result);
     }
     qs.delete('from');
     history.replaceState(history.state, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash);
@@ -533,7 +594,8 @@
       var done = [];
       return {
         enable: function () {
-          done = Array.prototype.filter.call(document.querySelectorAll('main p, main li'), function (el) {
+          // Issue 11 leaves the page without a <main>, so look in #main too.
+          done = Array.prototype.filter.call(document.querySelectorAll('main p, main li, #main p, #main li'), function (el) {
             return !inPanel(el) && squash(el.textContent).length >= 100;
           }).slice(0, 6);
           return Promise.all(done.map(function (el) { return m.simplifyText(el).catch(warn('simplify-text')); }));
@@ -574,14 +636,8 @@
     if (name === 'visual-assist') Object.assign(o, visualSettings());
     return Object.assign(o, set);
   }
-  // A toolkit profile's text settings go to visual-assist; without one it gets a middle setting.
-  function visualSettings() {
-    var t = currentProfile && currentProfile.tools;
-    if (!t) return { fontScale: 1.25, lineHeight: 1.8, enhanceFocus: true };
-    var o = {};
-    ['fontScale', 'lineHeight', 'letterSpacing', 'largeCursor', 'enhanceFocus'].forEach(function (k) { if (t[k] != null && t[k] !== false) o[k] = t[k]; });
-    return o;
-  }
+  // visual-assist gets a middle setting: bigger text and more space, without breaking the layout.
+  function visualSettings() { return { fontScale: 1.25, lineHeight: 1.6, enhanceFocus: true }; }
   function turnOn(name) {
     delete errors[name];
     refresh(name, 'Loading…');
@@ -613,9 +669,13 @@
     if (on && i === -1) names.push(name);
     if (!on && i !== -1) names.splice(i, 1);
     saveNames();
+    learn(name, on);
+    if (rendered) root.querySelectorAll('input[data-ad="' + name + '"]').forEach(function (x) { x.checked = on; });
     if (on) turnOn(name); else turnOff(name);
-    renderSkills();
-    renderDraft();
+    renderSaved();
+    renderResult();
+    renderOnList();
+    fixAllButton();
   }
   function go(changes) {
     Object.keys(changes).forEach(function (k) { qs.set(k, changes[k]); });
@@ -654,45 +714,88 @@
     if (e.type === 'text') return e.parts.some(function (p) { return !p.nodes.length || p.nodes.some(function (n) { return n.isConnected; }); });
     return true;
   }
-  function label(name) { return name === 'mine' ? 'your adapter' : name; }
+  // toolkit-fixes is the Audit tab's "Fix this page", so that's what it's called everywhere people see it.
+  function label(name) { return name === 'mine' ? 'your adapter' : name === 'toolkit-fixes' ? 'fix-this-page' : name; }
 
   // ── Panel ─────────────────────────────────────────────────────────────────
-  var ui = { tab: 'setup', open: true, side: 'left' };
+  // dockW: how wide the sidebar is.
+  var ui = { tab: 'profiles', open: true, side: 'left', dockW: 360, highlight: false };
   try { Object.assign(ui, JSON.parse(localStorage.getItem('redbird:panel') || 'null') || ((window.visualViewport ? visualViewport.width : innerWidth) < 640 ? { open: false } : {})); } catch (e) {}
+  ui.open = true; // the panel is always there: it sits beside the page, not over it
+  if (ui.dockW === 340) ui.dockW = 360; // the old default, too narrow for the tab names
+  // "Edit a copy" in the guide: open the copied example's code in Build your adapter.
+  var openCode = !!qs.get('from');
+  if (openCode) ui.tab = 'build';
+  // ?need= (the guide's problem list): open Build your own with that change already written in.
+  if (qs.get('need')) {
+    try {
+      localStorage.setItem('redbird:need', qs.get('need'));
+      localStorage.removeItem('redbird:build');
+      // &new=1: the guide knows no adapter fixes this yet, so Build it goes straight to writing one.
+      if (qs.get('new')) localStorage.setItem('redbird:need-new', qs.get('need')); else localStorage.removeItem('redbird:need-new');
+    } catch (e) {}
+    ui.tab = 'build';
+    qs.delete('need');
+    history.replaceState(history.state, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash);
+  }
+  if (['profiles', 'adapters', 'build', 'audit'].indexOf(ui.tab) === -1) ui.tab = ui.tab === 'checks' || ui.tab === 'changes' ? 'audit' : 'profiles';
   function saveUi() { try { localStorage.setItem('redbird:panel', JSON.stringify(ui)); } catch (e) {} }
-  // On a wide screen the open panel docks to the side like browser developer tools, and the store
-  // moves over to make room, so the panel never covers what an adapter changed. It only docks when
-  // the store still fits beside it: planted issue 15 makes the store at least 1280 px wide, and
-  // docking then would push the store into a sideways scroll. Otherwise it floats in the corner.
+  // The panel is a full-height sidebar, and the store moves over to make room, so the panel never
+  // covers the page. On a screen too narrow for both (a phone), it sits along the bottom instead,
+  // and the page gets that much room at its end.
   var dockStyle = null;
+  function dockWidth() { return Math.max(box.classList.contains('ws-wide') ? 520 : 280, Math.min(ui.dockW || 360, 720, innerWidth - 360)); }
   function dock() {
-    if (!dockStyle) {
-      dockStyle = document.createElement('style');
-      dockStyle.textContent = 'html.ws-dock-left{padding-left:340px!important}html.ws-dock-right{padding-right:340px!important}' +
-        'html.ws-dock-wide.ws-dock-left{padding-left:540px!important}html.ws-dock-wide.ws-dock-right{padding-right:540px!important}';
-      document.head.appendChild(dockStyle);
-    }
-    var need = (parseFloat(getComputedStyle(document.body).minWidth) || 0) || 900;
-    var on = ui.open && innerWidth - (box.classList.contains('ws-wide') ? 540 : 340) >= need && !!host.isConnected;
-    document.documentElement.classList.toggle('ws-dock-left', on && ui.side === 'left');
-    document.documentElement.classList.toggle('ws-dock-right', on && ui.side === 'right');
-    document.documentElement.classList.toggle('ws-dock-wide', on && box.classList.contains('ws-wide'));
-    if (on) box.setAttribute('data-dock', ''); else box.removeAttribute('data-dock');
+    if (!dockStyle) { dockStyle = document.getElementById('ws-dock') || document.head.appendChild(document.createElement('style')); }
+    if (!host.isConnected) { dockStyle.textContent = ''; return; }
+    var side = innerWidth >= 700, w = dockWidth();
+    box.setAttribute('data-dock', side ? 'side' : 'bottom');
+    var css = side ? 'html{padding-' + ui.side + ':' + w + 'px!important}' : 'html{padding-bottom:' + Math.round(innerHeight * 0.45) + 'px!important}';
+    if (dockStyle.textContent !== css) dockStyle.textContent = css;
+    var edge = $('.ws-edge');
+    if (edge) { edge.setAttribute('aria-valuenow', String(w)); edge.setAttribute('aria-valuemin', '280'); edge.setAttribute('aria-valuemax', '720'); }
     place();
     if (marks.outline || marks.flash) queueMarks();
   }
-  // A floating panel sits in the corner of what you can see. When the store is wider than the
-  // screen (issue 15 on a phone), the browser stretches the area fixed things are placed in, and a
-  // plain bottom: 12px would put the panel far below the screen.
   function place() {
-    var vv = window.visualViewport;
-    if (!box || box.hasAttribute('data-dock') || !vv) { if (box) box.removeAttribute('style'); return; }
-    var w = ui.open ? Math.min(box.classList.contains('ws-wide') ? 600 : 360, vv.width - 24) : Math.min(box.offsetWidth, vv.width - 24);
-    if (ui.open) box.style.width = w + 'px'; else box.style.width = '';
-    box.style.maxHeight = Math.round(vv.height * 0.62) + 'px';
-    box.style.right = box.style.bottom = 'auto';
-    box.style.left = Math.round(ui.side === 'right' ? vv.offsetLeft + vv.width - w - 12 : vv.offsetLeft + 12) + 'px';
-    box.style.top = Math.round(vv.offsetTop + vv.height - box.offsetHeight - 12) + 'px';
+    if (!box) return;
+    var w = box.getAttribute('data-dock') === 'side' ? dockWidth() + 'px' : '';
+    if (box.style.width !== w) box.style.width = w;
+  }
+  // The sidebar's inner edge changes its width: drag it, or focus it and use the arrow keys (it's a
+  // separator, the usual pattern for a resizable side pane). The reset button puts the width and
+  // the side back.
+  function wireResize() {
+    var edge = $('.ws-edge'), drag = null;
+    function setWidth(w) { ui.dockW = Math.max(280, Math.min(720, Math.round(w))); saveUi(); dock(); }
+    edge.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      drag = { x: e.clientX, w: dockWidth() };
+      edge.setPointerCapture(e.pointerId);
+    });
+    edge.addEventListener('pointermove', function (e) {
+      if (drag) setWidth(drag.w + (ui.side === 'left' ? 1 : -1) * (e.clientX - drag.x));
+    });
+    edge.addEventListener('pointerup', function () { drag = null; });
+    edge.addEventListener('pointercancel', function () { drag = null; });
+    edge.addEventListener('keydown', function (e) {
+      var d = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
+      if (e.key === 'Home') d = -100; else if (e.key === 'End') d = 100;
+      if (!d) return;
+      e.preventDefault();
+      setWidth(dockWidth() + d * 24 * (ui.side === 'left' ? 1 : -1));
+    });
+    $('#ws-reset').onclick = function () {
+      ui.dockW = 360;
+      ui.side = 'left';
+      box.setAttribute('data-side', 'left');
+      sideButton();
+      saveUi();
+      putHost();
+      dock();
+      $('#ws-reset').focus();
+    };
   }
   var host, root, box, rendered = false;
   var filterWho = '', expanded = {}, lastCounts = {}, found = [];
@@ -702,115 +805,186 @@
     // announce the page never see it, and the store's styles never reach it.
     host = document.createElement('div');
     host.id = 'ws-root';
+    host.setAttribute('lang', 'en'); // stays English when translate-page switches the page to Spanish
     root = host.attachShadow({ mode: 'open' });
     root.innerHTML = '<style>' + CSS + '</style>' +
-      '<section class="ws-panel" aria-label="Workshop panel" data-side="' + ui.side + '">' +
-        '<div class="ws-top"><button type="button" class="ws-head" aria-expanded="' + ui.open + '">' +
-          '<span class="ws-title">Workshop</span> <span class="ws-sub" id="ws-sub"></span></button>' +
-        '<button type="button" class="ws-icon" id="ws-side"></button>' +
-        '<button type="button" class="ws-icon ws-fold" id="ws-fold"></button></div>' +
-        '<div class="ws-main"' + (ui.open ? '' : ' hidden') + '>' +
-          '<div class="ws-tabs" role="tablist" aria-label="Workshop panel">' +
-            tab('setup', 'Setup') + tab('build', 'Build') + tab('changes', 'Changes <span class="ws-count" id="ws-count"></span>') + tab('checks', 'Checks') +
+      '<aside class="ws-panel" aria-label="AI4A11y Toolkit" data-side="' + ui.side + '">' +
+        '<a class="ws-skip" href="#" id="ws-skip">Skip to the store</a>' +
+        '<div class="ws-top">' +
+          '<h2 class="ws-head"><span class="ws-title">AI4A11y Toolkit <span class="ws-sub">(Workshop Demo)</span></span></h2>' +
+        '<button type="button" class="ws-icon" id="ws-reset" aria-label="Reset the panel’s width and side" title="Reset width and side">↺</button>' +
+        '<button type="button" class="ws-icon" id="ws-side"></button></div>' +
+        '<div class="ws-bar"><label class="ws-toggle" title="Marks each problem on the page with a red number, which turns green when an adapter fixes it.">' +
+          '<input type="checkbox" role="switch" class="ws-spot"' + (spotOn() ? ' checked' : '') + '> <span>Show accessibility problems on the page</span></label></div>' +
+        '<div class="ws-main">' +
+          '<div class="ws-tabs" role="tablist" aria-label="AI4A11y Toolkit">' +
+            tab('profiles', 'Profiles') + tab('adapters', 'Adapter Library') + tab('build', 'Build your adapter') + tab('audit', 'Audit') +
           '</div>' +
           '<div class="ws-scroll">' +
-            '<div role="tabpanel" class="ws-pane" id="ws-pane-setup" aria-labelledby="ws-tab-setup">' + setupHTML() + '</div>' +
+            '<div role="tabpanel" class="ws-pane" id="ws-pane-profiles" aria-labelledby="ws-tab-profiles">' + profilesHTML() + '</div>' +
+            '<div role="tabpanel" class="ws-pane" id="ws-pane-adapters" aria-labelledby="ws-tab-adapters">' + adaptersHTML() + '</div>' +
             '<div role="tabpanel" class="ws-pane" id="ws-pane-build" aria-labelledby="ws-tab-build">' + buildHTML() + '</div>' +
-            '<div role="tabpanel" class="ws-pane" id="ws-pane-changes" aria-labelledby="ws-tab-changes">' + changesHTML() + '</div>' +
-            '<div role="tabpanel" class="ws-pane" id="ws-pane-checks" aria-labelledby="ws-tab-checks">' + checksHTML() + '</div>' +
+            '<div role="tabpanel" class="ws-pane" id="ws-pane-audit" aria-labelledby="ws-tab-audit">' + auditHTML() + '</div>' +
           '</div>' +
-          '<p class="ws-status" id="ws-status" role="status"></p>' +
-          '<p class="ws-foot"><a href="' + base + '" target="_blank" rel="noopener">Guides<span class="ws-sr"> (opens in a new tab)</span></a> · ' +
-            '<a href="' + base + 'controls" target="_blank" rel="noopener">Store controls<span class="ws-sr"> (opens in a new tab)</span></a></p>' +
+          '<p class="ws-status" id="ws-status"></p>' +
+          '<p class="ws-foot"><a href="' + base + '" target="_blank" rel="noopener">Guide<span class="ws-sr"> (opens in a new tab)</span></a></p>' +
         '</div>' +
-      '</section><div class="ws-marks" aria-hidden="true"></div><div class="ws-pickbox" aria-hidden="true" hidden></div>';
-    document.body.appendChild(host);
+        '<div class="ws-edge" role="separator" aria-orientation="vertical" aria-label="Panel width" tabindex="0" title="Drag to change the width"></div>' +
+      '</aside><div class="ws-marks" aria-hidden="true"></div><div class="ws-pickbox" aria-hidden="true" hidden></div>';
+    putHost();
     box = root.querySelector('.ws-panel');
     rendered = true;
     wire();
     showTab(ui.tab, false);
-    box.classList.toggle('ws-closed', !ui.open);
-    foldButton();
     sideButton();
     dock();
-    toolkitProfiles().then(fillProfiles);
+    fillProfiles();
+    renderOnList();
     names.forEach(function (n) { refresh(n); });
     summary();
+  }
+  // Reading order follows the screen: on the left, the panel comes before the page; on the
+  // right, after it.
+  function putHost() {
+    if (ui.side === 'left') document.body.insertBefore(host, document.body.firstChild);
+    else document.body.appendChild(host);
   }
   function tab(id, text) {
     return '<button type="button" role="tab" class="ws-tab" id="ws-tab-' + id + '" aria-controls="ws-pane-' + id + '">' + text + '</button>';
   }
   function $(sel) { return root.querySelector(sel); }
 
-  function setupHTML() {
-    var people = Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('');
-    var html =
-      '<h3 class="ws-h">Shop as</h3>' +
-      '<label class="ws-field"><span class="ws-sr">Shop as</span><select id="ws-prof"><option value="none">Nobody in particular</option>' +
-        '<optgroup label="Workshop people">' + people + '</optgroup><optgroup label="Toolkit profiles" id="ws-tkprof"></optgroup></select></label>' +
-      '<p class="ws-help" id="ws-prof-note">Picking someone turns on the adapters that help them.</p>' +
-      '<div class="ws-line"><h3 class="ws-h">Adapters</h3><button type="button" class="ws-link" id="ws-alloff">Turn all off</button></div>' +
-      '<p class="ws-help">Switch one on to see it change the store. The Changes tab shows what it changed.</p>';
+  // Profiles: who you're shopping as, in their own words, and their adapters as switches you can
+  // tap. Like the toolkit's profiles, it learns: turn one of their adapters off, or another one on,
+  // and it's remembered for that person next time (see LEARN_KEY).
+  function profilesHTML() {
+    var people = '<optgroup label="Workshop shoppers">' + Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('') + '</optgroup>' +
+      '<optgroup label="The toolkit’s profiles">' + Object.keys(TOOLKIT_PROFILES).map(function (id) { return '<option value="' + id + '">' + TOOLKIT_PROFILES[id][0] + '</option>'; }).join('') + '</optgroup>';
+    return '<label class="ws-lab" for="ws-prof">Shop as</label>' +
+      '<select id="ws-prof" class="ws-select"><option value="me">My profile</option>' + people + '</select>' +
+      '<div id="ws-persona"></div>' +
+      '<div class="ws-line"><h3 class="ws-h">Adapters on</h3><button type="button" class="ws-link" id="ws-alloff">Turn all off</button></div>' +
+      '<ul class="ws-pills" id="ws-pills" aria-label="Adapters on"></ul>' +
+      '<p class="ws-help" id="ws-learned"></p>' +
+      '<h3 class="ws-h">What they do on this page</h3>' +
+      '<ul class="ws-plain ws-onlist" id="ws-on-list"></ul>';
+  }
+  function renderOnList() {
+    var el = rendered && $('#ws-on-list');
+    if (!el) return;
+    // Just labels, so a stray click can't turn one off. Switches are in the Adapter Library tab.
+    var pills = $('#ws-pills');
+    pills.innerHTML = names.length ? names.map(function (n) {
+      return '<li class="ws-pill" title="' + esc((ADAPTERS[n] || {}).help || '') + '">' + esc(label(n)) + '</li>';
+    }).join('') : '<li class="ws-help">No adapters on yet.</li>';
+    var l = profileName ? learned()[profileName] : null, bits = [];
+    // Only what matches the page now: a guide link can turn on an adapter the person turned off.
+    var lon = l ? l.on.filter(function (n) { return names.indexOf(n) !== -1; }) : [], loff = l ? l.off.filter(function (n) { return names.indexOf(n) === -1; }) : [];
+    if (lon.length) bits.push('keeps ' + lon.map(label).join(', ') + ' on');
+    if (loff.length) bits.push('keeps ' + loff.map(label).join(', ') + ' off');
+    var whose = !bits.length ? '' : profileName === 'me' ? 'your profile' : nameOf(profileName).split(',')[0].replace(' (toolkit profile)', '');
+    $('#ws-learned').innerHTML = bits.length ? 'Learned from you: ' + esc(whose) + ' ' + esc(bits.join(' and ')) + '. <button type="button" class="ws-link" id="ws-forget">Forget this</button>' : '';
+    // The person's adapters stay listed when they're off, so they can be ticked back on. The
+    // boxes are the same switches as in the Adapter Library tab, kept in step both ways.
+    var listed = (profileName ? setOf(profileName) : []).filter(function (n) { return ADAPTERS[n]; });
+    names.forEach(function (n) { if (listed.indexOf(n) === -1) listed.push(n); });
+    var had = root.activeElement && root.activeElement.closest && root.activeElement.closest('#ws-on-list') ? root.activeElement.getAttribute('data-ad') : null;
+    el.innerHTML = listed.length ? listed.map(function (n) {
+      var on = names.indexOf(n) !== -1;
+      var what = n === 'mine' && result && result.code ? result.need : (ADAPTERS[n] || {}).help || '';
+      return '<li><label class="ws-check"><input type="checkbox" data-ad="' + esc(n) + '"' + (on ? ' checked' : '') + '> <span class="ws-name">' + esc(label(n)) + '</span></label>' +
+        (what ? '<span class="ws-help ws-block ws-indent">' + esc(what) + '</span>' : '') +
+        '<div class="ws-chg-slot ws-indent" data-slot="' + esc(n) + '"></div></li>';
+    }).join('') : '<li class="ws-help">Nothing on yet.</li>';
+    if (had) { var again = el.querySelector('input[data-ad="' + had + '"]'); if (again) again.focus(); }
+    names.forEach(function (n) { refresh(n); });
+  }
+  // What the panel learned for each person: { sam: { on: [...], off: [...] } }.
+  var LEARN_KEY = 'redbird:learned';
+  function learned() { try { return JSON.parse(localStorage.getItem(LEARN_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function learnedSet(id) {
+    var l = learned()[id] || { on: [], off: [] };
+    return setOf(id).filter(function (n) { return l.off.indexOf(n) === -1; }).concat(l.on.filter(function (n) { return setOf(id).indexOf(n) === -1; }));
+  }
+  var learning = true; // off while a fix from the Build tab switches adapters: that isn't about the person
+  function learn(name, on) {
+    if (!learning || !profileName || name === 'mine' || (profileName === 'me' && !myProfile())) return;
+    var all = learned(), l = all[profileName] || { on: [], off: [] }, base = setOf(profileName).indexOf(name) !== -1;
+    l.on = l.on.filter(function (n) { return n !== name; });
+    l.off = l.off.filter(function (n) { return n !== name; });
+    if (on && !base) l.on.push(name);
+    if (!on && base) l.off.push(name);
+    all[profileName] = l;
+    try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (e) {}
+  }
+  // Adapters: every adapter, grouped by who it helps, each with a switch.
+  function adaptersHTML() {
+    var html = '<h3 class="ws-h">Fix accessibility problems with adapters</h3>';
     GROUPS.forEach(function (g) {
       var on = g[2].filter(function (n) { return names.indexOf(n) !== -1; }).length;
       html += '<details class="ws-group"' + (on || g === GROUPS[0] ? ' open' : '') + '><summary>' + g[0] +
         ' <span class="ws-gc" data-group="' + esc(g[0]) + '">' + (on ? on + ' on' : '') + '</span></summary>' +
         g[2].map(row).join('') + '</details>';
     });
-    html += '<details class="ws-group"><summary>Only in the extension</summary>' +
-      '<div class="ws-ad ws-flat"><p class="ws-name">Verification layer</p><p class="ws-help">Checks an AI agent’s work while it shops, and stops to ask you before it does anything you didn’t ask for. ' +
-        'It runs in the toolkit’s Chrome extension, next to the browser agent.</p></div>' +
-      '<div class="ws-ad ws-flat"><p class="ws-name">agent-watch</p><p class="ws-help">Shows on the page what the agent is doing for you. It needs the extension’s agent too.</p></div>' +
-      '<p class="ws-help"><a href="' + base + 'agents.html" target="_blank" rel="noopener">How to try them: the AI agents guide<span class="ws-sr"> (opens in a new tab)</span></a></p></details>';
     return html;
   }
+  // What people built in Build your own sits under the workshop examples: each saved adapter, and
+  // the one running now if it isn't saved yet. One runs at a time, so turning one on swaps it in,
+  // and the page reloads so the new code starts on a fresh page.
+  function mineRows() {
+    var code = readKey(MY_KEY), on = names.indexOf('mine') !== -1, html = '', shown = false;
+    fixes().forEach(function (f, i) {
+      if (!f.code) return;
+      var here = on && f.code === code;
+      if (here) shown = true;
+      html += '<div class="ws-ad"><label class="ws-check"><input type="checkbox" data-fix="' + i + '"' + (here ? ' checked' : '') + '> <span class="ws-name">' + esc(f.name) + '</span></label>' +
+        '<p class="ws-help ws-for">Built by you</p><p class="ws-help">' + esc(cut(f.need || f.description || '', 140)) + '</p>' +
+        (here ? '<div class="ws-state" data-state="mine"></div>' : '') + '</div>';
+    });
+    if (code && !shown) {
+      var cur = result && result.code === code;
+      html = '<div class="ws-ad" data-row="mine"><label class="ws-check"><input type="checkbox" data-ad="mine"' + (on ? ' checked' : '') + '> <span class="ws-name">' + esc(cur ? result.name : 'your adapter') + '</span></label>' +
+        '<p class="ws-help ws-for">Built by you, not saved yet</p><p class="ws-help">' + esc(cur ? cut(result.need, 140) : 'The adapter you made in Build your adapter.') + '</p>' +
+        '<div class="ws-state" data-state="mine"></div></div>' + html;
+    }
+    return '<div id="ws-mine-rows">' + (html || '<p class="ws-help ws-ad">Adapters you build in the Build your adapter tab show up here.</p>') + '</div>';
+  }
   function row(name) {
+    if (name === 'mine') return mineRows();
     var info = ADAPTERS[name] || {};
     var on = names.indexOf(name) !== -1;
     var help = info.help, off = false;
     if (name === 'mine') {
       off = !hasMine() && !on;
-      help = off ? 'You haven’t made one yet. Make one in the Build tab, under Describe a fix.' : fix.description ? '“' + cut(fix.description, 140) + '”' : 'The adapter you made in the Build tab.';
+      help = off ? 'Not made yet. The Build your adapter tab makes one.' : result && result.code ? '“' + cut(result.need, 140) + '”' : 'The adapter you made in Build your adapter.';
     }
     return '<div class="ws-ad" data-row="' + name + '"><label class="ws-check"><input type="checkbox" data-ad="' + name + '"' + (on ? ' checked' : '') + (off ? ' disabled' : '') + '> ' +
       '<span class="ws-name">' + label(name) + '</span>' + (info.ai ? ' <span class="ws-tag">AI</span>' : '') + '</label>' +
+      (info.who ? '<p class="ws-help ws-for">For: ' + esc(info.who) + '</p>' : '') +
       '<p class="ws-help">' + esc(help) + '</p><div class="ws-state" data-state="' + name + '"></div></div>';
   }
-  function changesHTML() {
-    return '<label class="ws-check"><input type="checkbox" id="ws-outline"> Outline the changes on the page</label>' +
-      '<label class="ws-field"><span>Show</span><select id="ws-filter"><option value="">Every adapter</option></select></label>' +
-      '<div id="ws-chg"></div>' +
-      '<h3 class="ws-h">What a screen reader hears</h3>' +
-      '<p class="ws-help">What the page reads out as it changes, e.g., “Added to cart”. Without it, a screen reader user doesn’t hear that anything changed.</p>' +
-      '<ol class="ws-heard" id="ws-heard"></ol>';
+  function spotOn() { return !!window.RB_SPOTLIGHT; }
+  function auditHTML() {
+    return '<h3 class="ws-h">Do a comprehensive audit</h3>' +
+      '<p class="ws-help">Finds accessibility problems on this page, like photos with no description.</p>' +
+      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-run">Run the audit</button></div>' +
+      '<div id="ws-res"></div>' +
+      '<h3 class="ws-h">Fix everything it found</h3>' +
+      '<p class="ws-help">Fixes what the audit finds: it describes photos, names buttons and fields, and fixes low contrast and headings. Sam’s profile turns this on.</p>' +
+      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-fixall"></button></div>' +
+      '<div class="ws-state" data-state="toolkit-fixes"></div>' +
+      '<details class="ws-group"><summary>What a screen reader hears</summary>' +
+      '<p class="ws-help">Messages the page reads out, like “Added to cart”.</p>' +
+      '<ol class="ws-heard" id="ws-heard"></ol></details>';
   }
-  function checksHTML() {
-    var spot = false;
-    try { spot = (new URLSearchParams(location.search).get('spotlight') || localStorage.getItem('redbird:spotlight')) === 'on'; } catch (e) {}
-    return '<label class="ws-check"><input type="checkbox" id="ws-spot"' + (spot ? ' checked' : '') + '> Point out the planted problems</label>' +
-      '<p class="ws-help">Puts a numbered badge on each planted problem on this page. A badge turns green once an adapter fixes it.</p>' +
-      '<button type="button" class="ws-btn" id="ws-run">Run the toolkit’s checks</button>' +
-      '<p class="ws-help">The same checks the extension runs before it fixes a page. Run them again after turning adapters on to compare.</p>' +
-      '<div id="ws-res"></div>';
+  function fixAllButton() {
+    var b = rendered && $('#ws-fixall');
+    if (b) b.textContent = names.indexOf('toolkit-fixes') !== -1 ? 'Undo the fixes' : 'Fix this page';
   }
 
   function wire() {
-    var head = $('.ws-head'), main = $('.ws-main');
-    var setOpen = function (open) {
-      ui.open = open;
-      head.setAttribute('aria-expanded', String(open));
-      main.hidden = !open;
-      box.classList.toggle('ws-closed', !open);
-      foldButton();
-      saveUi();
-      dock();
-    };
-    head.onclick = function () { setOpen(!ui.open); };
-    $('#ws-fold').onclick = function () { setOpen(!ui.open); if (ui.open) head.focus(); };
-    $('#ws-side').onclick = function () { ui.side = ui.side === 'left' ? 'right' : 'left'; box.setAttribute('data-side', ui.side); sideButton(); saveUi(); dock(); };
+    $('#ws-side').onclick = function () { ui.side = ui.side === 'left' ? 'right' : 'left'; box.setAttribute('data-side', ui.side); sideButton(); saveUi(); putHost(); dock(); $('#ws-side').focus(); };
     addEventListener('resize', dock);
-    if (window.visualViewport) { visualViewport.addEventListener('resize', place); visualViewport.addEventListener('scroll', place); }
-    addEventListener('scroll', place, { passive: true });
     var tabs = root.querySelectorAll('[role=tab]');
     tabs.forEach(function (t, i) {
       t.onclick = function () { showTab(t.id.replace('ws-tab-', ''), true); };
@@ -824,53 +998,102 @@
       };
     });
     // Setup
-    $('#ws-prof').value = profileName && (PEOPLE[profileName] || profileName) ? profileName : 'none';
+    $('#ws-prof').value = profileName || 'me';
     $('#ws-prof').onchange = function () {
       var id = this.value;
-      if (id === 'none') return go({ profile: 'none' });
-      toolkitProfiles().then(function (all) { var b = bundleFor(id, all); go({ profile: id, try: b.length ? b.join(',') : 'none' }); });
+      switchProfile(id);
     };
+    $('#ws-learned').addEventListener('click', function (e) {
+      if (!e.target.closest('#ws-forget')) return;
+      var all = learned();
+      delete all[profileName];
+      try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (x) {}
+      go({ profile: profileName, try: setOf(profileName).join(',') });
+    });
     $('#ws-alloff').onclick = function () {
       var reload = names.indexOf('toolkit-fixes') !== -1 || names.indexOf('mine') !== -1;
       var was = names.slice();
       names = [];
       saveNames();
+      // Turning everything off is a reset, not something to learn about the person.
       if (reload) return location.reload();
       was.forEach(turnOff);
       root.querySelectorAll('input[data-ad]').forEach(function (cb) { cb.checked = false; });
+      renderOnList();
+      fixAllButton();
     };
-    root.querySelectorAll('input[data-ad]').forEach(function (cb) {
-      cb.onchange = function () { toggle(cb.getAttribute('data-ad'), cb.checked); };
+    root.addEventListener('change', function (e) {
+      var cb = e.target;
+      if (cb.matches && cb.matches('input[data-fix]')) {
+        var f = fixes()[Number(cb.getAttribute('data-fix'))], others = names.filter(function (n) { return n !== 'mine'; });
+        if (!f) return;
+        if (cb.checked) install(f.code, 'Turned on ' + f.name + '.', others.concat('mine'), 'adapters');
+        else applySet(others, skillSettings);
+        return;
+      }
+      if (!cb.matches || !cb.matches('input[data-ad]')) return;
+      var n = cb.getAttribute('data-ad');
+      root.querySelectorAll('input[data-ad="' + n + '"]').forEach(function (x) { x.checked = cb.checked; });
+      toggle(n, cb.checked);
     });
+    // The changes listed under an adapter: open the list, show more, outline one on the page.
     root.addEventListener('click', function (e) {
-      var show = e.target.closest('[data-show]');
-      if (show) { filterWho = show.getAttribute('data-show'); $('#ws-filter').value = filterWho; showTab('changes', true); }
-    });
-    // Changes
-    $('#ws-outline').onchange = function () { setMarks(this.checked); };
-    $('#ws-filter').onchange = function () { filterWho = this.value; renderChanges(); };
-    $('#ws-chg').addEventListener('click', function (e) {
       var b = e.target.closest('[data-n]');
       if (b) return locate(Track.list[Number(b.getAttribute('data-n')) - 1]);
       var more = e.target.closest('[data-more]');
-      if (more) { expanded[more.getAttribute('data-more')] = true; renderChanges(); }
+      if (more) {
+        expanded[more.getAttribute('data-more')] = true;
+        var det = more.closest('details');
+        det.querySelector('.ws-chgbody').__html = '';
+        updateChanges(det.parentNode, det.getAttribute('data-who'));
+      }
     });
-    // Checks
-    $('#ws-spot').onchange = function () { go({ spotlight: this.checked ? 'on' : 'off' }); };
+    root.addEventListener('toggle', function (e) {
+      var det = e.target;
+      if (!det.classList || !det.classList.contains('ws-chgs')) return;
+      openChanges[det.getAttribute('data-who')] = det.open;
+      if (det.open) updateChanges(det.parentNode, det.getAttribute('data-who'));
+    }, true);
+    // Audit
+    // The problem badges come and go in place, without a reload.
+    root.querySelectorAll('.ws-spot').forEach(function (cb) {
+      cb.onchange = function () {
+        var on = cb.checked;
+        qs.set('spotlight', on ? 'on' : 'off');
+        history.replaceState(history.state, '', location.pathname + '?' + qs + location.hash);
+        if (on && window.RB_SPOTLIGHT_START) window.RB_SPOTLIGHT_START();
+        if (!on && window.RB_SPOTLIGHT && window.RB_SPOTLIGHT.stop) window.RB_SPOTLIGHT.stop();
+        root.querySelectorAll('.ws-spot').forEach(function (other) { other.checked = on; });
+      };
+    });
     $('#ws-run').onclick = runChecks;
+    $('#ws-fixall').onclick = function () {
+      var on = names.indexOf('toolkit-fixes') !== -1;
+      if (!on) status('Fixing the page. Photos take a few seconds each.');
+      toggle('toolkit-fixes', !on);
+      fixAllButton();
+    };
+    fixAllButton();
     $('#ws-res').addEventListener('click', function (e) {
       var b = e.target.closest('[data-found]');
       if (b) locateEl(found[Number(b.getAttribute('data-found'))], b.textContent);
     });
-    document.addEventListener('ws-report', function () { refresh('toolkit-fixes'); });
+    document.addEventListener('ws-report', function (e) {
+      refresh('toolkit-fixes');
+      if (/^(Fixed|Nothing)/.test(e.detail.text) && $('#ws-res').innerHTML) runChecks();
+    });
     wireBuild();
-  }
-  // Collapsed, the panel is just its title in the corner; the same button opens it again.
-  function foldButton() {
-    var b = $('#ws-fold');
-    b.textContent = ui.open ? '–' : '+';
-    b.setAttribute('aria-label', ui.open ? 'Collapse the workshop panel' : 'Open the workshop panel');
-    b.title = ui.open ? 'Collapse' : 'Open';
+    wireResize();
+    // Skip to the store, and Alt+Shift+T to come back to the panel from anywhere on the page.
+    $('#ws-skip').onclick = function (e) {
+      e.preventDefault();
+      var main = document.querySelector('main, #main, [role=main]') || document.body;
+      if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+      main.focus();
+    };
+    document.addEventListener('keydown', function (e) {
+      if (e.altKey && e.shiftKey && (e.code === 'KeyT')) { e.preventDefault(); var t = $('[role=tab][aria-selected=true]'); if (t) t.focus(); }
+    });
   }
   function sideButton() {
     var b = $('#ws-side');
@@ -886,52 +1109,199 @@
       t.tabIndex = on ? 0 : -1;
     });
     root.querySelectorAll('[role=tabpanel]').forEach(function (p) { p.hidden = p.id !== 'ws-pane-' + id; });
-    if (id === 'changes') renderChanges();
+    if (id === 'audit') renderHeard();
     place();
   }
-  function fillProfiles(all) {
-    var group = $('#ws-tkprof');
-    group.innerHTML = Object.keys(all).map(function (id) { return '<option value="' + esc(id) + '">' + esc(all[id].name) + '</option>'; }).join('');
-    if (profileName && (PEOPLE[profileName] || all[profileName])) $('#ws-prof').value = profileName;
-    var note = '';
-    if (currentProfile) {
-      var b = bundleFor(profileName, all);
-      note = (currentProfile.toolkit ? esc(currentProfile.description) : '“' + esc(currentProfile.freeText || '') + '”') +
-        (b.length ? ' Its adapters: ' + b.map(label).join(', ') + '.' : '');
-    } else {
-      note = 'Picking a profile switches on its adapters. You can change them below.';
+  // Changes who you're shopping as without a reload: their profile file is read, adapters that
+  // read the profile start again with it, and their set of adapters is turned on. Only when the
+  // store's problems aren't all on (after an agent link) does it reload, to put them back.
+  function switchProfile(id) {
+    var ids = id === 'none' ? [] : learnedSet(id);
+    if (!window.RB_ISSUES || RB_ISSUES.value !== 'on') return go({ profile: id, try: ids.join(',') || 'none', issues: 'on' });
+    return (id === 'none' ? Promise.resolve(null) : loadProfile(id))
+      .then(function (prof) {
+        profileName = id === 'none' ? '' : id;
+        currentProfile = prof;
+        baseOptions.profile = prof && !prof.toolkit ? prof : null;
+        try { localStorage.setItem('redbird:profile', id); } catch (e) {}
+        qs.set('profile', id);
+        var again = names.filter(function (n) { return ids.indexOf(n) !== -1 && n !== 'toolkit-fixes' && n !== 'mine'; });
+        if (applySet(ids, {})) return;
+        again.forEach(function (n) { turnOff(n); turnOn(n); });
+        fillProfiles();
+        renderOnList();
+        var p = $('#ws-person');
+        if (p && !readKey(PERSON_KEY)) p.value = prof ? prof.freeText || '' : '';
+        var on = names.length + ' adapter' + (names.length === 1 ? '' : 's') + ' on.';
+        status(id === 'me' ? (prof ? 'Using your profile. ' + on : 'Answer the questions below to make your profile.')
+          : !prof ? 'Shopping as nobody in particular. ' + on : prof.toolkit ? 'Using the toolkit’s ' + TOOLKIT_PROFILES[id][0] + ' profile. ' + on : 'Shopping as ' + nameOf(id) + '. ' + on);
+      }, function () { go({ profile: id, try: ids.join(',') || 'none', issues: 'on' }); });
+  }
+  function fillProfiles() {
+    if (profileName === 'me') return fillMine();
+    $('#ws-persona').innerHTML = currentProfile
+      ? '<figure class="ws-persona"><figcaption>' + esc(nameOf(profileName)) + '</figcaption>' + (currentProfile.toolkit
+        ? '<p class="ws-help">' + esc(currentProfile.freeText) + '</p>' : '<blockquote>“' + esc(currentProfile.freeText || '') + '”</blockquote>') + '</figure>'
+      : '<p class="ws-help">Pick someone to shop as, or pick My profile to make your own.</p>';
+  }
+  // My profile, made or not yet. Making it asks three questions; AI writes the profile in the
+  // person's words and picks the adapters that match, the way the toolkit's onboarding does.
+  function fillMine(editing) {
+    var me = myProfile(), el = $('#ws-persona');
+    if (me && !editing) {
+      el.innerHTML = '<figure class="ws-persona" tabindex="-1"><figcaption>My profile</figcaption><blockquote>“' + esc(me.freeText) + '”</blockquote></figure>' +
+        '<div class="ws-row" id="ws-me-acts"><button type="button" class="ws-btn ws-quiet" id="ws-me-edit">Change it</button>' +
+        '<button type="button" class="ws-btn ws-quiet" id="ws-me-file">Save it as a file</button>' +
+        '<button type="button" class="ws-link" id="ws-me-del">Delete it</button></div>' +
+        '<p class="ws-help">It’s kept in this browser, and it remembers which adapters you turn on or off. The toolkit’s browser extension can load the file with Import profile.</p>';
+      $('#ws-me-edit').onclick = function () { fillMine(true); $('#ws-me1').focus(); };
+      $('#ws-me-file').onclick = saveMine;
+      $('#ws-me-del').onclick = askDelete;
+      return;
     }
-    $('#ws-prof-note').innerHTML = note;
+    var a = (me && me.answers) || ['', '', ''];
+    var q = function (id, text, v) { return '<label class="ws-lab" for="' + id + '">' + text + '</label><textarea id="' + id + '" class="ws-input" rows="2">' + esc(v) + '</textarea>'; };
+    el.innerHTML = '<div class="ws-card"><h3 class="ws-h">Make your own profile</h3>' +
+      '<p class="ws-help">Answer in your own words, and the toolkit picks adapters for you.</p>' +
+      q('ws-me1', 'What gets in your way on shopping websites?', a[0]) + q('ws-me2', 'What would make shopping websites easier for you?', a[1]) + q('ws-me3', 'Is there anything you don’t want changed?', a[2]) +
+      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-me-go">' + (me ? 'Update my profile' : 'Make my profile') + '</button>' +
+      (me ? '<button type="button" class="ws-link" id="ws-me-cancel">Cancel</button>' : '') + '</div>' +
+      '<p class="ws-help" id="ws-me-msg"></p>' +
+      '<p class="ws-help">AI reads your answers to write the profile. The profile is kept only in this browser.</p></div>';
+    $('#ws-me-go').onclick = makeMine;
+    if (me) $('#ws-me-cancel').onclick = function () { fillMine(); $('#ws-me-edit').focus(); };
+  }
+  function meSays(text) { var m = $('#ws-me-msg'); if (m) m.textContent = text; say(text, true); }
+  // Two adapters that do the same job fight on the page; when the AI picks both, the first is kept.
+  var CLASH = [['pause-moving-things', 'stop-auto-advance'], ['reading-level', 'simplify-text'], ['visual-assist', 'bionic-reading']];
+  function makeMine() {
+    var a = ['#ws-me1', '#ws-me2', '#ws-me3'].map(function (q) { return $(q).value.trim(); });
+    if (!a[0] && !a[1]) { meSays('Answer the first two questions first.'); $('#ws-me1').focus(); return; }
+    var btn = $('#ws-me-go'), label = btn.textContent, t0 = Date.now();
+    btn.disabled = true;
+    btn.textContent = 'Making your profile…';
+    // The time ticks on the button, which a screen reader doesn't read out again.
+    var tick = setInterval(function () { btn.textContent = 'Making your profile… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+    var stop = function () { clearInterval(tick); btn.textContent = label; btn.disabled = false; };
+    meSays('Making your profile…');
+    var input = { catalog: catalog(), answers: 'What gets in my way on shopping websites: ' + (a[0] || '-') + '\nWhat would make shopping websites easier for me: ' + (a[1] || '-') + '\nWhat I don’t want changed: ' + (a[2] || '-') };
+    var parse = function (text) {
+      var d = null;
+      try { d = JSON.parse((String(text).match(/\{[\s\S]*\}/) || ['null'])[0]); } catch (e) {}
+      if (!d || typeof d !== 'object' || (d.about != null && typeof d.about !== 'string')) throw new Error('the AI’s answer wasn’t a profile');
+      d.about = d.about || ''; // nothing to go on: the answers didn't say what gets in their way
+      return d;
+    };
+    // One more try if the answer doesn't come back or isn't a profile.
+    ask('myProfile', input).then(parse).catch(function () { return ask('myProfile', input).then(parse); })
+      .then(function (d) {
+        clearInterval(tick);
+        if (!d.about.trim()) { stop(); meSays('Say a bit more about what gets in your way, then try again.'); $('#ws-me1').focus(); return; }
+        var ids = (d.adapters || []).filter(function (n, i, all) { return ADAPTERS[n] && n !== 'mine' && all.indexOf(n) === i; });
+        CLASH.forEach(function (c) { if (ids.indexOf(c[0]) !== -1) ids = ids.filter(function (n) { return n !== c[1]; }); });
+        ids = ids.slice(0, 5);
+        var me = { name: 'My profile', freeText: String(d.about).trim(), adapters: ids, answers: a, updatedAt: Date.now(),
+          supportAreas: (d.supportAreas || []).filter(function (x) { return /^(vision|hearing|motor|cognitive|reading|sensory)$/.test(x); }),
+          fields: { needs: [] } };
+        var grade = Number(d.readingLevel);
+        if (grade >= 3 && grade <= 12) me.fields.readingLevel = grade;
+        if (d.urgency === 'hide' || d.urgency === 'label') me.fields.needs.push({ dimension: 'urgency', value: d.urgency, strength: 'preference', unit: 'enum' });
+        localStorage.setItem(ME_KEY, JSON.stringify(me));
+        var all = learned(); delete all.me; localStorage.setItem(LEARN_KEY, JSON.stringify(all)); // a new profile starts fresh
+        return Promise.resolve(switchProfile('me')).then(function () {
+          var f = $('#ws-persona figure');
+          if (f) f.focus();
+          if (!ids.length) status('Made your profile. None of the adapters matched what you wrote, so none are on. Turn any on in the Adapter Library, and they’re saved to your profile.');
+        });
+      })
+      .catch(function (e) { stop(); meSays('That didn’t work: ' + e.message + '. Try again.'); });
+  }
+  function saveMine() {
+    var me = myProfile();
+    if (!me) return;
+    var blob = { kind: 'aa-profile-blob', v: 1, exportedAt: Date.now(), abilityModel: null,
+      profile: { supportAreas: me.supportAreas || [], freeText: me.freeText, fields: me.fields || {}, metaPreferences: { language: 'standard' }, updatedAt: me.updatedAt || null } };
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(blob, null, 2)], { type: 'application/json' }));
+    link.download = 'my-accessibility-profile.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 2000);
+    status('Saved my-accessibility-profile.json to your downloads.');
+  }
+  function askDelete() {
+    $('#ws-me-acts').innerHTML = '<span class="ws-help">Delete your profile from this browser?</span>' +
+      '<button type="button" class="ws-btn ws-quiet" id="ws-me-yes">Delete it</button><button type="button" class="ws-link" id="ws-me-no">Keep it</button>';
+    $('#ws-me-no').focus();
+    $('#ws-me-no').onclick = function () { fillMine(); $('#ws-me-del').focus(); };
+    $('#ws-me-yes').onclick = function () {
+      localStorage.removeItem(ME_KEY);
+      var all = learned(); delete all.me; localStorage.setItem(LEARN_KEY, JSON.stringify(all));
+      Promise.resolve(switchProfile('me')).then(function () { var q = $('#ws-me1'); if (q) q.focus(); });
+    };
   }
   function summary() {
-    var on = names.length;
-    var sk = activeSkill();
-    $('#ws-sub').textContent = (currentProfile ? currentProfile.name.split(',')[0] + ' · ' : '') + (sk ? sk.name + ' · ' : '') + (on ? on + ' adapter' + (on === 1 ? '' : 's') + ' on' : 'no adapters on');
     GROUPS.forEach(function (g) {
       var n = g[2].filter(function (x) { return names.indexOf(x) !== -1; }).length;
       var el = root.querySelector('[data-group="' + g[0] + '"]');
       if (el) el.textContent = n ? n + ' on' : '';
     });
   }
-  // The line under an adapter's switch: loading, an error, what the fixes did, how many changes.
+  // The line under an adapter's switch: loading, an error, or what the fixes did; then a list of
+  // its changes that opens in place.
   function refresh(name, text) {
     if (!rendered) return;
-    var el = root.querySelector('[data-state="' + name + '"]');
     summary();
-    if (!el) return;
-    var on = names.indexOf(name) !== -1;
-    var n = on ? count(name) : 0;
-    var html = '';
-    if (!on) html = '';
-    else if (errors[name]) html = '<p class="ws-err">' + esc(errors[name]) + '</p>';
-    else if (text) html = '<p class="ws-note">' + esc(text) + '</p>';
-    else if (name === 'toolkit-fixes' && ToolkitFixes.summary) html = '<p class="ws-note">' + esc(ToolkitFixes.summary) + '</p>';
-    if (on && !errors[name] && n) html += '<button type="button" class="ws-link" data-show="' + name + '">See its ' + n + ' change' + (n === 1 ? '' : 's') + '</button>';
-    else if (on && !errors[name] && !text && Track.obs) html += '<p class="ws-note">No changes on this page yet.</p>';
-    el.innerHTML = html;
     if (name === 'mine') fixState();
+    root.querySelectorAll('[data-slot="' + name + '"]').forEach(function (slot) { updateChanges(slot, name); });
+    var el = root.querySelector('[data-state="' + name + '"]');
+    if (!el) return;
+    var on = names.indexOf(name) !== -1, line = '';
+    if (on && errors[name]) line = '<p class="ws-err">' + esc(errors[name]) + '</p>';
+    else if (on && text) line = '<p class="ws-note">' + esc(text) + '</p>';
+    else if (on && name === 'toolkit-fixes' && ToolkitFixes.summary) line = '<p class="ws-note">' + esc(ToolkitFixes.summary) + '</p>';
+    var lineEl = el.querySelector('.ws-state-line') || el.appendChild(Object.assign(document.createElement('div'), { className: 'ws-state-line' }));
+    if (lineEl.__html !== line) { lineEl.innerHTML = line; lineEl.__html = line; }
+    var slot = el.querySelector('.ws-chg-slot') || el.appendChild(Object.assign(document.createElement('div'), { className: 'ws-chg-slot' }));
+    if (on && !errors[name] && !text) updateChanges(slot, name); else slot.innerHTML = '';
   }
   function count(name) { return Track.list.filter(function (e) { return e.who === name && live(e); }).length; }
+  // "12 changes on this page", a disclosure that lists them when opened. A list that has focus
+  // inside it isn't redrawn, so a screen reader or keyboard user doesn't lose their place.
+  var openChanges = {};
+  function updateChanges(slot, who) {
+    var n = count(who), det = slot.querySelector('details.ws-chgs');
+    if (!n) {
+      var none = Track.obs ? '<p class="ws-help">Nothing to change on this page.</p>' : '';
+      if (slot.__html !== none) { slot.innerHTML = none; slot.__html = none; }
+      return;
+    }
+    var title = n + ' change' + (n === 1 ? '' : 's') + ' on this page';
+    if (!det) {
+      slot.innerHTML = '<details class="ws-chgs" data-who="' + esc(who) + '"' + (openChanges[who] ? ' open' : '') + '><summary><span>' + title + '</span><span class="ws-sr"> by ' + esc(label(who)) + '</span></summary><div class="ws-chgbody"></div></details>';
+      slot.__html = '';
+      det = slot.querySelector('details');
+    } else if (det.firstChild.firstChild.textContent !== title) det.firstChild.firstChild.textContent = title;
+    var body = det.querySelector('.ws-chgbody');
+    if (det.open && !body.contains(root.activeElement)) {
+      var html = changesList(who);
+      if (body.__html !== html) { body.innerHTML = html; body.__html = html; }
+    }
+  }
+  function changesList(who) {
+    var mine = Track.list.filter(function (e) { return e.who === who && live(e); });
+    var kinds = {}, order = [], html = '';
+    mine.forEach(function (e) { var k = e.type + ':' + e.attr; if (!kinds[k]) { kinds[k] = []; order.push(k); } kinds[k].push(e); });
+    order.forEach(function (k) {
+      var items = kinds[k], key = who + '|' + k, open = expanded[key] ? items.length : 8;
+      html += '<ul class="ws-list">' + items.slice(0, open).map(changeRow).join('') + '</ul>';
+      if (items.length > open) html += '<button type="button" class="ws-link" data-more="' + esc(key) + '">Show ' + (items.length - open) + ' more like these</button>';
+    });
+    var unseen = mine.filter(function (e) { return e.type !== 'removed' && e.type !== 'style' && !box2(e.el); }).length;
+    if (unseen) html += '<p class="ws-help">' + unseen + ' of these are only for screen readers or the keyboard, so they don’t show on the page.</p>';
+    return html;
+  }
 
   // Called after anything is put down to an adapter; redraws what's showing, a few times a second at most.
   var pending = 0;
@@ -940,40 +1310,12 @@
     pending = setTimeout(function () {
       pending = 0;
       names.forEach(function (n) { refresh(n); });
-      var total = Track.list.filter(live).length;
-      $('#ws-count').textContent = total ? String(total) : '';
-      if (ui.tab === 'changes' && ui.open) renderChanges();
+      if (ui.tab === 'audit') renderHeard();
       if (marks.outline) queueMarks();
       place();
     }, 300);
   }
 
-  function renderChanges() {
-    if (!rendered) return;
-    var sel = $('#ws-filter'), whos = [];
-    Track.list.forEach(function (e) { if (whos.indexOf(e.who) === -1 && live(e)) whos.push(e.who); });
-    sel.innerHTML = '<option value="">Every adapter</option>' + whos.map(function (w) { return '<option value="' + esc(w) + '">' + esc(label(w)) + '</option>'; }).join('');
-    if (filterWho && whos.indexOf(filterWho) === -1) whos.push(filterWho);
-    sel.value = filterWho;
-    var shown = filterWho ? [filterWho] : whos, html = '';
-    shown.forEach(function (w) {
-      var mine = Track.list.filter(function (e) { return e.who === w && live(e); });
-      html += '<h3 class="ws-h">' + esc(label(w)) + ' · ' + mine.length + '</h3>';
-      if (!mine.length) { html += '<p class="ws-help">No changes on this page yet.</p>'; return; }
-      var kinds = {}, order = [];
-      mine.forEach(function (e) { var k = e.type + ':' + e.attr; if (!kinds[k]) { kinds[k] = []; order.push(k); } kinds[k].push(e); });
-      order.forEach(function (k) {
-        var items = kinds[k], key = w + '|' + k, open = expanded[key] ? items.length : 8;
-        html += '<ul class="ws-list">' + items.slice(0, open).map(changeRow).join('') + '</ul>';
-        if (items.length > open) html += '<button type="button" class="ws-link" data-more="' + esc(key) + '">Show ' + (items.length - open) + ' more like these</button>';
-      });
-    });
-    if (!shown.length) html = '<p class="ws-help">Nothing yet. Switch an adapter on in Setup and its changes show up here.</p>';
-    var hidden = Track.list.filter(function (e) { return live(e) && e.type !== 'removed' && e.type !== 'style' && !box2(e.el); }).length;
-    if (hidden) html += '<p class="ws-help">' + hidden + ' of these only change what a screen reader or the keyboard gets, so they don’t show on the page.</p>';
-    $('#ws-chg').innerHTML = html;
-    renderHeard();
-  }
   function changeRow(e) {
     var what, diff = '', tag = '';
     if (e.type === 'style') {
@@ -984,7 +1326,9 @@
     }
     if (e.type === 'attr') {
       what = describe(e.el);
-      diff = (ATTR[e.attr] ? ATTR[e.attr] + ' (' + e.attr + ')' : e.attr) + ': ' + fmt(e.before) + ' → ' + fmt(e.el.getAttribute(e.attr));
+      // A new class or inline style reads as code ("deal-timer ws-calm-hide"), so say what it did instead.
+      if (e.attr === 'class' || e.attr === 'style') diff = e.el.isConnected && !e.el.getClientRects().length ? 'hid it' : 'changed how it looks';
+      else diff = (ATTR[e.attr] ? ATTR[e.attr] + ' (' + e.attr + ')' : e.attr) + ': ' + fmt(e.before) + ' → ' + fmt(e.el.getAttribute(e.attr));
       if (UNSEEN.indexOf(e.attr) !== -1) tag = '<span class="ws-tag">heard, not seen</span>';
     } else if (e.type === 'text') {
       what = 'Text in ' + (e.el.nodeType === 1 ? kindName(e.el) : 'the page');
@@ -994,7 +1338,7 @@
       if (was && was === now) diff = 'same words, new markup: ' + cut(nodes.map(function (n) { return n.nodeType === 1 ? n.outerHTML : n.data; }).join(''), 160);
       else diff = (was ? fmt(was) + ' → ' : 'added ') + (now ? fmt(now) : 'removed');
     } else if (e.type === 'added' && e.el.matches(LIVE)) {
-      what = 'Added an area that screen readers read out';
+      what = 'Added a message area for screen readers';
       diff = squash(e.el.textContent) ? 'now saying ' + fmt(squash(e.el.textContent)) : 'nothing said yet';
       tag = '<span class="ws-tag">heard, not seen</span>';
     } else if (e.type === 'added') {
@@ -1012,7 +1356,7 @@
     ol.innerHTML = Track.heard.slice().reverse().map(function (h) {
       var s = Math.round((h.at - t0) / 1000);
       return '<li><span class="ws-t">' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + '</span> “' + esc(cut(h.text, 160)) + '”' +
-        ' <span class="ws-who">' + (h.who ? 'from ' + esc(label(h.who)) : 'from the store') + '</span></li>';
+        ' <span class="ws-who">' + (h.who === 'panel' ? 'from the panel' : h.who ? 'from ' + esc(label(h.who)) : 'from the store') + '</span></li>';
     }).join('');
   }
 
@@ -1027,12 +1371,6 @@
     if (r.right < -100 || r.bottom < -100 - scrollY || r.left > document.documentElement.scrollWidth) return null;
     return r;
   }
-  function setMarks(on) {
-    marks.outline = on;
-    var cb = rendered && $('#ws-outline');
-    if (cb) cb.checked = on;
-    queueMarks();
-  }
   function queueMarks() {
     if (!marks.raf) marks.raf = requestAnimationFrame(drawMarks);
     if ((marks.outline || marks.flash) && !marks.timer) marks.timer = setInterval(queueMarks, 700);
@@ -1045,7 +1383,7 @@
     if (!marks.outline && !marks.flash) { clearInterval(marks.timer); marks.timer = 0; layer.innerHTML = ''; return; }
     var items = [], seen = [];
     if (marks.outline) Track.list.forEach(function (e) {
-      if (live(e) && e.type !== 'removed' && e.type !== 'style' && (!filterWho || e.who === filterWho) && seen.indexOf(e.el) === -1) { seen.push(e.el); items.push([e.el, e.n, '']); }
+      if (live(e) && e.type !== 'removed' && e.type !== 'style' && seen.indexOf(e.el) === -1) { seen.push(e.el); items.push([e.el, 0, '']); }
     });
     if (marks.flash) items.push([marks.flash.el, marks.flash.n, ' ws-flash']);
     var html = '';
@@ -1059,7 +1397,8 @@
   }
   addEventListener('scroll', function () { if (marks.outline || marks.flash) queueMarks(); }, { passive: true, capture: true });
   addEventListener('resize', function () { if (marks.outline || marks.flash) queueMarks(); });
-  function status(text) { var s = $('#ws-status'); s.textContent = ''; setTimeout(function () { s.textContent = text; }, 50); }
+  // The panel's visible message line. What it says is read out through say(), the page's one voice.
+  function status(text) { var s = $('#ws-status'); s.textContent = text; say(text, true); }
   function locate(e) {
     if (!e) return;
     if (e.type === 'removed' || !e.el.isConnected) return status('That part isn’t on the page any more.');
@@ -1072,46 +1411,48 @@
       // Hidden things, like a skip link before you press Tab: point at the nearest visible parent.
       var p = el.parentElement;
       while (p && !box2(p)) p = p.parentElement;
-      if (!p || /^(HTML|BODY)$/.test(p.tagName)) return status('You can’t see this one. Only a screen reader or the keyboard notices it.');
+      if (!p || /^(HTML|BODY)$/.test(p.tagName)) return status('This change is only for screen readers or the keyboard.');
       el = p;
-      status('You can’t see this one. It sits inside the outlined part, and only a screen reader or the keyboard notices it.');
+      status('This change is only for screen readers or the keyboard. It’s inside the outlined part.');
     } else status(what ? 'Outlined: ' + what : 'Outlined on the page.');
     el.scrollIntoView({ block: 'center', behavior: 'smooth' });
     marks.flash = { el: el, n: n, until: Date.now() + 3000 };
     queueMarks();
   }
 
-  // ── Build: make a skill, or describe a fix ────────────────────────────────
-  // The toolkit's two builders, on the store. "Make a skill" is the Engineer from the toolkit's
-  // core: it picks adapters that already exist and writes them up as a SKILL.md, with no code.
-  // "Describe a fix" is the extension's Adapter Builder: AI writes a new adapter, and it runs here
-  // as "your adapter". Both prompts live in the store's /api/ai (api/_builders.js).
+  // ── Build: one box, and the toolkit decides ───────────────────────────────
+  // Someone writes who the fix is for and what should change, and presses Build it. The toolkit's
+  // two builders run in the order the toolkit uses them: the Engineer (toolkit/core/skill-builder.js)
+  // first tries to meet the need with adapters that already exist, and writes that up as a
+  // SKILL.md. Only when none fit does the extension's Adapter Builder prompt have AI write a new
+  // adapter, which runs here as "mine". Both prompts are in the store's api/_builders.js.
+  //
+  // Whatever gets built is a "fix": a name, the need, the adapters it turns on, its SKILL.md, and
+  // the code of a new adapter if it has one. Saved fixes keep their own code, so building a new
+  // adapter never overwrites a saved one.
   function hasMine() { try { return !!localStorage.getItem(MY_KEY); } catch (e) { return false; } }
   function readKey(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
   function writeKey(key, v) { try { if (v == null) localStorage.removeItem(key); else localStorage.setItem(key, v); } catch (e) {} }
   function load(key, fallback) { try { var v = JSON.parse(readKey(key) || 'null'); return v == null ? fallback : v; } catch (e) { return fallback; } }
   function keep(key, v) { writeKey(key, v == null ? null : JSON.stringify(v)); }
-  var fix = load(FIX_KEY, {});
-  var draft = load(DRAFT_KEY, null);
+  var result = load(DRAFT_KEY, null);
+  if (result && !result.adapters) result = null; // something saved by an older version of the panel
   var note = load(NOTE_KEY, null);
   keep(NOTE_KEY, null);
 
   // What the Engineer can pick from: every adapter in the panel, with who it helps.
-  var AREAS = { 'Fix the whole page': 'vision, motor', 'Screen readers': 'vision', 'Low vision and color': 'vision', Reading: 'reading, cognitive',
-    'Attention and anxiety': 'cognitive, sensory', Hearing: 'hearing', 'Keyboard and motor': 'motor' };
-  var EX_AREAS = { 'real-arrival-dates': 'vision, cognitive', 'swatch-names': 'vision', 'calm-urgency': 'cognitive', 'reading-level': 'reading, cognitive' };
+  var AREAS = { 'Blind and screen reader users': 'vision', 'Low vision and color blindness': 'vision', 'Reading and understanding': 'reading, cognitive',
+    'Attention, anxiety and motion': 'cognitive, sensory', 'Deaf and hard of hearing': 'hearing', 'Motor and keyboard': 'motor' };
+  var EX_AREAS = { 'real-arrival-dates': 'vision, cognitive', 'swatch-names': 'vision', 'calm-urgency': 'cognitive', 'reading-level': 'reading, cognitive', 'pause-moving-things': 'cognitive, sensory' };
   function areasOf(n) {
     if (EX_AREAS[n]) return EX_AREAS[n];
     var g = GROUPS.find(function (x) { return x[2].indexOf(n) !== -1; });
     return (g && AREAS[g[0]]) || 'cognitive';
   }
   function catalog() {
-    var lines = [];
+    var lines = ['- toolkit-fixes — ' + ADAPTERS['toolkit-fixes'].help + ' (helps: vision, motor)'];
     GROUPS.forEach(function (g) {
-      g[2].forEach(function (n) {
-        if (n !== 'mine') lines.push('- ' + n + ' — ' + ADAPTERS[n].help + ' (helps: ' + areasOf(n) + ')');
-        else if (hasMine() && fix.description) lines.push('- mine — the builder’s own adapter: ' + fix.description + ' (helps: the person it was made for)');
-      });
+      g[2].forEach(function (n) { if (n !== 'mine') lines.push('- ' + n + ' — ' + ADAPTERS[n].help + ' (helps: ' + areasOf(n) + ')'); });
     });
     return lines.join('\n');
   }
@@ -1135,42 +1476,33 @@
     if (fm) fm[1].split('\n').forEach(function (l) { var m = l.match(/^(\w+):\s*(.*)$/); if (m) meta[m[1]] = m[2].trim(); });
     var rec = text.match(/```json\s*\n([\s\S]*?)\n```/), list = [];
     try { list = JSON.parse(rec[1]).adapters || []; } catch (e) {}
-    var dropped = [], seen = {};
+    var seen = {};
     var adapters = list.filter(function (a) {
-      var ok = a && ADAPTERS[a.id] && (a.id !== 'mine' || hasMine()) && !seen[a.id];
-      if (a && a.id && !ok && !seen[a.id]) dropped.push(String(a.id));
+      var ok = a && ADAPTERS[a.id] && a.id !== 'mine' && !seen[a.id];
       if (ok) seen[a.id] = true;
       return ok;
     }).map(function (a) { return { id: a.id, settings: a.settings && typeof a.settings === 'object' ? a.settings : {} }; });
-    var s = { name: kebab(meta.name), description: meta.description || '', adapters: adapters, dropped: dropped, md: text };
+    var s = { name: kebab(meta.name), description: meta.description || '', adapters: adapters, md: text };
     s.md = recipe(s);
     return s;
   }
   function recipe(s) {
+    if (!s.md) return '';
     var json = '```json\n' + JSON.stringify({ adapters: s.adapters.map(function (a) { return { id: a.id, settings: settingsOf([a])[a.id] || {} }; }) }, null, 2) + '\n```';
     var md = /```json\s*\n[\s\S]*?\n```/.test(s.md) ? s.md.replace(/```json\s*\n[\s\S]*?\n```/, json) : s.md + '\n\n## Recipe\n' + json;
     return md.replace(/^name:.*$/m, 'name: ' + s.name);
   }
-  function kebab(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'my-skill'; }
-  // A skill made by hand from the switches that are on.
-  function handSkill(ids, need) {
-    var areas = [];
-    ids.forEach(function (n) { areasOf(n).split(', ').forEach(function (a) { if (areas.indexOf(a) === -1) areas.push(a); }); });
-    var desc = (need ? need.replace(/[.\s]+$/, '') + '. ' : '') + 'Turns on ' + ids.map(label).join(', ') + '.';
-    var s = {
-      name: 'my-skill', description: desc, dropped: [],
-      adapters: ids.map(function (n) { return { id: n, settings: skillSettings[n] || {} }; }),
-      md: '---\nname: my-skill\ndescription: ' + desc + '\nsupportAreas: [' + areas.join(', ') + ']\nsiteRelevance: [shopping]\n---\n\n# My skill\n\n' +
-        (person() ? 'For: ' + person() + '\n\n' : '') + '## What it does\n' +
-        ids.map(function (n, i) { return (i + 1) + '. **' + n + '**: ' + ADAPTERS[n].help; }).join('\n') + '\n',
-    };
-    s.md = recipe(s);
-    return s;
-  }
+  function kebab(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'my-fix'; }
   function idsOf(s) { return s.adapters.map(function (a) { return a.id; }); }
   function same(a, b) { return a.length === b.length && a.every(function (x) { return b.indexOf(x) !== -1; }); }
-  function skills() { return load(SKILLS_KEY, []); }
-  function activeSkill() { return names.length ? skills().find(function (s) { return same(idsOf(s), names); }) : null; }
+  function fixes() { return load(SKILLS_KEY, []).filter(function (f) { return f && f.adapters; }); }
+  function activeFix() { return names.length ? fixes().find(function (s) { return same(idsOf(s), names); }) : null; }
+  function isSaved(f) { return fixes().some(function (x) { return x.name === f.name && same(idsOf(x), idsOf(f)) && (x.code || '') === (f.code || ''); }); }
+  function saveFix(f) {
+    var list = fixes().filter(function (x) { return x.name !== f.name; });
+    list.unshift({ name: f.name, need: f.need || '', description: f.description || '', adapters: f.adapters, md: f.md || '', code: f.code || null, from: f.from || 'built', at: Date.now() });
+    keep(SKILLS_KEY, list);
+  }
 
   // The Build tab's AI calls. Unlike the adapters' calls, these say why they failed.
   function ask(task, input) {
@@ -1184,9 +1516,11 @@
       });
   }
   function person() { var t = rendered && $('#ws-person'); return t ? t.value.trim() : readKey(PERSON_KEY) || ''; }
+  function here() { return location.pathname + location.search; }
 
-  // Turns on exactly these adapters, in place when it can.
+  // Turns on exactly these adapters, in place when it can. Returns true when the page reloads.
   function applySet(ids, settings) {
+    hushUntil = Date.now() + 2500;
     var before = skillSettings;
     skillSettings = settings || {};
     keep(SETTINGS_KEY, skillSettings);
@@ -1194,19 +1528,42 @@
     if (off.indexOf('toolkit-fixes') !== -1 || off.indexOf('mine') !== -1) {
       names = ids.slice();
       saveNames();
-      return location.reload();
+      location.reload();
+      return true;
     }
+    learning = false;
     off.forEach(function (n) { toggle(n, false); });
     ids.forEach(function (n) {
       if (names.indexOf(n) === -1) toggle(n, true);
       else if (JSON.stringify(before[n] || {}) !== JSON.stringify(skillSettings[n] || {})) { turnOff(n); turnOn(n); }
     });
+    learning = true;
     root.querySelectorAll('input[data-ad]').forEach(function (cb) { cb.checked = names.indexOf(cb.getAttribute('data-ad')) !== -1; });
-    renderSkills();
-    renderDraft();
+    renderResult();
+    renderSaved();
+    return false;
+  }
+  // Puts code in as your adapter (the last version is kept), turns on exactly these adapters, and
+  // reloads so the new code runs on a fresh page.
+  function install(code, msg, ids, tab) {
+    var old = readKey(MY_KEY);
+    if (old && old !== code) writeKey(PREV_KEY, old);
+    writeKey(MY_KEY, code);
+    keep(NOTE_KEY, { text: msg });
+    names = ids.slice();
+    saveNames();
+    ui.tab = tab || 'build';
+    saveUi();
+    location.reload();
+  }
+  function cleanCode(code) {
+    var m = String(code).match(/```(?:javascript|js)?\s*\n([\s\S]*?)\n```/);
+    if (m) code = m[1];
+    if (!/export\s+(const|let|var|default|function|class)\b/.test(code)) throw new Error('the AI’s answer wasn’t an adapter');
+    return String(code).trim() + '\n';
   }
 
-  // Share links carry the skill or the adapter after the #, so they can be long, and the server
+  // Share links carry the whole fix after the #, so they can be long, and the server
   // never sees them. They are squeezed first, so a whole adapter fits in a chat message.
   function b64(u8) {
     var s = '';
@@ -1239,272 +1596,327 @@
     Object.keys(extra || {}).forEach(function (k) { q.set(k, extra[k]); });
     return location.origin + location.pathname + '?' + q;
   }
-  function skillLink(s) {
-    var ids = idsOf(s).filter(function (n) { return n !== 'mine'; });
-    var data = { name: s.name, description: s.description, md: s.md, adapters: s.adapters };
-    var withMine = idsOf(s).indexOf('mine') !== -1;
-    return (withMine ? myCode() : Promise.resolve(null)).then(function (code) {
-      if (code) { data.code = code; data.fix = { description: fix.description || '' }; }
-      return pack(data);
-    }).then(function (p) { return pageLink({ try: ids.join(',') || 'none' }) + '#skill=' + p; });
+  function fixLink(f) {
+    var ids = idsOf(f).filter(function (n) { return n !== 'mine'; });
+    return pack({ name: f.name, need: f.need, description: f.description, adapters: f.adapters, md: f.md, code: f.code || null })
+      .then(function (p) { return pageLink({ try: ids.join(',') || 'none' }) + '#fix=' + p; });
   }
-  function adapterLink() {
-    return myCode().then(function (code) { return pack({ description: fix.description || '', code: code }); })
-      .then(function (p) { return pageLink() + '#adapter=' + p; });
-  }
-  function share(linkPromise, msgEl) {
-    linkPromise.then(function (url) {
-      var shown = $(msgEl);
-      shown.innerHTML = '<label class="ws-lab">Link to share<input class="ws-input ws-linkbox" readonly value="' + esc(url) + '"></label>';
+  function share(f, msgSel) {
+    fixLink(f).then(function (url) {
+      var shown = $(msgSel);
+      shown.innerHTML = '<label class="ws-lab">Link to share<input class="ws-input ws-linkbox" readonly value="' + esc(url) + '"></label><span class="ws-said"></span>';
       var box = shown.querySelector('input');
       box.onfocus = function () { box.select(); };
-      return (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { say2(msgEl, 'Link copied. Paste it in the chat.', true); }, function () { box.focus(); say2(msgEl, 'Copy the link from the box.', true); });
-    }).catch(function (e) { say2(msgEl, 'Couldn’t make a link: ' + (e.message || e)); });
+      var said = shown.querySelector('.ws-said');
+      return (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(
+        function () { said.textContent = 'Copied. Paste it in the chat.'; say(said.textContent, true); },
+        function () { box.focus(); said.textContent = 'Copy the link from the box.'; say(said.textContent, true); });
+    }).catch(function (e) { $(msgSel).textContent = 'Couldn’t make a link: ' + (e.message || e); });
   }
 
-  // A link from someone else: #skill= saves their skill (its adapters come on with ?try=), and
-  // #adapter= offers their adapter. Their code only runs when you press the button.
+  // A link from someone else (#fix=, or #skill= and #adapter= from before). A fix without new code
+  // turns on right away (its adapters come in the link's ?try=) and is saved. A fix with code waits:
+  // the code is shown, and only runs when the person presses Run it.
   var incoming = null;
-  var shared = location.hash.match(/^#(skill|adapter)=([\w-]+)$/);
+  var shared = location.hash.match(/^#(fix|skill|adapter)=([\w-]+)$/);
   var incomingReady = !shared ? Promise.resolve() : unpack(shared[2]).then(function (d) {
-    incoming = { kind: shared[1], data: d };
-    if (shared[1] === 'skill') {
-      var s = parseSkill(d.md || '');
-      s.name = kebab(d.name || s.name);
-      // The link's own list wins over the recipe in its SKILL.md, in case the two differ.
-      var sent = (d.adapters || []).filter(function (a) { return a && ADAPTERS[a.id]; }).map(function (a) { return { id: a.id, settings: a.settings || {} }; });
-      s.adapters = (sent.length ? sent : s.adapters).filter(function (a) { return a.id !== 'mine'; });
-      if (d.code) s.adapters.push({ id: 'mine', settings: {} });
-      s.md = recipe(s);
-      s.from = 'shared';
-      incoming.skill = s;
-      if (!d.code) saveSkill(s);
-      skillSettings = settingsOf(s.adapters);
+    var f = { name: kebab(d.name || d.description), need: d.need || d.description || '', description: d.description || '', md: d.md || '', code: d.code || null, from: 'shared' };
+    f.adapters = (d.adapters || (d.code ? [{ id: 'mine' }] : [])).filter(function (a) { return a && ADAPTERS[a.id]; })
+      .map(function (a) { return { id: a.id, settings: a.settings || {} }; })
+      .filter(function (a) { return a.id !== 'mine'; });
+    if (f.code) f.adapters.push({ id: 'mine', settings: {} });
+    incoming = { fix: f };
+    if (!f.code) {
+      saveFix(f);
+      result = f;
+      keep(DRAFT_KEY, result);
+      skillSettings = settingsOf(f.adapters);
       keep(SETTINGS_KEY, skillSettings);
     }
-  }).catch(function () { incoming = { kind: 'bad' }; }).then(function () {
-    if (incoming) { ui.tab = 'build'; ui.open = true; }
+  }).catch(function () { incoming = { bad: true }; }).then(function () {
+    if (incoming) ui.tab = 'build';
     history.replaceState(history.state, '', location.pathname + location.search);
   });
-  function saveSkill(s) {
-    var list = skills().filter(function (x) { return x.name !== s.name; });
-    list.unshift({ name: s.name, description: s.description, adapters: s.adapters, md: s.md, from: s.from || 'built', at: Date.now() });
-    keep(SKILLS_KEY, list);
-  }
-  // Puts new code in as your adapter, keeping the last version, and reloads so it runs fresh.
-  function install(code, msg) {
-    var old = readKey(MY_KEY);
-    if (old) writeKey(PREV_KEY, old);
-    writeKey(MY_KEY, code);
-    keep(FIX_KEY, fix);
-    keep(NOTE_KEY, { where: '#ws-fix-msg', text: msg });
-    if (names.indexOf('mine') === -1) names.push('mine');
-    saveNames();
-    ui.tab = 'build';
-    ui.build = 'fix';
-    saveUi();
-    location.reload();
-  }
-  function cleanCode(code) {
-    var m = String(code).match(/```(?:javascript|js)?\s*\n([\s\S]*?)\n```/);
-    if (m) code = m[1];
-    if (!/export\s+(const|let|var|default|function|class)\b/.test(code)) throw new Error('the AI’s answer wasn’t an adapter');
-    return String(code).trim() + '\n';
-  }
 
   // ── Build tab ─────────────────────────────────────────────────────────────
+  // Three steps, top to bottom: who it's for, what should change, Build it.
+  var EXAMPLE_NEEDS = ['Hide the countdowns and “only 2 left” messages', 'Read the star ratings out as numbers', 'Make the buttons bigger and easier to hit'];
   function buildHTML() {
     return '<div id="ws-in"></div>' +
-      '<label class="ws-lab" for="ws-person">Who are you building for?</label>' +
-      '<textarea id="ws-person" class="ws-input" rows="2" placeholder="e.g., Mark has ADHD and anxiety. Countdown timers make him rush and buy the wrong thing."></textarea>' +
-      '<p class="ws-help">Their ability profile from the card game, in a sentence or two. Both builders read it.</p>' +
-      '<div class="ws-seg" role="group" aria-label="What to build">' +
-        '<button type="button" data-seg="skill" aria-pressed="false">Make a skill</button><button type="button" data-seg="fix" aria-pressed="false">Describe a fix</button></div>' +
-      '<div id="ws-b-skill">' +
-        '<p class="ws-help">A skill is a recipe that turns on a few adapters for one need. Describe the need, and the toolkit’s Engineer picks the adapters. No code.</p>' +
-        '<label class="ws-lab" for="ws-need">What does this person need on this page?</label>' +
-        '<textarea id="ws-need" class="ws-input" rows="3" placeholder="e.g., Calm the checkout down: no countdowns, nothing moving"></textarea>' +
-        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-sk-build">Pick adapters for me</button>' +
-          '<button type="button" class="ws-btn ws-quiet" id="ws-sk-hand">Use the ones on now</button></div>' +
-        '<p class="ws-msg" id="ws-sk-msg" role="status"></p>' +
-        '<div id="ws-sk-draft"></div>' +
-        '<h3 class="ws-h">Your skills</h3><ul class="ws-sks" id="ws-sk-list"></ul>' +
-      '</div>' +
-      '<div id="ws-b-fix">' +
-        '<p class="ws-help">When no adapter does what the person needs, describe the fix. AI writes a new adapter, and it runs here as your adapter.</p>' +
-        '<label class="ws-lab" for="ws-fix">What should change on the page?</label>' +
-        '<textarea id="ws-fix" class="ws-input" rows="3" placeholder="e.g., Read the star ratings out as “4.6 out of 5 stars”"></textarea>' +
-        '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-point" aria-pressed="false">Point at it on the page</button>' +
-          '<span class="ws-help" id="ws-target"></span></div>' +
-        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-fix-go">Write the adapter</button></div>' +
-        '<p class="ws-msg" id="ws-fix-msg" role="status"></p>' +
-        '<div id="ws-fix-out"></div>' +
-      '</div>';
+      '<h3 class="ws-h">Build your own adapter or skill</h3>' +
+      '<ol class="ws-steps">' +
+        '<li><label class="ws-lab" for="ws-person">Who is it for?</label>' +
+          '<textarea id="ws-person" class="ws-input" rows="2" aria-describedby="ws-person-help" placeholder="e.g., Mark has ADHD and anxiety. Countdown timers make him rush."></textarea>' +
+          '<p class="ws-help" id="ws-person-help">A sentence or two about them, like your card game’s ability profile.</p>' +
+          '<details class="ws-more" id="ws-ask"><summary>Not sure what to write? Answer three questions</summary>' +
+            '<label class="ws-lab" for="ws-q1">What on shopping sites gets in their way?</label><textarea id="ws-q1" class="ws-input" rows="2"></textarea>' +
+            '<label class="ws-lab" for="ws-q2">What would make shopping sites easier for them?</label><textarea id="ws-q2" class="ws-input" rows="2"></textarea>' +
+            '<label class="ws-lab" for="ws-q3">Is there anything they don’t want changed?</label><textarea id="ws-q3" class="ws-input" rows="2"></textarea>' +
+            '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-askgo">Write it for me</button></div></details></li>' +
+        '<li><label class="ws-lab" for="ws-need">What should change on this page?</label>' +
+          '<textarea id="ws-need" class="ws-input" rows="3" placeholder="Describe one change"></textarea>' +
+          '<p class="ws-help">For example: ' + EXAMPLE_NEEDS.map(function (t, i) {
+            return '<button type="button" class="ws-link" data-eg="' + i + '">' + esc(t) + '</button>';
+          }).join(', ') + '</p>' +
+          '<p class="ws-help"><button type="button" class="ws-link" id="ws-point" aria-pressed="false">Point at it on the page</button> <span id="ws-target"></span></p>' +
+          '<details class="ws-more" id="ws-ideas"><summary>Not sure what to change? Get ideas for this page</summary>' +
+            '<p class="ws-help">AI looks at this page and at who it’s for, and suggests three changes.</p>' +
+            '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-ideasgo">Suggest changes</button></div>' +
+            '<ul class="ws-plain" id="ws-idealist"></ul></details></li>' +
+        '<li><div class="ws-row"><button type="button" class="ws-btn" id="ws-build" aria-describedby="ws-build-help">Build it</button></div>' +
+          '<p class="ws-help" id="ws-build-help">If the toolkit has adapters that do this, you get a skill that turns them on. If not, AI writes a new adapter, which takes about 30 seconds.</p>' +
+          '<details class="ws-more"><summary>What’s the difference?</summary>' +
+            '<p class="ws-help"><b>An adapter</b> is code that changes one thing on a page, like stopping animations.</p>' +
+            '<p class="ws-help"><b>A skill</b> has no code. It lists a few adapters to turn on together for a user’s need.</p></details></li>' +
+      '</ol>' +
+      '<p class="ws-msg" id="ws-msg"></p>' +
+      '<div id="ws-result"></div>' +
+      '<div id="ws-saved"></div>' +
+      '<details class="ws-more ws-ready"><summary>Ready-made skills from the toolkit</summary><ul class="ws-sks" id="ws-ready"></ul></details>';
   }
-  function say2(sel, text, keepHtml) {
-    var el = $(sel);
+  // The toolkit's built-in skills (toolkit/skills/builtin/*.md). Their recipes are mapped to the
+  // adapters in this panel, since the toolkit's ids for its automatic fixes and captions differ.
+  var READY = [
+    { name: 'calm-browsing', need: 'Stops motion, darkens the page and hides clutter.', adapters: ['motion-reducer', 'dark-mode', 'focus-mode'] },
+    { name: 'quiet-video', need: 'Turns on captions and stops motion.', adapters: ['show-captions', 'motion-reducer'] },
+    { name: 'reading-aid', need: 'Bigger text, more space between lines, and fewer distractions.', adapters: ['visual-assist', 'focus-mode'] },
+    { name: 'screen-reader-boost', need: 'Fixes the page for screen readers and adds keyboard shortcuts.', adapters: ['toolkit-fixes', 'keyboard-nav'] },
+  ];
+  function renderReady() {
+    var el = rendered && $('#ws-ready');
     if (!el) return;
-    if (keepHtml) { var p = el.querySelector('.ws-said') || el.appendChild(Object.assign(document.createElement('span'), { className: 'ws-said' })); p.textContent = ' ' + text; return; }
-    el.textContent = text;
+    el.innerHTML = READY.map(function (r, i) {
+      return '<li class="ws-sk"><p><span class="ws-name">' + r.name + '</span></p><p class="ws-help">' + esc(r.need) + ' Turns on ' + r.adapters.map(label).join(', ') + '.</p>' +
+        '<div class="ws-row"><button type="button" class="ws-link" data-ready="' + i + '" aria-label="Turn on ' + r.name + '">Turn on</button></div></li>';
+    }).join('');
   }
+  function useReady(r) {
+    var f = { name: r.name, need: r.need, description: r.need, adapters: r.adapters.map(function (id) { return { id: id, settings: {} }; }), md: '', code: null, from: 'toolkit' };
+    result = f;
+    keep(DRAFT_KEY, result);
+    keep(NOTE_KEY, { text: 'Turned on ' + r.name + '.' });
+    // Its SKILL.md comes from the toolkit's repository, for the Details link.
+    fetch(TOOLKIT.replace(/tools\/$/, 'toolkit/skills/builtin/') + r.name + '.md').then(function (x) { return x.ok ? x.text() : ''; }).then(function (md) {
+      if (md && result === f) { f.md = md; keep(DRAFT_KEY, f); renderResult(); }
+    }).catch(function () {});
+    if (!applySet(idsOf(f), {})) { keep(NOTE_KEY, null); msg('Turned on ' + r.name + '.'); renderResult(); }
+  }
+  // Ideas for step 2: AI reads this page and who it's for, and suggests three changes.
+  function suggest() {
+    var done = wait($('#ws-ideasgo'), 'Looking at this page…');
+    ask('suggestChanges', { person: person(), snapshot: snapshot(document.body, 14000), url: here() }).then(function (text) {
+      done();
+      var ideas = text.split('\n').map(function (l) { return l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').replace(/^["“]|["”]$/g, '').trim(); }).filter(Boolean).slice(0, 4);
+      $('#ws-idealist').innerHTML = ideas.map(function (t) {
+        return '<li><button type="button" class="ws-link ws-idea" data-idea>' + esc(t) + '</button></li>';
+      }).join('');
+      msg(ideas.length ? '' : 'No ideas came back. Try again.');
+      if (ideas.length) say(ideas.length + ' ideas below.', true);
+    }, function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+  }
+  // Three answers become the "Who is it for?" text, like the toolkit's onboarding chat.
+  function askProfile() {
+    var a = ['#ws-q1', '#ws-q2', '#ws-q3'].map(function (q) { return $(q).value.trim(); });
+    if (!a.join('')) { msg('Answer at least one question first.'); $('#ws-q1').focus(); return; }
+    var done = wait($('#ws-askgo'), 'Writing who it’s for…');
+    ask('profileFromChat', { answers: 'What gets in their way on shopping sites: ' + (a[0] || '-') + '\nWhat would make shopping sites easier for them: ' + (a[1] || '-') + '\nWhat they don’t want changed: ' + (a[2] || '-') })
+      .then(function (text) {
+        done();
+        var main = text.split(/\n\s*Support areas:/i)[0].trim();
+        var p = $('#ws-person');
+        p.value = main;
+        writeKey(PERSON_KEY, main);
+        $('#ws-ask').open = false;
+        p.focus();
+        msg('Done. Edit it if anything is wrong.');
+      }, function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+  }
+  function msg(text) { var el = rendered && $('#ws-msg'); if (el) el.textContent = text; if (text) say(text, true); }
   // A button that waits on the AI shows how long it has been, so a 30-second wait doesn't look stuck.
-  var waiting = null;
-  function wait(btn, sel, text) {
+  // The time ticks in a separate, silent element, so a screen reader hears the message once.
+  var waiting = 0;
+  function wait(btn, text) {
     var t = Date.now();
     btn.disabled = true;
-    say2(sel, text);
-    waiting = setInterval(function () { say2(sel, text + ' ' + Math.round((Date.now() - t) / 1000) + ' s'); }, 1000);
-    return function () { clearInterval(waiting); btn.disabled = false; };
+    msg(text);
+    var tick = Object.assign(document.createElement('span'), { className: 'ws-tick' });
+    tick.setAttribute('aria-hidden', 'true');
+    btn.parentNode.appendChild(tick);
+    clearInterval(waiting);
+    waiting = setInterval(function () { tick.textContent = Math.round((Date.now() - t) / 1000) + ' s'; }, 1000);
+    return function () { clearInterval(waiting); tick.remove(); btn.disabled = false; };
   }
 
-  function buildSkillAI(feedback) {
+  // Build it: the Engineer first; if no adapter fits, AI writes a new one.
+  function build() {
     var need = $('#ws-need').value.trim();
-    if (!need) return say2('#ws-sk-msg', 'Write what the person needs first.');
-    var btn = feedback ? $('#ws-sk-again') : $('#ws-sk-build');
-    var done = wait(btn, '#ws-sk-msg', feedback ? 'Changing the skill…' : 'The Engineer is picking adapters…');
-    ask('buildSkill', { need: need, person: person(), catalog: catalog(), settings: settingsLines(), previous: feedback && draft ? draft.skill.md : '', feedback: feedback || '' })
-      .then(function (md) {
-        done();
-        draft = { need: need, skill: parseSkill(md) };
-        keep(DRAFT_KEY, draft);
-        renderDraft();
-        say2('#ws-sk-msg', draft.skill.adapters.length ? 'Here’s the skill. Try it on the page, then save it.' : 'No adapter does this yet.');
-      }, function (e) { done(); say2('#ws-sk-msg', 'That didn’t work: ' + e.message + '. Try again.'); });
+    if (!need) { msg('Write what should change first.'); $('#ws-need').focus(); return; }
+    if (readKey('redbird:need-new') === need) return writeNew(need, $('#ws-build'));
+    var done = wait($('#ws-build'), 'Looking for adapters that do this…');
+    ask('buildSkill', { need: need, person: person(), catalog: catalog(), settings: settingsLines() }).then(parseSkill).then(function (s) {
+      done();
+      if (s.adapters.length) return useSkill(need, s);
+      writeNew(need, $('#ws-build'));
+    }, function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
-  function renderDraft() {
-    var el = rendered && $('#ws-sk-draft');
-    if (!el) return;
-    if (!draft) { el.innerHTML = ''; return; }
-    var s = draft.skill;
-    if (!s.adapters.length) {
-      var why = (s.md.match(/## When to use\s*\n([\s\S]*?)(\n## |$)/) || [])[1] || '';
-      el.innerHTML = '<div class="ws-card"><p><b>No adapter does this yet.</b></p>' + (why ? '<p class="ws-help">' + esc(cut(why, 400)) + '</p>' : '') +
-        '<p class="ws-help">Describe it as a fix instead, and AI writes a new adapter for it.</p>' +
-        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-sk-tofix">Describe it as a fix</button>' +
-        '<button type="button" class="ws-link" id="ws-sk-clear">Clear</button></div></div>';
+  function useSkill(need, s) {
+    result = { name: s.name, need: need, description: s.description, adapters: s.adapters, md: s.md, code: null };
+    keep(DRAFT_KEY, result);
+    var n = s.adapters.length;
+    var text = 'Done. Check the page.';
+    keep(NOTE_KEY, { text: text });
+    if (applySet(idsOf(result), settingsOf(result.adapters))) return;
+    keep(NOTE_KEY, null);
+    msg(text);
+    $('#ws-result').scrollIntoView({ block: 'nearest' });
+  }
+  // keep: adapters from the toolkit to keep next to the new one (a skill someone asked to change).
+  function writeNew(need, btn, keep) {
+    var done = wait(btn, 'No adapter does this yet, so AI is writing one. This takes about 30 seconds…');
+    ask('writeAdapter', { description: need, person: person(), snapshot: snapshot(document.body, 14000), target: target ? target.html : '', url: here() })
+      .then(function (code) { finishAdapter(need, cleanCode(code), 'Done. AI wrote a new adapter, and it’s on.', keep); })
+      .catch(function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+  }
+  function finishAdapter(need, code, text, kept) {
+    var adapters = (kept || []).filter(function (a) { return a.id !== 'mine'; }).concat({ id: 'mine', settings: {} });
+    result = { name: kebab(need.split(/\s+/).slice(0, 5).join(' ')), need: need, description: need, adapters: adapters, md: '', code: code, target: target };
+    keep(DRAFT_KEY, result);
+    install(code, text, idsOf(result));
+  }
+  // Not right? A built adapter is changed by the AI that wrote it. A skill goes back to the
+  // Engineer, and if it now finds no adapter that fits, AI writes a new one for the need and the change.
+  function change(feedback, error) {
+    // Code written by hand (in Details, or from the guide) has no fix card: make one, so the AI
+    // can fix the code that's running.
+    var running = readKey(MY_KEY);
+    if (error && running && (!result || !result.code || result.code !== running)) {
+      result = { name: (result && result.name) || 'my-adapter', need: (result && result.need) || 'My own adapter', description: '',
+        adapters: [{ id: 'mine', settings: {} }], md: '', code: running };
+      keep(DRAFT_KEY, result);
+    }
+    if (!result) return;
+    if (!feedback && !error) { msg('Say what to change first.'); $('#ws-fb').focus(); return; }
+    var btn = $(error ? '#ws-repair' : '#ws-change');
+    if (result.code) {
+      var done = wait(btn, error ? 'Asking the AI to fix the error…' : 'Changing the adapter…');
+      ask('reviseAdapter', { code: result.code, description: result.need, feedback: feedback || '', error: error || '', person: person(),
+        snapshot: snapshot(document.body, 14000), target: result.target ? result.target.html : '', url: here() })
+        .then(function (code) {
+          result.code = cleanCode(code);
+          keep(DRAFT_KEY, result);
+          install(result.code, error ? 'Fixed. It’s running again.' : 'Changed.', idsOf(result));
+        }).catch(function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
       return;
     }
-    var on = same(idsOf(s), names);
-    el.innerHTML = '<div class="ws-card">' +
-      '<label class="ws-lab" for="ws-sk-name">Name</label><input id="ws-sk-name" class="ws-input" value="' + esc(s.name) + '">' +
-      (s.description ? '<p class="ws-help">' + esc(s.description) + '</p>' : '') +
-      '<p class="ws-lab">Adapters it turns on</p><ul class="ws-plain">' + s.adapters.map(function (a) {
-        var st = settingsOf([a])[a.id];
-        return '<li><span class="ws-name">' + esc(label(a.id)) + '</span>' + (st ? ' <span class="ws-help">' + esc(JSON.stringify(st).replace(/[{}"]/g, '').replace(/:/g, ' ').replace(/,/g, ', ')) + '</span>' : '') +
-          ' <button type="button" class="ws-link" data-skdrop="' + esc(a.id) + '" aria-label="Take ' + esc(label(a.id)) + ' out">Take out</button>' +
-          '<span class="ws-help ws-block">' + esc(ADAPTERS[a.id].help) + '</span></li>';
-      }).join('') + '</ul>' +
-      (s.dropped.length ? '<p class="ws-help">Left out ' + esc(s.dropped.join(', ')) + ': not an adapter here.</p>' : '') +
-      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-sk-try"' + (on ? ' disabled' : '') + '>' + (on ? 'On now' : 'Try it on this page') + '</button>' +
-        '<button type="button" class="ws-btn" id="ws-sk-save">Save skill</button></div>' +
-      '<label class="ws-lab" for="ws-sk-fb">Not quite right? Say what to change</label>' +
-      '<textarea id="ws-sk-fb" class="ws-input" rows="2" placeholder="e.g., Also make the text bigger"></textarea>' +
-      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-sk-again">Ask for a change</button>' +
-        '<button type="button" class="ws-link" id="ws-sk-clear">Clear</button></div>' +
-      '<details class="ws-more"><summary>See the SKILL.md</summary><pre class="ws-pre">' + esc(s.md) + '</pre></details></div>';
-  }
-  function renderSkills() {
-    var el = rendered && $('#ws-sk-list');
-    if (!el) return;
-    summary();
-    var list = skills();
-    el.innerHTML = list.length ? list.map(function (s, i) {
-      var on = same(idsOf(s), names);
-      return '<li class="ws-sk"><p><span class="ws-name">' + esc(s.name) + '</span>' + (on ? ' <span class="ws-tag">on</span>' : '') +
-          (s.from === 'shared' ? ' <span class="ws-tag">shared with you</span>' : '') + '</p>' +
-        '<p class="ws-help">' + esc(s.description || idsOf(s).map(label).join(', ')) + '</p>' +
-        '<div class="ws-row">' + (on ? '' : '<button type="button" class="ws-link" data-skon="' + i + '">Turn on</button>') +
-          '<button type="button" class="ws-link" data-sklink="' + i + '">Copy link</button>' +
-          '<button type="button" class="ws-link" data-skmd="' + i + '" aria-expanded="false">SKILL.md</button>' +
-          '<button type="button" class="ws-link" data-skdel="' + i + '">Delete</button></div>' +
-        '<p class="ws-msg" id="ws-sk-m' + i + '" role="status"></p>' +
-        '<pre class="ws-pre" id="ws-sk-pre' + i + '" hidden>' + esc(s.md) + '</pre></li>';
-    }).join('') : '<li class="ws-help">None yet. Saved skills show up here, with a link to share each one.</li>';
+    var done2 = wait(btn, 'Trying again…');
+    ask('buildSkill', { need: result.need, person: person(), catalog: catalog(), settings: settingsLines(), previous: result.md, feedback: feedback })
+      .then(parseSkill).then(function (s) {
+        done2();
+        if (s.adapters.length) return useSkill(result.need, s);
+        writeNew(result.need + '. ' + feedback, btn, result.adapters);
+      }, function (e) { done2(); msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
 
-  function writeFix() {
-    var d = $('#ws-fix').value.trim();
-    if (!d) return say2('#ws-fix-msg', 'Describe what should change first.');
-    var done = wait($('#ws-fix-go'), '#ws-fix-msg', 'Writing your adapter. This takes about half a minute.');
-    ask('writeAdapter', { description: d, person: person(), snapshot: snapshot(document.body, 14000), target: target ? target.html : '', url: location.pathname + location.search })
-      .then(function (code) {
-        code = cleanCode(code);
-        fix = { description: d, target: target, at: Date.now() };
-        install(code, 'Your adapter is on. Look at the page, and open Changes to see what it did.');
-      }).catch(function (e) { done(); say2('#ws-fix-msg', 'That didn’t work: ' + e.message + '. Try again.'); });
-  }
-  function revise(feedback, error) {
-    if (!feedback && !error) return say2('#ws-fix-msg', 'Say what to change first.');
-    var btn = $(error ? '#ws-fix-repair' : '#ws-fix-again');
-    var done = wait(btn, '#ws-fix-msg', error ? 'Asking the AI to fix the error…' : 'Changing your adapter…');
-    myCode().then(function (code) {
-      return ask('reviseAdapter', { code: code, description: fix.description || '', feedback: feedback || '', error: error || '', person: person(),
-        snapshot: snapshot(document.body, 14000), target: fix.target ? fix.target.html : '', url: location.pathname + location.search });
-    }).then(function (code) {
-      install(cleanCode(code), error ? 'Fixed and running again. Check the page.' : 'Changed. Check the page again.');
-    }).catch(function (e) { done(); say2('#ws-fix-msg', 'That didn’t work: ' + e.message + '. Try again.'); });
-  }
-  function renderFix() {
-    var el = rendered && $('#ws-fix-out');
+  // What was built: what it turned on, a switch to compare, Save, and a box to change it.
+  function renderResult() {
+    var el = rendered && $('#ws-result');
     if (!el) return;
-    $('#ws-fix-go').textContent = hasMine() ? 'Write a new adapter' : 'Write the adapter';
-    // Without an adapter yet, coders can still start from the template (the first-adapter guide).
-    if (!hasMine() && names.indexOf('mine') === -1) {
-      el.innerHTML = '<p class="ws-help">Or <button type="button" class="ws-link" id="ws-byhand">write one by hand</button>, starting from a template.</p>';
+    if (!result) {
+      // Coders who open ?try=mine get the code box straight away (Write an adapter by hand).
+      el.innerHTML = names.indexOf('mine') !== -1 ? '<div class="ws-card"><h3 class="ws-h">Your adapter</h3>' + mineState() + codeBox('') + '</div>' : '';
+      fillCode();
       return;
     }
+    var ids = idsOf(result), on = same(ids, names), saved = isSaved(result);
+    var others = ids.filter(function (n) { return n !== 'mine'; });
+    var did = result.code ? (others.length ? 'A new adapter written by AI, plus ' + others.map(label).join(', ') + ' from the toolkit.' : 'A new adapter, written by AI.')
+      : ids.length + ' adapter' + (ids.length === 1 ? '' : 's') + ' from the toolkit:';
+    var body = result.code
+      ? mineState()
+      : '<ul class="ws-plain ws-compact">' + result.adapters.map(function (a) {
+        return '<li><span class="ws-name" title="' + esc(ADAPTERS[a.id].help) + '">' + esc(label(a.id)) + '</span>' +
+          '<div class="ws-chg-slot" data-slot="' + esc(a.id) + '"></div></li>';
+      }).join('') + '</ul>';
     el.innerHTML = '<div class="ws-card">' +
-      '<p class="ws-lab">Your adapter</p>' + (fix.description ? '<p class="ws-help">“' + esc(cut(fix.description, 300)) + '”</p>' : '') +
-      '<div id="ws-fix-state"></div>' +
-      '<label class="ws-lab" for="ws-fix-fb">Change something</label>' +
-      '<textarea id="ws-fix-fb" class="ws-input" rows="2" placeholder="e.g., It missed the stars on the search page"></textarea>' +
-      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-fix-again">Ask for the change</button></div>' +
-      '<details class="ws-more" id="ws-code-box"><summary>See the code</summary>' +
-        '<label class="ws-sr" for="ws-code">Your adapter’s code</label><textarea id="ws-code" class="ws-codearea" spellcheck="false"></textarea>' +
-        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-runmine">Save and run</button></div></details>' +
-      '<div class="ws-row"><button type="button" class="ws-link" id="ws-fix-link">Copy link</button>' +
-        (readKey(PREV_KEY) ? '<button type="button" class="ws-link" id="ws-fix-prev">Go back to the last version</button>' : '') +
-        '<button type="button" class="ws-link" id="ws-reset">Delete it</button></div>' +
-      '<p class="ws-msg" id="ws-fix-share" role="status"></p></div>';
-    myCode().then(function (c) { var t = $('#ws-code'); if (t) t.value = c; });
-    fixState();
+      '<button type="button" class="ws-icon ws-close" id="ws-close" aria-label="Close ' + esc(result.name) + ' (its adapters stay as they are)" title="Close">×</button>' +
+      '<h3 class="ws-h">' + esc(result.name) + ' <span class="ws-tag">' + (result.code ? (others.length ? 'Skill + new adapter' : 'New adapter') : 'Skill') + '</span></h3><p class="ws-help">' + did + '</p>' + body +
+      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-onoff" aria-pressed="' + !on + '">' + (on ? 'Turn off to compare' : 'Turn it back on') + '</button>' +
+        '<button type="button" class="ws-btn" id="ws-save"' + (saved ? ' disabled' : '') + '>' + (saved ? 'Saved' : 'Save') + '</button></div>' +
+      '<details class="ws-more" id="ws-fbbox"><summary>Not right? Change it</summary>' +
+        '<label class="ws-lab" for="ws-fb">Say what to change</label>' +
+        '<textarea id="ws-fb" class="ws-input" rows="2" placeholder="e.g., It missed the countdown at checkout"></textarea>' +
+        '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-change">Change it</button></div></details>' +
+      (result.code ? codeBox(readKey(PREV_KEY) ? '<button type="button" class="ws-link" id="ws-prev">Go back to the last version</button>' : '')
+        : '<details class="ws-more"><summary>Details</summary><p class="ws-help">As a SKILL.md file, the toolkit’s format for skills:</p><pre class="ws-pre" tabindex="0">' + esc(result.md) + '</pre></details>') +
+      '</div>';
+    fillCode();
+    ids.forEach(function (n) { var slot = el.querySelector('[data-slot="' + n + '"]'); if (slot) updateChanges(slot, n); });
   }
-  // How your adapter is doing, under its card: off, broken, or what it changed.
+  function codeBox(extra) {
+    return '<details class="ws-more" id="ws-code-box"' + (openCode ? ' open' : '') + '><summary>Details</summary>' +
+      '<label class="ws-help" for="ws-code">The code. You can edit it and run it again.</label>' +
+      '<textarea id="ws-code" class="ws-codearea" spellcheck="false"></textarea>' +
+      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-runmine">Save and run</button>' + extra + '</div></details>';
+  }
+  function fillCode() { var t = $('#ws-code'); if (t) myCode().then(function (c) { t.value = (result && result.code) || c; }); }
+  // How your adapter is doing: off, broken, or what it changed.
   var mineWarn = '';
+  function mineState() {
+    var on = names.indexOf('mine') !== -1, err = errors.mine || (mineWarn && 'It logged an error: ' + mineWarn);
+    if (!on) return '<p class="ws-help" id="ws-fix-state">It’s off.</p>';
+    if (err) return '<div id="ws-fix-state"><p class="ws-err">' + esc(err) + '</p><div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-repair">Ask the AI to fix it</button></div></div>';
+    return '<div id="ws-fix-state"><div class="ws-chg-slot" data-slot="mine"></div></div>';
+  }
   function fixState() {
     var el = rendered && $('#ws-fix-state');
     if (!el) return;
-    var on = names.indexOf('mine') !== -1, n = on ? count('mine') : 0, err = errors.mine || (mineWarn && 'It logged an error: ' + mineWarn);
-    var html;
-    if (!on) html = '<p class="ws-help">It’s off. <button type="button" class="ws-link" data-turnon="mine">Turn it on</button></p>';
-    else if (err) html = '<p class="ws-err">' + esc(err) + '</p><div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-fix-repair">Ask the AI to fix it</button></div>';
-    else if (n) html = '<p class="ws-help">It’s on and made ' + n + ' change' + (n === 1 ? '' : 's') + ' on this page. <button type="button" class="ws-link" data-show="mine">See them</button></p>';
-    else html = '<p class="ws-help">It’s on, but hasn’t changed anything on this page. If it should have, say so below.</p>';
-    el.innerHTML = html;
+    var slot = el.querySelector('[data-slot="mine"]');
+    if (slot && !errors.mine && !mineWarn) return updateChanges(slot, 'mine');
+    var wrap = document.createElement('div');
+    wrap.innerHTML = mineState();
+    el.replaceWith(wrap.firstChild);
+    var s2 = $('#ws-fix-state [data-slot="mine"]');
+    if (s2) updateChanges(s2, 'mine');
+  }
+  function renderSaved() {
+    var mr = rendered && $('#ws-mine-rows');
+    if (mr) mr.outerHTML = mineRows();
+    var el = rendered && $('#ws-saved');
+    if (!el) return;
+    summary();
+    var list = fixes();
+    if (!list.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<h3 class="ws-h">Saved fixes</h3><ul class="ws-sks">' + list.map(function (f, i) {
+      var on = same(idsOf(f), names) && (!f.code || f.code === readKey(MY_KEY));
+      var kind = f.code ? (idsOf(f).length > 1 ? 'Skill + new adapter' : 'New adapter') : 'Skill';
+      return '<li class="ws-sk"><p><span class="ws-name">' + esc(f.name) + '</span> <span class="ws-tag">' + kind + '</span>' + (on ? ' <span class="ws-tag">on</span>' : '') +
+          (f.from === 'shared' ? ' <span class="ws-tag">shared with you</span>' : '') + '</p>' +
+        '<p class="ws-help">' + esc(cut(f.need || f.description || idsOf(f).map(label).join(', '), 160)) + '</p>' +
+        '<div class="ws-row">' + (on ? '' : '<button type="button" class="ws-link" data-fon="' + i + '" aria-label="Turn on ' + esc(f.name) + '">Turn on</button>') +
+          '<button type="button" class="ws-link" data-fshare="' + i + '" aria-label="Share ' + esc(f.name) + '">Share</button>' +
+          '<button type="button" class="ws-link" data-fdel="' + i + '" aria-label="Delete ' + esc(f.name) + '">Delete</button></div>' +
+        '<div class="ws-msg" id="ws-f' + i + '"></div></li>';
+    }).join('') + '</ul>';
   }
   function renderIncoming() {
     var el = rendered && $('#ws-in');
     if (!el || !incoming) return;
-    var d = incoming.data || {}, html = '';
-    if (incoming.kind === 'bad') html = '<p class="ws-err">This share link is broken. Ask for it again.</p>';
-    else if (incoming.kind === 'skill') {
-      html = '<p><b>Someone shared a skill: ' + esc(incoming.skill.name) + '</b></p><p class="ws-help">' + esc(incoming.skill.description) + '</p>';
-      html += d.code
-        ? '<p class="ws-help">Its adapters are on, except one they wrote themselves: “' + esc(cut((d.fix || {}).description || 'no description', 200)) + '”.</p>' + codeBox(d.code) +
-          '<div class="ws-row"><button type="button" class="ws-btn" id="ws-in-run">Run their adapter too</button></div>' +
-          '<p class="ws-help">This replaces your adapter. “Go back to the last version” brings yours back.</p>'
-        : '<p class="ws-help">It’s on now, and saved in Your skills below.</p>';
-    } else {
-      html = '<p><b>Someone shared an adapter</b></p><p class="ws-help">“' + esc(cut(d.description || 'no description', 300)) + '”</p>' + codeBox(d.code) +
-        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-in-run">Run it as your adapter</button></div>' +
-        '<p class="ws-help">This replaces your adapter. “Go back to the last version” brings yours back.</p>';
+    var html;
+    if (incoming.bad) html = '<p class="ws-err">This share link is broken. Ask for it again.</p>';
+    else {
+      var f = incoming.fix;
+      html = '<h3 class="ws-h">Someone shared a fix: ' + esc(f.name) + '</h3><p class="ws-help">' + esc(cut(f.need || f.description, 300)) + '</p>';
+      html += f.code
+        ? '<p class="ws-help">It has code they wrote, which runs only if you press Run it.</p>' +
+          '<details class="ws-more"><summary>See their code</summary><pre class="ws-pre" tabindex="0">' + esc(f.code) + '</pre></details>' +
+          '<div class="ws-row"><button type="button" class="ws-btn" id="ws-in-run">Run it</button></div>'
+        : '<p class="ws-help">It’s on, and saved under Saved fixes.</p>';
     }
     el.innerHTML = '<div class="ws-card ws-incard">' + html + '<button type="button" class="ws-link" id="ws-in-close">Close</button></div>';
   }
-  function codeBox(code) { return '<details class="ws-more"><summary>See the code</summary><pre class="ws-pre">' + esc(code || '') + '</pre></details>'; }
 
-  // Pointing at the part of the page a fix is about. Its markup goes to the AI with the request.
-  var target = (fix && fix.target) || null, picking = false, pickBox = null;
+  // Pointing at the part of the page the change is about. Its markup goes to the AI with the request.
+  var target = (result && result.target) || null, picking = false, pickBox = null;
   function startPick() {
     if (picking) return stopPick('Stopped pointing.');
     picking = true;
@@ -1514,7 +1926,7 @@
     pickBox = root.querySelector('.ws-pickbox');
     ['mouseover', 'focusin'].forEach(function (t) { document.addEventListener(t, pickOver, true); });
     ['click', 'mousedown', 'pointerdown', 'mouseup', 'keydown'].forEach(function (t) { document.addEventListener(t, pickEvent, true); });
-    status('Click the part of the page your fix is about, or Tab to it and press Enter. Escape stops.');
+    status('Click the part of the page, or Tab to it and press Enter. Press Escape to stop.');
   }
   function stopPick(msg) {
     picking = false;
@@ -1552,7 +1964,7 @@
     target = { html: snapshot(el, 3000), label: describe(el) };
     renderTarget();
     status('Pointing at ' + target.label + '.');
-    $('#ws-fix').focus();
+    $('#ws-need').focus();
   }
   function renderTarget() {
     var el = $('#ws-target');
@@ -1615,91 +2027,86 @@
   }
   function wireBuild() {
     var pane = $('#ws-pane-build');
-    var p = $('#ws-person');
-    p.value = readKey(PERSON_KEY) || '';
+    var p = $('#ws-person'), need = $('#ws-need');
+    p.value = readKey(PERSON_KEY) || (currentProfile ? currentProfile.freeText || '' : '');
     p.oninput = function () { writeKey(PERSON_KEY, p.value.trim() || null); };
-    $('#ws-need').value = (draft && draft.need) || '';
-    $('#ws-fix').value = !hasMine() && fix.description ? fix.description : '';
-    $('#ws-sk-build').onclick = function () { buildSkillAI(''); };
-    $('#ws-sk-hand').onclick = function () {
-      if (!names.length) return say2('#ws-sk-msg', 'Nothing is on. Switch some adapters on in Setup first.');
-      draft = { need: $('#ws-need').value.trim(), skill: handSkill(names.slice(), $('#ws-need').value.trim()) };
-      keep(DRAFT_KEY, draft);
-      renderDraft();
-      say2('#ws-sk-msg', 'Made a skill from the ' + names.length + ' adapter' + (names.length === 1 ? '' : 's') + ' that are on. Name it and save it.');
-    };
-    $('#ws-fix-go').onclick = writeFix;
+    need.value = readKey(NEED_KEY) || (result && result.need) || '';
+    need.oninput = function () { writeKey(NEED_KEY, need.value.trim() || null); };
+    $('#ws-build').onclick = build;
+    $('#ws-askgo').onclick = askProfile;
+    $('#ws-ideasgo').onclick = suggest;
     $('#ws-point').onclick = startPick;
-    pane.addEventListener('input', function (e) {
-      if (e.target.id === 'ws-sk-name' && draft) { draft.skill.name = kebab(e.target.value); draft.skill.md = recipe(draft.skill); keep(DRAFT_KEY, draft); }
-    });
     pane.addEventListener('toggle', function (e) {
-      if (e.target.id === 'ws-code-box') { box.classList.toggle('ws-wide', e.target.open); dock(); }
+      if (e.target.id === 'ws-code-box' && e.target.open) $('#ws-code').focus();
     }, true);
     pane.addEventListener('click', function (e) {
       var t = e.target.closest('button');
       if (!t) return;
-      var id = t.id, list = skills(), i;
-      if (t.hasAttribute('data-seg')) seg(t.getAttribute('data-seg'), true);
-      else if (id === 'ws-sk-try') applySet(idsOf(draft.skill), settingsOf(draft.skill.adapters));
-      else if (id === 'ws-sk-save') {
-        draft.skill.name = kebab($('#ws-sk-name').value);
-        draft.skill.md = recipe(draft.skill);
-        saveSkill(draft.skill);
-        var saved = draft.skill.name;
-        draft = null;
-        keep(DRAFT_KEY, null);
-        renderDraft();
-        renderSkills();
-        say2('#ws-sk-msg', 'Saved “' + saved + '”. It’s in Your skills, with a link to share it.');
-      } else if (id === 'ws-sk-again') buildSkillAI($('#ws-sk-fb').value.trim() || 'Try again with different adapters.');
-      else if (id === 'ws-sk-clear') { draft = null; keep(DRAFT_KEY, null); renderDraft(); say2('#ws-sk-msg', ''); }
-      else if (id === 'ws-sk-tofix') { $('#ws-fix').value = $('#ws-need').value; draft = null; keep(DRAFT_KEY, null); renderDraft(); seg('fix', true); $('#ws-fix').focus(); }
-      else if (t.hasAttribute('data-skdrop')) {
-        draft.skill.adapters = draft.skill.adapters.filter(function (a) { return a.id !== t.getAttribute('data-skdrop'); });
-        draft.skill.md = recipe(draft.skill);
-        keep(DRAFT_KEY, draft);
-        renderDraft();
-      } else if (t.hasAttribute('data-skon')) { var s = list[+t.getAttribute('data-skon')]; applySet(idsOf(s), settingsOf(s.adapters)); status('Turned on ' + s.name + '.'); }
-      else if (t.hasAttribute('data-sklink')) { i = +t.getAttribute('data-sklink'); share(skillLink(list[i]), '#ws-sk-m' + i); }
-      else if (t.hasAttribute('data-skmd')) {
-        i = t.getAttribute('data-skmd');
-        var pre = $('#ws-sk-pre' + i);
-        pre.hidden = !pre.hidden;
-        t.setAttribute('aria-expanded', String(!pre.hidden));
-      } else if (t.hasAttribute('data-skdel')) {
-        i = +t.getAttribute('data-skdel');
+      var id = t.id, list = fixes(), f, i;
+      if (id === 'ws-onoff') {
+        if (same(idsOf(result), names)) {
+          keep(NOTE_KEY, { text: 'Your fix is off.' });
+          if (!applySet([], {})) { keep(NOTE_KEY, null); msg('Your fix is off.'); }
+        }
+        else if (result.code && result.code !== readKey(MY_KEY)) install(result.code, 'Your fix is on again.', idsOf(result));
+        else { applySet(idsOf(result), settingsOf(result.adapters)); msg('Your fix is on again.'); }
+      } else if (id === 'ws-save') {
+        saveFix(result);
+        renderResult();
+        renderSaved();
+        msg('Saved as “' + result.name + '”. It’s under Saved fixes, where you can share it.');
+      } else if (id === 'ws-change') change($('#ws-fb').value.trim(), '');
+      else if (id === 'ws-close') { result = null; keep(DRAFT_KEY, null); renderResult(); msg(''); need.focus(); }
+      else if (id === 'ws-repair') change('', errors.mine || mineWarn);
+      else if (id === 'ws-runmine') {
+        var code = $('#ws-code').value;
+        if (result) { result.code = code; keep(DRAFT_KEY, result); }
+        install(code, 'Saved your code and ran it.', result ? idsOf(result) : names.indexOf('mine') === -1 ? names.concat('mine') : names);
+      } else if (id === 'ws-prev') {
+        var prev = readKey(PREV_KEY);
+        writeKey(PREV_KEY, null);
+        if (prev) { result.code = prev; keep(DRAFT_KEY, result); install(prev, 'Back to the last version.', idsOf(result)); }
+      } else if (id === 'ws-untarget') { target = null; renderTarget(); need.focus(); }
+      else if (t.hasAttribute('data-ready')) useReady(READY[+t.getAttribute('data-ready')]);
+      else if (t.hasAttribute('data-idea')) { need.value = t.textContent; writeKey(NEED_KEY, need.value); $('#ws-ideas').open = false; need.focus(); }
+      else if (t.hasAttribute('data-eg')) { need.value = EXAMPLE_NEEDS[+t.getAttribute('data-eg')].replace(/[“”]/g, ''); writeKey(NEED_KEY, need.value); need.focus(); }
+      else if (t.hasAttribute('data-fon')) {
+        f = list[+t.getAttribute('data-fon')];
+        result = f;
+        keep(DRAFT_KEY, result);
+        if (f.code) return install(f.code, 'Turned on ' + f.name + '.', idsOf(f));
+        if (!applySet(idsOf(f), settingsOf(f.adapters))) msg('Turned on ' + f.name + '.');
+      } else if (t.hasAttribute('data-fshare')) { i = +t.getAttribute('data-fshare'); share(list[i], '#ws-f' + i); }
+      else if (t.hasAttribute('data-fdel')) {
+        i = +t.getAttribute('data-fdel');
         var gone = list.splice(i, 1)[0];
         keep(SKILLS_KEY, list);
-        renderSkills();
-        status('Deleted ' + gone.name + '.');
-      } else if (id === 'ws-untarget') { target = null; renderTarget(); $('#ws-fix').focus(); }
-      else if (id === 'ws-fix-again') revise($('#ws-fix-fb').value.trim(), '');
-      else if (id === 'ws-fix-repair') revise('', errors.mine || mineWarn);
-      else if (id === 'ws-runmine') install($('#ws-code').value, 'Saved your code and ran it.');
-      else if (id === 'ws-fix-link') share(adapterLink(), '#ws-fix-share');
-      else if (id === 'ws-fix-prev') { var prev = readKey(PREV_KEY); writeKey(PREV_KEY, null); if (prev) { writeKey(MY_KEY, prev); install(prev, 'Back to the last version.'); } }
-      else if (id === 'ws-reset') {
-        writeKey(MY_KEY, null); writeKey(PREV_KEY, null); keep(FIX_KEY, null);
-        var j = names.indexOf('mine');
-        if (j !== -1) { names.splice(j, 1); saveNames(); }
-        location.reload();
-      } else if (t.hasAttribute('data-turnon')) toggle('mine', true);
-      else if (id === 'ws-byhand') { toggle('mine', true); renderFix(); $('#ws-code-box').open = true; $('#ws-code').focus(); }
-      else if (id === 'ws-in-run') {
-        var d = incoming.data;
-        fix = { description: (incoming.kind === 'skill' ? (d.fix || {}).description : d.description) || '', at: Date.now() };
-        if (incoming.kind === 'skill') saveSkill(incoming.skill);
-        install(d.code, 'Their adapter is on now.');
-      } else if (id === 'ws-in-close') { incoming = null; $('#ws-in').innerHTML = ''; }
+        renderSaved();
+        renderResult();
+        msg('Deleted ' + gone.name + '.');
+      } else if (id === 'ws-in-run') {
+        f = incoming.fix;
+        saveFix(f);
+        result = f;
+        keep(DRAFT_KEY, result);
+        install(f.code, 'Their fix is on now.', idsOf(f));
+      } else if (id === 'ws-in-close') { incoming = null; $('#ws-in').innerHTML = ''; need.focus(); }
     });
     renderTarget();
-    renderDraft();
-    renderSkills();
-    renderFix();
+    renderResult();
+    renderSaved();
+    renderReady();
     renderIncoming();
-    seg(incoming && incoming.kind === 'adapter' ? 'fix' : incoming ? 'skill' : ui.build || 'skill', false);
-    if (note) say2(note.where, note.text);
+    if (note) {
+      msg(note.text);
+      setTimeout(function () {
+        var h = $('#ws-result .ws-h');
+        if (!h) return;
+        h.setAttribute('tabindex', '-1');
+        h.scrollIntoView({ block: 'nearest' });
+        h.focus();
+      }, 300);
+    }
   }
 
   // ── Start ─────────────────────────────────────────────────────────────────
@@ -1718,6 +2125,14 @@
     baseOptions = { profile: prof && !prof.toolkit ? prof : null, today: window.RB ? RB.today() : new Date(), rewrite: rewrite, fallback: storeFallback };
     if (panelOn) panel();
     names.forEach(turnOn);
+    // Load the shoppers' adapters in the background, so switching between them doesn't wait on the network.
+    if (panelOn) setTimeout(function () {
+      var all = [];
+      Object.keys(PEOPLE).concat(Object.keys(TOOLKIT_PROFILES)).forEach(function (id) {
+        setOf(id).forEach(function (n) { if (all.indexOf(n) === -1 && n !== 'toolkit-fixes' && n !== 'mine') all.push(n); });
+      });
+      all.forEach(function (n) { ensure(n).catch(function () {}); });
+    }, 2500);
   });
 
   // ── Checks ────────────────────────────────────────────────────────────────
@@ -1749,7 +2164,7 @@
         var html = '<h3 class="ws-h">The toolkit’s auditors</h3>';
         groups.forEach(function (g) {
           var els = g[1].filter(function (el) { return el && !inPanel(el); });
-          html += result(g[0], els.map(function (el) { return [el, describe(el)]; }));
+          html += auditRow(g[0], els.map(function (el) { return [el, describe(el)]; }));
         });
         html += '<p class="ws-res-line">Landmarks the page is missing: <b>' + (missing.length ? esc(missing.join(', ')) : 'none') + '</b></p>';
         var groupsAxe = W.groupViolationsByCategory(violations), total = 0;
@@ -1759,18 +2174,18 @@
             var els = v.nodes.map(function (n) { return W.getElementFromNode(n); }).filter(function (el) { return el && !inPanel(el); });
             if (!els.length) return;
             total += els.length;
-            axeHtml += result(v.help, els.map(function (el) { return [el, describe(el)]; }));
+            axeHtml += auditRow(v.help, els.map(function (el) { return [el, describe(el)]; }));
           });
         });
         html += '<h3 class="ws-h">axe-core · ' + total + ' problems</h3>';
         if (ToolkitFixes.before != null) html += '<p class="ws-help">Before toolkit-fixes ran, axe found ' + ToolkitFixes.before + ' problems on this page.</p>';
         html += axeHtml || '<p class="ws-help">axe found nothing.</p>';
         res.innerHTML = html;
-        status('Checks done. axe found ' + total + ' problems.');
+        status('Audit done: ' + total + ' problem' + (total === 1 ? '' : 's') + '.');
       });
     }).catch(function (e) { res.innerHTML = '<p class="ws-err">The checks didn’t load: ' + esc(e.message || e) + '</p>'; });
   }
-  function result(title, items) {
+  function auditRow(title, items) {
     var was = lastCounts[title];
     lastCounts[title] = items.length;
     var head = esc(title) + ' <b>' + items.length + '</b>' + (was != null && was !== items.length ? ' <span class="ws-was">was ' + was + '</span>' : '');
@@ -1788,26 +2203,52 @@
       'box-shadow:0 8px 24px rgba(140,149,159,.2);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;' +
       'text-align:left;letter-spacing:normal;word-spacing:normal}' +
     '.ws-panel[data-side=right]{left:auto;right:12px}.ws-panel.ws-wide{width:600px}' +
-    '.ws-panel[data-dock]{top:0;bottom:0;left:0;width:340px;max-height:none;border-radius:0;border-width:0 1px 0 0;box-shadow:none}' +
-    '.ws-panel[data-dock][data-side=right]{left:auto;right:0;border-width:0 0 0 1px}.ws-panel[data-dock].ws-wide{width:540px}' +
-    '.ws-panel.ws-closed{width:auto!important;max-width:min(360px,calc(100vw - 24px))}.ws-panel.ws-closed #ws-side{display:none}' +
+    '.ws-panel[data-dock]{top:0;bottom:0;left:0;width:360px;max-width:none;max-height:none;border-radius:0;border-width:0 1px 0 0;box-shadow:none}' +
+    '.ws-panel[data-dock=side][data-side=right]{left:auto;right:0;border-width:0 0 0 1px}' +
+    '.ws-panel[data-dock=bottom]{top:auto;left:0;right:0;width:auto;height:45vh;border-width:1px 0 0 0}' +
+    '.ws-panel[data-dock=bottom] #ws-side,.ws-panel[data-dock=bottom] #ws-reset{display:none}' +
     '*{box-sizing:border-box}[hidden]{display:none!important}' +
     'p,h3,ul,ol{margin:0;padding:0}' +
     'button,select,input,textarea{font:inherit;color:inherit;letter-spacing:normal}' +
     ':focus-visible{outline:2px solid #0969da;outline-offset:-2px;border-radius:6px}' +
     'a{color:#0969da;text-decoration:none}a:hover{text-decoration:underline}' +
     '.ws-top{display:flex;align-items:center;gap:4px;padding:4px;border-bottom:1px solid #d1d9e0}.ws-closed .ws-top{border-bottom:0}' +
-    '.ws-head{all:unset;cursor:pointer;flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;padding:4px 8px;border-radius:6px;overflow:hidden}' +
-    '.ws-head:hover{background:#f6f8fa}.ws-title{font-weight:600}' +
+    '.ws-head{flex:1;min-width:0;margin:0;padding:4px 8px;font-size:14px;overflow:hidden}' +
+    '.ws-title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ws-title .ws-sub{font-weight:400}' +
     '.ws-sub{color:#59636e;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}' +
     '.ws-icon{all:unset;cursor:pointer;padding:2px 8px;border-radius:6px;color:#59636e;line-height:20px}.ws-icon:hover{background:#f6f8fa;color:#1f2328}' +
-    '.ws-fold{font-size:16px}' +
+    '.ws-bar{padding:6px 12px;border-bottom:1px solid #d1d9e0;font-size:13px}' +
+
+    '.ws-edge{position:absolute;top:0;bottom:0;right:-4px;width:8px;cursor:col-resize;display:none;touch-action:none;z-index:1}' +
+    '.ws-edge:hover,.ws-edge:focus-visible{background:rgba(9,105,218,.35);outline:none}' +
+    '.ws-panel[data-dock=side] .ws-edge{display:block}.ws-panel[data-dock=side][data-side=right] .ws-edge{right:auto;left:-4px}' +
+    '.ws-select{display:block;width:100%;margin-top:4px;padding:5px 8px;border-radius:6px;border:1px solid #d1d9e0;background:#f6f8fa;color:#1f2328}' +
+    '.ws-onlist{margin-top:4px!important}.ws-onlist > li{padding:6px 0;border-top:1px solid #eff2f5}.ws-indent{margin-left:26px}' +
+    '.ws-persona{margin:10px 0 0;padding:10px 12px;background:#f6f8fa;border:1px solid #d1d9e0;border-radius:6px}' +
+    '.ws-persona[tabindex]:focus{outline:none}.ws-persona figcaption{font-weight:600}.ws-persona blockquote{margin:4px 0 0;color:#59636e;font-size:13px}' +
+    '.ws-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px!important}' +
+    '.ws-pills{list-style:none;padding:0}.ws-pill{padding:0 8px;border-radius:2em;border:1px solid #d1d9e0;background:#f6f8fa;color:#1f2328;font-size:12px;line-height:20px}' +
+    '.ws-chgs > summary{cursor:pointer;color:#0969da;font-size:12px}.ws-chgs[open] > summary{margin-bottom:4px}' +
+    '.ws-tick{color:#59636e;font-size:12px;font-variant-numeric:tabular-nums}' +
+    '.ws-for{color:#1f2328}.ws-ad .ws-for + .ws-help{margin-top:0}' +
+    '.ws-steps{list-style:none;padding:0!important;margin:0;counter-reset:step}.ws-steps > li{margin-bottom:16px;counter-increment:step}' +
+    '.ws-steps > li > .ws-lab:first-child::before{content:counter(step) ". "}' +
+    '.ws-steps .ws-lab{margin-top:0!important}.ws-steps .ws-help{margin-top:4px}' +
+    '.ws-pane > :first-child{margin-top:0!important}' +
+    '.ws-toggle{display:flex;align-items:center;gap:8px;cursor:pointer}' +
+    '.ws-toggle input{appearance:none;-webkit-appearance:none;flex:none;position:relative;width:30px;height:18px;margin:0;border-radius:9px;background:#d1d9e0;cursor:pointer;transition:background .15s}' +
+    '.ws-toggle input::before{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(31,35,40,.3);transition:left .15s}' +
+    '.ws-toggle input:checked{background:#1f883d}.ws-toggle input:checked::before{left:14px}' +
+    '.ws-toggle input:focus-visible{outline:2px solid #0969da;outline-offset:2px}' +
+    '.ws-steps details .ws-lab{margin-top:8px!important}.ws-ready{margin-top:16px!important}' +
+    '.ws-idea{display:block;text-align:left;font-size:13px;padding:4px 0}#ws-idealist li + li{border-top:1px solid #eff2f5}' +
+    '.ws-card{position:relative}.ws-close{position:absolute;top:4px;right:4px;font-size:16px}.ws-card .ws-h{padding-right:28px}' +
+    '.ws-compact li{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;padding:2px 0}.ws-compact .ws-chg-slot{flex:1 1 auto}' +
+    '.ws-h + .ws-plain{margin-top:4px!important}.ws-card .ws-h{margin-top:0!important}' +
     '.ws-main{display:flex;flex-direction:column;min-height:0}' +
-    '.ws-tabs{display:flex;gap:8px;padding:0 12px;border-bottom:1px solid #d1d9e0}' +
-    '.ws-tab{all:unset;cursor:pointer;padding:8px 2px;color:#59636e;border-bottom:2px solid transparent;margin-bottom:-1px}' +
+    '.ws-tabs{display:flex;flex-wrap:wrap;column-gap:8px;padding:0 12px;border-bottom:1px solid #d1d9e0}' +
+    '.ws-tab{all:unset;cursor:pointer;white-space:nowrap;padding:8px 2px;color:#59636e;border-bottom:2px solid transparent;margin-bottom:-1px}' +
     '.ws-tab:hover{color:#1f2328}.ws-tab[aria-selected=true]{color:#1f2328;font-weight:600;border-bottom-color:#fd8c73}' +
-    '.ws-count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:2em;background:rgba(129,139,152,.12);color:#1f2328;font-size:12px;font-weight:500;line-height:18px;text-align:center}' +
-    '.ws-count:empty{display:none}' +
     '.ws-scroll{overflow:auto;padding:12px 16px 4px;min-height:0;flex:1}' +
     '.ws-pane > * + *{margin-top:8px}' +
     '.ws-field{display:flex;align-items:center;gap:8px}.ws-field > span{min-width:7.5em;color:#1f2328}' +
@@ -1815,15 +2256,20 @@
     '.ws-help,.ws-note{color:#59636e;font-size:12px}.ws-note{color:#9a6700}' +
     '.ws-err{color:#d1242f;font-size:12px}' +
     '.ws-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px}' +
-    '.ws-h{font-size:14px;font-weight:600;margin-top:16px!important}.ws-pane > .ws-h:first-child{margin-top:0!important}' +
-    '.ws-link{all:unset;cursor:pointer;color:#0969da;font-size:12px}.ws-link:hover{text-decoration:underline}' +
+    '.ws-h{font-size:14px;font-weight:600;margin-top:16px!important}.ws-pane > .ws-h:first-child,.ws-pane > #ws-in:empty + .ws-h{margin-top:0!important}' +
+    '.ws-link{all:unset;cursor:pointer;color:#0969da;font-size:12px;display:inline-flex;align-items:center;min-height:24px;padding:0 2px}.ws-link:hover{text-decoration:underline}' +
+    '.ws-skip{position:absolute;left:8px;top:8px;z-index:2;padding:6px 10px;background:#fff;border:2px solid #0969da;border-radius:6px;color:#0969da}' +
+    '.ws-skip:not(:focus){width:1px;height:1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
+    'summary{min-height:24px;display:list-item}.ws-chgs > summary,.ws-more summary{padding:2px 0}' +
+    '.ws-check{min-height:24px}.ws-icon{min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center}' +
     '.ws-group{border:1px solid #d1d9e0;border-radius:6px;padding:0}.ws-group + .ws-group{margin-top:8px}' +
+    '#ws-pane-audit .ws-group{margin-top:16px!important}.ws-group > .ws-help,.ws-group > .ws-heard{margin:8px 12px!important}' +
     '.ws-group > summary{cursor:pointer;font-weight:600;padding:6px 12px;background:#f6f8fa;border-radius:6px}' +
     '.ws-group[open] > summary{border-bottom:1px solid #d1d9e0;border-radius:6px 6px 0 0}' +
     '.ws-gc{display:inline-block;padding:0 6px;margin-left:4px;border-radius:2em;background:rgba(129,139,152,.12);font-weight:500;font-size:12px}.ws-gc:empty{display:none}' +
     '.ws-gwho{padding:6px 12px 0}' +
-    '.ws-ad{padding:6px 12px}.ws-ad + .ws-ad{border-top:1px solid #eff2f5}.ws-ad .ws-help{margin-left:24px}.ws-state{margin-left:24px}.ws-flat .ws-help{margin-left:0}' +
-    '.ws-check{display:flex;gap:8px;align-items:center;cursor:pointer}.ws-check input{width:16px;height:16px;margin:0;accent-color:#0969da}' +
+    '.ws-ad{padding:6px 12px}.ws-ad + .ws-ad{border-top:1px solid #eff2f5}.ws-ad .ws-help{margin-left:24px}.ws-ad .ws-state{margin-left:24px}.ws-flat .ws-help{margin-left:0}' +
+    '.ws-check{display:flex;gap:8px;align-items:center;cursor:pointer}.ws-check input{width:18px;height:18px;margin:0;accent-color:#0969da}' +
     '.ws-name{font-weight:600}p.ws-name{margin-left:0}' +
     '.ws-tag{display:inline-block;padding:0 7px;border-radius:2em;border:1px solid #d1d9e0;color:#59636e;font-size:12px;font-weight:500;line-height:18px}' +
     '.ws-btn{padding:3px 12px;border-radius:6px;border:1px solid rgba(31,35,40,.15);background:#1f883d;color:#fff;font-weight:500;cursor:pointer}' +
@@ -1863,7 +2309,7 @@
     '.ws-res-line{font-size:13px}.ws-res-line summary{cursor:pointer}.ws-zero{color:#59636e}' +
     '.ws-was{color:#1a7f37;font-size:12px}' +
     '.ws-status{padding:4px 16px 0;color:#59636e;font-size:12px}.ws-status:empty{display:none}' +
-    '.ws-foot{padding:8px 16px;font-size:12px;color:#59636e;border-top:1px solid #d1d9e0}' +
+    '.ws-foot{padding:4px 16px;font-size:12px;color:#59636e;border-top:1px solid #d1d9e0}.ws-foot a{display:inline-flex;align-items:center;min-height:28px}' +
     '.ws-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
     '.ws-marks{position:fixed;inset:0;pointer-events:none;z-index:2147482000}' +
     '.ws-mark{position:fixed;border:2px solid #0969da;border-radius:3px}' +

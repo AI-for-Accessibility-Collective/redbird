@@ -36,16 +36,28 @@
   }
 
   // ── Dates ─────────────────────────────────────────────────────────────────
-  // ?today=2026-11-02 pins the store's "today", so a demo can show the same delivery dates.
-  if (param('today')) store('redbird:today', param('today') === 'now' ? null : param('today'));
+  // ?today=2026-11-02 pins the store's "today", so a demo can show the same delivery dates. The pin is
+  // kept in the browser tab that set it (sessionStorage), so an old agent link can't leave other tabs
+  // or later visits on that day.
+  if (param('today')) {
+    try {
+      if (param('today') === 'now') sessionStorage.removeItem('redbird:today');
+      else sessionStorage.setItem('redbird:today', param('today'));
+    } catch (e) {}
+  }
+  store('redbird:today', null); // where older versions kept the pin, for every tab
   // ?reset=1 empties the cart and the order history, for starting a new agent run.
   if (param('reset')) {
     store('redbird:cart', []);
     store('redbird:orders', []);
   }
+  // ?cart=rb-20w-usbc-charger puts one of that product in an empty cart, so a guide link can open
+  // checkout with something to buy.
+  if (param('cart') && !(store('redbird:cart') || []).length) store('redbird:cart', [{ id: param('cart'), qty: 1 }]);
   // Always 10 am local, so adding days never crosses midnight and the date is the same in every timezone.
   function today() {
-    var t = store('redbird:today');
+    var t = null;
+    try { t = sessionStorage.getItem('redbird:today'); } catch (e) {}
     var d = t ? new Date(t + 'T10:00:00') : new Date();
     if (isNaN(d)) d = new Date();
     d.setHours(10, 0, 0, 0);
@@ -183,8 +195,8 @@
     heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.2-9.3C1.6 7.2 3.8 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c3.4 0 5.6 3.2 4.4 6.7C19.5 15.4 12 20 12 20Z" fill="none" stroke="#8c1515" stroke-width="2"/></svg>',
   };
   // The Redbird mark: a cardinal. BIRD takes the text color (white on the dark header), BIRD_ON_LIGHT is red for white backgrounds.
-  var BIRD = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>';
-  var BIRD_ON_LIGHT = '<svg viewBox="0 0 48 48" aria-hidden="true" style="color:#8c1515"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>';
+  var BIRD = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>';
+  var BIRD_ON_LIGHT = '<svg viewBox="0 0 48 48" aria-hidden="true" style="color:#8c1515"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>';
 
   // ── Cart ──────────────────────────────────────────────────────────────────
   var CART_KEY = 'redbird:cart';

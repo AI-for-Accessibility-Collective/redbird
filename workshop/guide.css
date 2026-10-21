@@ -124,3 +124,22 @@ tr:nth-child(2n) td { background: var(--subtle); }
 .ctl-linkrow { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
 .ctl-linkrow code { flex: 1 1 280px; font-family: var(--mono); font-size: 13px; background: var(--subtle); border: 1px solid var(--border); border-radius: 6px; padding: 8px; overflow-wrap: anywhere; }
 .ctl-copy { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--subtle); cursor: pointer; }
+
+/* Example adapters: before and after */
+.ba { display: grid; grid-template-columns: repeat(2, max-content); justify-content: start; gap: 16px; margin: 0 0 16px; align-items: start; }
+.ba.stack { grid-template-columns: minmax(0, max-content); }
+.ba figure { margin: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; max-width: 100%; }
+.ba figcaption { font-size: 14px; font-weight: 600; padding: 4px 12px; background: var(--subtle); border-bottom: 1px solid var(--border); }
+.ba img, .ex-img { display: block; max-width: 100%; height: auto; }
+.ex-img { border: 1px solid var(--border); border-radius: 6px; margin: 0 0 16px; }
+.ba .said { margin: 0; padding: 10px 12px; max-width: 300px; }
+.ex-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.ex-links a { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--subtle); color: var(--fg); font-size: 14px; font-weight: 500; text-decoration: none !important; }
+.ex-links a:hover { background: #eff2f5; }
+@media (max-width: 860px) { .ba { grid-template-columns: minmax(0, 1fr); } }
+
+/* Reset the store */
+.btn-danger { font: inherit; font-weight: 600; color: #fff; background: #d1242f; border: 1px solid rgba(31, 35, 40, .15); border-radius: 6px; padding: 8px 16px; min-height: 40px; cursor: pointer; }
+.btn-danger:hover { background: #a40e26; }
+.btn-danger:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+.ex-table td:first-child { white-space: nowrap; }

@@ -20,12 +20,13 @@ const builders = require('./_builders.js');
 const TASKS = {
   // Workshop reading-level adapter: rewrite at a grade, with optional instructions it can change.
   rewrite: ({ text, instructions }) => ({
-    text: `${clip(instructions, MAX_NOTE) || 'Rewrite this text in plain language.'}\n\n${clip(text, MAX_TEXT)}`,
+    text: `${clip(instructions, MAX_NOTE) || 'Rewrite this text in plain language.'}\n` +
+      'Return only the new text, as plain text: no intro like "Here is…" and no markdown.\n\n' + clip(text, MAX_TEXT),
   }),
   simplify: ({ text }) => ({
     text: `Rewrite this text using simpler language, but KEEP ALL THE INFORMATION.\n\nORIGINAL TEXT:\n${clip(text, MAX_TEXT)}\n\n` +
       'RULES:\n- Use common, everyday words (6th-grade vocabulary)\n- Break long sentences into shorter ones\n' +
-      '- Keep EVERY fact, detail, and point from the original\n- Do NOT summarize\n- No bullet points, no markdown, plain text only\n\n' +
+      '- Keep EVERY fact, detail, and point from the original\n- Do NOT summarize\n- Keep an adult tone. Don\'t talk down to the reader\n- No bullet points, no markdown, plain text only\n\n' +
       'Return ONLY the simplified text:',
   }),
   summarize: ({ text }) => ({
@@ -78,12 +79,24 @@ const TASKS = {
       target: clip(b.target, 3000), url: clip(b.url, 300),
     }),
   }),
+  profileFromChat: (b) => ({ text: builders.profileFromChat({ answers: clip(b.answers, MAX_DESC) }) }),
+  myProfile: (b) => ({ long: true, text: builders.myProfile({ answers: clip(b.answers, MAX_DESC), catalog: clip(b.catalog, 8000) }) }),
+  suggestChanges: (b) => ({ text: builders.suggestChanges({ person: clip(b.person, MAX_NOTE), snapshot: clip(b.snapshot, MAX_PAGE), url: clip(b.url, 300) }) }),
   columnHeader: ({ sampleData }) => ({
     text: `These are values from one table column: ${clip(JSON.stringify(sampleData), 1500)}\nReturn a short column header (1 to 3 words) only.`,
   }),
 };
 
 function clip(v, n) { return typeof v === 'string' ? v.slice(0, n) : ''; }
+
+// Text that goes straight onto the page. The model sometimes adds "Here is the simplified text:"
+// and markdown anyway, which would show on the page as stars and pound signs.
+const ON_PAGE = new Set(['rewrite', 'simplify', 'summarize', 'translate', 'define']);
+function plain(t) {
+  return t.replace(/^\s*here(?:'s| is| are)\b[^\n]*?:\s*/i, '')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/__([^_\n]+)__/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '').replace(/^\s*[*•]\s+/gm, '').trim();
+}
 
 // Same request, same answer: the store's text barely changes, so most requests in a workshop
 // room repeat. Kept per server instance, which is enough to save most calls.
@@ -126,7 +139,8 @@ module.exports = async function handler(req, res) {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) return res.status(502).json({ error: 'AI request failed (' + r.status + ')' });
-    const text = (d.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();
+    let text = (d.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();
+    if (ON_PAGE.has(body.task)) text = plain(text);
     // A cut-off answer would read as broken text on the page, so treat it as no answer.
     if (!text || d.candidates?.[0]?.finishReason === 'MAX_TOKENS') return res.status(502).json({ error: 'AI returned nothing' });
     if (cache.size > 2000) cache.delete(cache.keys().next().value);

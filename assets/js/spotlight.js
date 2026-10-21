@@ -8,20 +8,18 @@
 // what's wrong, who it affects and how to notice it. "Issues on this page" in the bottom-right
 // corner lists them all, including ones that cover the whole page. The page is checked again
 // whenever it changes, so a badge turns green when an adapter fixes its issue.
-// The choice is remembered in this browser, like ?issues=.
-(function () {
+// It starts off on every page: ?spotlight=on or the workshop panel turns it on.
+(function spotlight(force) {
   var KEY = 'redbird:spotlight';
-  var param = new URLSearchParams(location.search).get('spotlight');
-  var value = param;
-  try {
-    // A page shown inside another page (the workshop's side-by-side view) doesn't save its settings.
-    if (param) { if (window.top === window) localStorage.setItem(KEY, param); }
-    else value = localStorage.getItem(KEY);
-  } catch (e) { /* private window: off */ }
-  if ((value || 'off').toLowerCase() !== 'on' || !window.RB_ISSUES || !window.RB) return;
+  // The workshop panel turns the spotlight on and off in place, without reloading the page.
+  window.RB_SPOTLIGHT_START = function () { if (!window.RB_SPOTLIGHT) spotlight(true); };
+  // Only ?spotlight=on or the workshop panel turns it on. It isn't remembered between pages, so it
+  // always starts off.
+  var value = new URLSearchParams(location.search).get('spotlight');
+  try { localStorage.removeItem(KEY); } catch (e) { /* private window */ }
+  if ((!force && (value || 'off').toLowerCase() !== 'on') || !window.RB_ISSUES || !window.RB) return;
 
   var esc = RB.esc;
-  var LIST_URL = 'https://github.com/AI-for-Accessibility-Collective/redbird/blob/main/ISSUES.md';
 
   // ── What the store's own words look like with issues on ───────────────────
   // Taken from the catalog, so a title or description an adapter rewrote no longer matches.
@@ -268,7 +266,7 @@
       find: function () { return places(['.list-price', '.delivery', '.card .brand', '.stars-num', '.seller', '.fine'], lowContrast, hasText); } },
     13: { title: 'Fine print is tiny',
       what: 'The return policy and the subscription terms are 10 px tall.',
-      who: 'People with low vision, and older shoppers',
+      who: 'People with low vision, and older adults',
       notice: 'Read the return policy at normal zoom: the letters are much smaller than the rest of the page.',
       find: function () { return places(['.policy', '.fine'], function (el) { return parseFloat(getComputedStyle(el).fontSize) < 12; }, hasText); } },
     14: { title: 'The header stays stuck at the top',
@@ -276,7 +274,7 @@
       who: 'People with low vision who zoom in',
       notice: 'Zoom to 200% (Cmd and +) and scroll down: the header stays put and covers a big part of the page.',
       badgeOn: function (el) { return { el: el.querySelector('.rb-subnav') || el, at: 'end' }; },
-      find: function () { return places('.rb-top', function (el) { return /sticky|fixed/.test(getComputedStyle(el).position); }); } },
+      find: function () { return places('#rb-top', function (el) { return /sticky|fixed/.test(getComputedStyle(el).position); }); } },
     15: { title: 'The page doesn\'t fit when zoomed in', wide: true,
       what: 'The page is at least 1280 px wide, so at 200% zoom you have to scroll sideways.',
       who: 'People with low vision who zoom in, and phone users',
@@ -311,12 +309,15 @@
       notice: 'Press Tab to the price filter and try the arrow keys: you can\'t reach it, and nothing moves.',
       find: function () {
         return places('.drag-slider', function (el) {
-          return !el.querySelector('input[type=range]') && !Array.prototype.some.call(el.querySelectorAll('[role=slider]'), function (k) { return k.tabIndex >= 0; });
+          var keys = !!el.querySelector('input[type=range]') || Array.prototype.some.call(el.querySelectorAll('[role=slider]'), function (k) { return k.tabIndex >= 0; });
+          // A fix can also add min and max boxes next to the slider instead.
+          var typed = !!el.parentElement && Array.prototype.some.call(el.parentElement.querySelectorAll('input[type=number], input[type=text], input[inputmode]'), rendered);
+          return !keys && !typed;
         });
       } },
     19: { title: 'The checkout timer can\'t be extended', nocheck: true,
       what: 'Checkout says your cart is held for 5:00 and counts down. You can\'t get more time, and then you can\'t order.',
-      who: 'Anyone who needs more time: screen reader users, people with cognitive disabilities and slow typists',
+      who: 'Anyone who needs more time, like screen reader users, people with motor or cognitive disabilities, and people who type slowly',
       notice: 'Wait five minutes on this page: "Place your order" stops working, and nothing offers more time.',
       find: function () { return places('#hold', function () { return true; }); } },
     20: { title: 'No focus outline', wide: true,
@@ -419,10 +420,10 @@
         return remembered(32, [keys, '.list-price', '.line .meta', '.co-item', '.opt-group label', '.notice-quiet', '.ord-line .fine'],
           function (el) { return jargon(el) && !explained(el); }, jargon);
       } },
-    33: { title: 'The video plays by itself with sound',
-      what: 'The product video plays by itself, with sound, on a loop.',
-      who: 'Screen reader users (it talks over their reader), and people with ADHD or vestibular disorders',
-      notice: 'Open this page with the sound on and click anywhere: the video\'s sound starts, and there is no pause button.',
+    33: { title: 'The video plays by itself',
+      what: 'The product video starts by itself and keeps looping, with no button to pause it.',
+      who: 'People with ADHD or vestibular disorders, and screen reader users when its sound is on',
+      notice: 'Watch the video: it starts by itself and keeps looping, and there is no button to pause it.',
       find: function () {
         return places('#pvid', function (v) { return rendered(v) && !(v.paused && (v.played.length > 0 || !v.autoplay)); });
       } },
@@ -526,48 +527,52 @@
   // Everything sits in one <aside> at the end of the page. The badges and outlines are placed
   // over the page, so nothing in the store moves. Rules use the aside's id and !important where
   // adapters restyle every button or unpin everything fixed, so the spotlight keeps its shape.
+  // GitHub's look (Primer colors), the same as the workshop's toolkit panel: issue numbers like
+  // "#4" in small labels, red for not fixed, yellow for partly, green for fixed.
   var CSS =
-    '#rb-spotlight{font:14px/1.45 var(--font);color:var(--ink)}' +
+    '#rb-spotlight{font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;color:#1f2328}' +
     '#rb-spotlight .spot-layer{position:absolute!important;left:0;top:0;width:0;height:0;z-index:84}' +
     '#rb-spotlight.over-sheet .spot-layer{z-index:97}' +
-    '#rb-spotlight .spot-box{position:absolute!important;box-sizing:border-box;margin:0!important;border:2px dashed #c40000;border-radius:4px;' +
+    '#rb-spotlight .spot-box{position:absolute!important;box-sizing:border-box;margin:0!important;border:2px solid #d1242f;border-radius:6px;' +
     'outline:1px solid rgba(255,255,255,.85)!important;pointer-events:none!important}' +
-    '#rb-spotlight .spot-box.is-fixed{border-color:#1e7b3b}#rb-spotlight .spot-box.is-partly{border-color:#9a4f00}' +
-    '#rb-spotlight .spot-box.is-flash{border-width:3px;box-shadow:0 0 0 4px rgba(232,199,102,.95)}' +
+    '#rb-spotlight .spot-box.is-fixed{border-color:#1a7f37}#rb-spotlight .spot-box.is-partly{border-color:#9a6700}' +
+    '#rb-spotlight .spot-box.is-flash{border-color:#0969da;box-shadow:0 0 0 3px rgba(9,105,218,.3)}' +
     '#rb-spotlight .spot-badge{position:absolute!important;display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box!important;' +
-    'min-width:24px!important;min-height:0!important;height:24px!important;margin:0!important;padding:0 6px!important;border:2px solid #fff;border-radius:999px;' +
-    'background:#c40000;color:#fff;font:700 12.5px/1 var(--font);white-space:nowrap;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)}' +
-    '#rb-spotlight .spot-badge:hover{background:#9e0000}' +
-    '#rb-spotlight .spot-badge.is-fixed{background:#1e7b3b}#rb-spotlight .spot-badge.is-partly{background:#9a4f00}' +
-    '#rb-spotlight :focus-visible{outline:3px solid var(--focus)!important;outline-offset:2px!important}' +
-    '#rb-spotlight .spot-badge:focus-visible{box-shadow:0 0 0 2px #fff!important}' +
-    '#rb-spotlight .spot-toggle{position:fixed!important;right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:86;margin:0!important;' +
-    'min-height:0!important;padding:9px 16px!important;border:2px solid #fff;border-radius:999px;background:var(--cardinal);color:#fff;' +
-    'font:600 14.5px/1.2 var(--font);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}' +
-    '#rb-spotlight .spot-toggle:hover{background:var(--cardinal-dark)}' +
-    '#rb-spotlight .spot-panel{position:fixed!important;right:12px;bottom:64px;z-index:90;box-sizing:border-box;width:min(390px,calc(100vw - 24px));' +
-    'max-height:min(72vh,620px);overflow-y:auto;padding:14px 16px 16px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}' +
-    '#rb-spotlight .spot-pop{position:absolute!important;z-index:90;box-sizing:border-box;width:min(340px,calc(100vw - 24px));padding:12px 16px 14px;' +
-    'background:#fff;border:1px solid var(--line);border-top:4px solid #c40000;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}' +
+    'min-width:22px!important;min-height:0!important;height:22px!important;margin:0!important;padding:0 6px!important;border:2px solid #fff;border-radius:2em;' +
+    'background:#cf222e;color:#fff;font:600 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;white-space:nowrap;cursor:pointer;' +
+    'box-shadow:0 1px 3px rgba(31,35,40,.3)}' +
+    '#rb-spotlight .spot-badge:hover{background:#a40e26}' +
+    '#rb-spotlight .spot-badge.is-fixed{background:#1f883d}#rb-spotlight .spot-badge.is-fixed:hover{background:#1a7f37}' +
+    '#rb-spotlight .spot-badge.is-partly{background:#bf8700}#rb-spotlight .spot-badge.is-partly:hover{background:#9a6700}' +
+    '#rb-spotlight :focus-visible{outline:2px solid #0969da!important;outline-offset:2px!important}' +
+    '#rb-spotlight .spot-toggle{position:fixed!important;right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));z-index:86;margin:0!important;' +
+    'min-height:0!important;padding:5px 12px!important;border:1px solid #d1d9e0;border-radius:6px;background:#f6f8fa;color:#1f2328;' +
+    'font:500 14px/20px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(140,149,159,.2)}' +
+    '#rb-spotlight .spot-toggle:hover{background:#eff2f5}#rb-spotlight .spot-toggle[hidden]{display:none!important}' +
+    '#rb-spotlight .spot-count{display:inline-block;min-width:20px;margin-left:6px;padding:0 6px;border-radius:2em;background:rgba(129,139,152,.12);font-size:12px;line-height:18px;text-align:center}' +
+    '#rb-spotlight .spot-panel{position:fixed!important;right:16px;bottom:60px;z-index:90;box-sizing:border-box;width:min(380px,calc(100vw - 32px));' +
+    'max-height:min(72vh,620px);overflow-y:auto;padding:12px 16px 16px;background:#fff;border:1px solid #d1d9e0;border-radius:6px;box-shadow:0 8px 24px rgba(140,149,159,.2)}' +
+    '#rb-spotlight .spot-pop{position:absolute!important;z-index:90;box-sizing:border-box;width:min(340px,calc(100vw - 24px));padding:12px 16px;' +
+    'background:#fff;border:1px solid #d1d9e0;border-radius:6px;box-shadow:0 8px 24px rgba(140,149,159,.2)}' +
     '#rb-spotlight.over-sheet .spot-pop{z-index:98}' +
-    '#rb-spotlight .spot-pop.is-fixed{border-top-color:#1e7b3b}#rb-spotlight .spot-pop.is-partly{border-top-color:#9a4f00}' +
-    '#rb-spotlight h2{font:700 17px/1.25 var(--font);margin:0 32px 6px 0}' +
-    '#rb-spotlight p{margin:6px 0}#rb-spotlight a{color:var(--link);text-decoration:underline;display:inline!important;min-height:0!important;padding:0!important;margin:0!important}' +
-    '#rb-spotlight .spot-close{position:absolute!important;top:8px;right:8px;width:32px;height:32px;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;' +
-    'border:0;border-radius:50%;background:none;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}' +
-    '#rb-spotlight .spot-close:hover{background:#f0f2f2}' +
-    '#rb-spotlight .spot-status{font-weight:700;color:#a30000}#rb-spotlight .spot-status.is-fixed{color:#1e7b3b}#rb-spotlight .spot-status.is-partly{color:#8a4700}' +
-    '#rb-spotlight .spot-btn{display:inline-block;margin:0 6px 0 0!important;min-height:0!important;padding:4px 12px!important;border:1px solid #8d9191;border-radius:999px;' +
-    'background:#fff;color:var(--ink);font:600 13.5px/1.3 var(--font);cursor:pointer}' +
-    '#rb-spotlight .spot-btn:hover{background:#f5f6f6}#rb-spotlight .spot-btn[aria-pressed=true]{background:#fff3cf;border-color:#a37b00}' +
-    '#rb-spotlight .spot-list{list-style:none;margin:10px 0 0;padding:0}' +
-    '#rb-spotlight .spot-item{display:grid;grid-template-columns:30px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}' +
-    '#rb-spotlight .spot-num{display:inline-flex;align-items:center;justify-content:center;height:24px;min-width:24px;padding:0 5px;box-sizing:border-box;' +
-    'border-radius:999px;background:#c40000;color:#fff;font:700 12.5px/1 var(--font)}' +
-    '#rb-spotlight .spot-num.is-fixed{background:#1e7b3b}#rb-spotlight .spot-num.is-partly{background:#9a4f00}' +
-    '#rb-spotlight .spot-item p{margin:0 0 4px}#rb-spotlight .spot-item .spot-acts{margin-top:6px}' +
-    '#rb-spotlight .spot-more{margin-top:6px;padding:8px 10px;background:#f7f8f8;border-radius:8px}#rb-spotlight .spot-more p{margin:0 0 6px}' +
-    '#rb-spotlight .spot-note{color:var(--muted);font-size:13.5px}';
+    '#rb-spotlight h2{font-size:14px;font-weight:600;line-height:1.5;margin:0 32px 4px 0}#rb-spotlight h2:focus{outline:none!important}' +
+    '#rb-spotlight .spot-line{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:0 0 8px!important;font-size:12px;color:#59636e}' +
+    '#rb-spotlight .spot-line .spot-btn{margin-left:4px!important;padding:0 8px!important}' +
+    '#rb-spotlight p{margin:4px 0;font-size:14px}#rb-spotlight a{color:#0969da;text-decoration:underline;display:inline!important;min-height:0!important;padding:0!important;margin:0!important}' +
+    '#rb-spotlight .spot-close{position:absolute!important;top:8px;right:8px;width:28px;height:28px;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;' +
+    'border:0;border-radius:6px;background:none;color:#59636e;font-size:18px;line-height:1;cursor:pointer}' +
+    '#rb-spotlight .spot-close:hover{background:#f6f8fa;color:#1f2328}' +
+    '#rb-spotlight .spot-status{font-size:12px;font-weight:600;color:#d1242f}#rb-spotlight .spot-status.is-fixed{color:#1a7f37}#rb-spotlight .spot-status.is-partly{color:#9a6700}' +
+    '#rb-spotlight .spot-btn{display:inline-block;margin:0 6px 0 0!important;min-height:0!important;padding:3px 12px!important;border:1px solid #d1d9e0;border-radius:6px;' +
+    'background:#f6f8fa;color:#1f2328;font:500 12px/20px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;cursor:pointer}' +
+    '#rb-spotlight .spot-btn:hover{background:#eff2f5}#rb-spotlight .spot-btn[aria-pressed=true]{background:#ddf4ff;border-color:#54aeff}' +
+    '#rb-spotlight .spot-list{list-style:none;margin:8px 0 0;padding:0}' +
+    '#rb-spotlight .spot-item{display:grid;grid-template-columns:32px 1fr;gap:8px;padding:8px 0;border-top:1px solid #d1d9e0}' +
+    '#rb-spotlight .spot-num{font-size:12px;font-weight:600;line-height:21px;color:#d1242f}' +
+    '#rb-spotlight .spot-num.is-fixed{color:#1a7f37}#rb-spotlight .spot-num.is-partly{color:#9a6700}' +
+    '#rb-spotlight .spot-item p{margin:0 0 2px}#rb-spotlight .spot-item .spot-acts{margin-top:6px}' +
+    '#rb-spotlight .spot-more{margin-top:8px;padding:8px 12px;background:#f6f8fa;border-radius:6px}#rb-spotlight .spot-more p{margin:0 0 6px;font-size:13px}' +
+    '#rb-spotlight .spot-note{color:#59636e;font-size:12px}';
 
   var layer, toggle, panel = null, pop = null, live, badges = {}, boxes = [];
   var showAll = null, flash = null, flashTimer = null;
@@ -581,7 +586,7 @@
     ui.id = 'rb-spotlight';
     ui.setAttribute('aria-label', 'Issue spotlight');
     ui.innerHTML = '<div class="spot-layer"></div>' +
-      '<button type="button" class="spot-toggle" aria-expanded="false">Issues on this page (0)</button>' +
+      '<button type="button" class="spot-toggle" aria-expanded="false" hidden>Issues on this page <span class="spot-count">0</span></button>' +
       '<div class="sr-only" aria-live="polite"></div>';
     document.body.appendChild(ui);
     layer = ui.querySelector('.spot-layer');
@@ -594,20 +599,23 @@
       else if (panel && (panel.contains(e.target) || e.target === toggle)) { e.preventDefault(); closePanel(true); }
     });
     // A click anywhere else closes what's open.
-    document.addEventListener('mousedown', function (e) {
-      if (pop && !pop.contains(e.target) && !e.target.closest('.spot-badge')) closePop(false);
-      if (panel && !panel.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) closePanel(false);
-    }, true);
+    document.addEventListener('mousedown', clickAway, true);
+  }
+  function clickAway(e) {
+    if (pop && !pop.contains(e.target) && !e.target.closest('.spot-badge')) closePop(false);
+    if (panel && !panel.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) closePanel(false);
   }
   function say(textToSay) {
+    // With the workshop panel on the page, use its one voice, so messages don't talk over each other.
+    if (window.RB_SAY) return window.RB_SAY(textToSay, true);
     live.textContent = '';
     setTimeout(function () { live.textContent = textToSay; }, 60);
   }
-  var WORDS = { present: 'Still there', fixed: 'Fixed ✓', partly: 'Partly fixed', nocheck: 'Still there', waiting: 'Shows when a payment fails' };
+  var WORDS = { present: 'Not fixed', fixed: 'Fixed', partly: 'Partly fixed', nocheck: 'Not fixed', waiting: 'Shows when a payment fails' };
   function statusLine(n) {
     var s = state[n];
-    if (s.status === 'partly') return 'Partly fixed: ' + s.still + ' of ' + s.places.length + ' places still have it';
-    if (s.status === 'nocheck') return 'Still there (the spotlight can\'t check this one)';
+    if (s.status === 'partly') return 'Partly fixed: ' + s.still + ' of ' + s.places.length + ' still there';
+    if (s.status === 'nocheck') return 'Not fixed (this one can\'t be checked automatically)';
     return WORDS[s.status];
   }
   function tone(status) { return status === 'fixed' ? 'is-fixed' : status === 'partly' ? 'is-partly' : 'is-bad'; }
@@ -616,8 +624,8 @@
   // Badges: one per issue, kept between checks so focus stays on them.
   function render() {
     var shownNow = present();
-    var label = 'Issues on this page (' + shownNow.length + ')';
-    if (toggle.textContent !== label) toggle.textContent = label;
+    var label = 'Issues on this page <span class="spot-count">' + shownNow.length + '</span>';
+    if (toggle.innerHTML !== label) toggle.innerHTML = label;
     Object.keys(badges).forEach(function (n) { if (!state[n]) { badges[n].remove(); delete badges[n]; } });
     shownNow.forEach(function (n) {
       var s = state[n], b = badges[n];
@@ -631,8 +639,8 @@
         var after = Object.keys(badges).map(Number).filter(function (m) { return m > n && badges[m] !== b && badges[m].isConnected; }).sort(function (x, y) { return x - y; })[0];
         layer.insertBefore(b, after ? badges[after] : null);
       }
-      var words = { fixed: 'fixed', partly: 'partly fixed' }[s.status] || 'still there';
-      var face = n + (s.status === 'fixed' ? ' ✓' : '');
+      var words = { fixed: 'fixed', partly: 'partly fixed' }[s.status] || 'not fixed';
+      var face = String(n);
       if (b.textContent !== face) b.textContent = face;
       if (b.getAttribute('aria-label') !== 'Issue ' + n + ', ' + words + ', details') b.setAttribute('aria-label', 'Issue ' + n + ', ' + words + ', details');
       var cls = 'spot-badge ' + tone(s.status);
@@ -651,11 +659,15 @@
     var L = layer.getBoundingClientRect();
     var root = document.documentElement, vw = root.clientWidth;
     var maxX = Math.max(vw, document.body.getBoundingClientRect().right); // page's right edge, on screen
-    var minX = -window.scrollX, minY = -window.scrollY;
+    // The workshop panel sits beside the page (the page is padded to make room for it), so badges
+    // stay out from under it.
+    var rs = getComputedStyle(root), padL = parseFloat(rs.paddingLeft) || 0, padR = parseFloat(rs.paddingRight) || 0;
+    var minX = Math.max(-window.scrollX, padL), minY = -window.scrollY;
+    if (padR) maxX = Math.min(maxX, vw - padR);
     var placed = [], used = 0;
     // A header stuck to the top: badges for things under it stay below it, and badges for
     // things in it stay on screen.
-    var header = document.querySelector('.rb-top'), hr = null;
+    var header = document.querySelector('#rb-top'), hr = null;
     if (header && /sticky|fixed/.test(getComputedStyle(header).position)) hr = header.getBoundingClientRect();
     function box(b, status, extra) {
       var d = boxes[used] || (boxes[used] = layer.insertBefore(document.createElement('div'), layer.firstChild));
@@ -749,7 +761,7 @@
     var issue = ISSUES[n];
     return '<p>' + esc(issue.what) + '</p>' +
       '<p><b>Who it affects:</b> ' + esc(issue.who) + '</p>' +
-      '<p><b>How to notice it:</b> ' + esc(issue.notice) + '</p>' +
+      '<p><b>Try it:</b> ' + esc(issue.notice) + '</p>' +
       (issue.checks ? '<p class="spot-note">' + esc(issue.checks) + '</p>' : '');
   }
   function openPop(n) {
@@ -760,10 +772,9 @@
     pop.setAttribute('role', 'dialog');
     pop.setAttribute('aria-labelledby', 'spot-pop-title');
     pop.innerHTML = '<button type="button" class="spot-close" aria-label="Close">×</button>' +
-      '<h2 id="spot-pop-title" tabindex="-1">Issue ' + n + '</h2><p class="spot-status"></p>' + detailsHTML(n) +
-      '<p class="spot-where" hidden>Found in <span></span> places on this page. ' +
-      '<button type="button" class="spot-btn" data-all aria-pressed="false">Show all <span></span></button></p>' +
-      '<p><a href="' + LIST_URL + '" target="_blank" rel="noopener">All 36 issues<span class="sr-only"> (opens in a new tab)</span></a></p>';
+      '<h2 id="spot-pop-title" tabindex="-1">#' + n + ' ' + esc(ISSUES[n].title) + '</h2>' +
+      '<p class="spot-line"><span class="spot-status"></span><span class="spot-where" hidden> · in <span></span> places ' +
+        '<button type="button" class="spot-btn" data-all aria-pressed="false">Show all</button></span></p>' + detailsHTML(n);
     ui.insertBefore(pop, live);
     fillPop();
     badges[n].setAttribute('aria-expanded', 'true');
@@ -787,7 +798,8 @@
     line.className = 'spot-status ' + tone(s.status);
     pop.className = 'spot-pop ' + tone(s.status);
     where.hidden = Number(count) < 2;
-    where.querySelectorAll('span').forEach(function (x) { if (x.textContent !== count) x.textContent = count; });
+    var num = where.querySelector('span');
+    if (num.textContent !== count) num.textContent = count;
   }
   // Under its badge, or above it when there's no room below, and never off the side of the screen.
   function placePop() {
@@ -844,19 +856,18 @@
       off.searchParams.set('spotlight', 'off');
       panel.innerHTML = '<h2 tabindex="-1">Issues on this page</h2>' +
         (list.length
-          ? '<p class="spot-note">The planted issues that are turned on and show up here. Green ones are fixed, for example by an adapter.</p><ul class="spot-list">' +
+          ? '<p class="spot-note">Green ones are fixed by an adapter.</p><ul class="spot-list">' +
             list.map(function (n) {
               var issue = ISSUES[n];
-              return '<li class="spot-item" data-n="' + n + '"><span class="spot-num" aria-hidden="true">' + n + '</span><div>' +
+              return '<li class="spot-item" data-n="' + n + '"><span class="spot-num" aria-hidden="true">#' + n + '</span><div>' +
                 '<p><b><span class="sr-only">Issue ' + n + ': </span>' + esc(issue.title) + '</b></p><p class="spot-status"></p><div class="spot-acts">' +
                 '<button type="button" class="spot-btn" data-show="' + n + '">Show me<span class="sr-only"> issue ' + n + '</span></button>' +
                 '<span class="spot-note" hidden></span>' +
                 '<button type="button" class="spot-btn" data-more aria-expanded="false">Details<span class="sr-only"> for issue ' + n + '</span></button></div>' +
                 '<div class="spot-more" hidden>' + detailsHTML(n) + '</div></div></li>';
             }).join('') + '</ul>'
-          : '<p>No planted issues are turned on here, so there is nothing to mark. Add ?issues=on to the address to turn them all on.</p>') +
-        '<p class="spot-note"><a href="' + LIST_URL + '" target="_blank" rel="noopener">All 36 issues<span class="sr-only"> (opens in a new tab)</span></a> · ' +
-        '<a href="' + esc(off.href) + '">Turn off the spotlight</a></p>';
+          : '<p>No accessibility problems are turned on here, so there is nothing to mark. Add ?issues=on to the address to turn them all on.</p>') +
+        '<p class="spot-note"><a href="' + esc(off.href) + '">Turn off the spotlight</a></p>';
     }
     list.forEach(function (n) {
       var item = panel.querySelector('[data-n="' + n + '"]'), s = state[n];
@@ -919,12 +930,24 @@
   // Check again when the page changes (adapters change it after load), at most twice a second,
   // and every second anyway, since moving rows and tickers change without touching the page.
   var queued = false;
-  new MutationObserver(function (records) {
+  var watcher = new MutationObserver(function (records) {
     if (queued || !records.some(function (r) { return !ui.contains(r.target); })) return;
     queued = true;
-    setTimeout(function () { queued = false; check(); }, 500);
-  }).observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
-  setInterval(function () { if (!document.hidden) check(); }, 1000);
+    setTimeout(function () { queued = false; if (window.RB_SPOTLIGHT) check(); }, 500);
+  });
+  watcher.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+  var ticker = setInterval(function () { if (!document.hidden) check(); }, 1000);
+  window.RB_SPOTLIGHT.stop = function () {
+    watcher.disconnect();
+    clearInterval(ticker);
+    document.removeEventListener('mousedown', clickAway, true);
+    window.removeEventListener('scroll', relayout, { capture: true });
+    window.removeEventListener('resize', relayout);
+    ui.remove();
+    var css = document.getElementById('rb-spotlight-css');
+    if (css) css.remove();
+    delete window.RB_SPOTLIGHT;
+  };
   var framed = false;
   function relayout() {
     if (framed) return;

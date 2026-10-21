@@ -531,7 +531,7 @@ window.RB_REVIEWS = {
       { q: "Is this men's or women's sizing?", a: "It is unisex sizing. Women may want to order one size down for a closer fit.", by: "Seller", date: "2025-02-20", votes: 31 },
       { q: "Does it shrink?", a: "yes some if you dry it hot. i air dry mine", by: "Alexis", date: "2025-09-23", votes: 22 },
       { q: "Is the Navy close to black?", a: "it's a dark navy, you can tell it's blue in daylight", by: "Redbird Customer", date: "2026-04-08", votes: 6 },
-      { q: "Is there a tag in the neck?", a: "no tag, the label is printed on. nice because tags drive me crazy", by: "Jordan", date: "2025-03-12", votes: 11 },
+      { q: "Is there a tag in the neck?", a: "no tag, the label is printed on. nice because tags bother me", by: "Jordan", date: "2025-03-12", votes: 11 },
     ],
   },
 

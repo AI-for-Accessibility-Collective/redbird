@@ -40,6 +40,26 @@
       "source": "/workshop/ideas(\\.html)?",
       "destination": "/workshop/build-your-own",
       "permanent": false
+    },
+    {
+      "source": "/workshop/make-a-skill(\\.html)?",
+      "destination": "/workshop/build-a-fix",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/describe-a-fix(\\.html)?",
+      "destination": "/workshop/build-a-fix",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/agents(\\.html)?",
+      "destination": "/workshop/",
+      "permanent": false
+    },
+    {
+      "source": "/workshop/controls(\\.html)?",
+      "destination": "/workshop/",
+      "permanent": false
     }
   ]
 }

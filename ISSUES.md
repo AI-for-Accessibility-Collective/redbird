@@ -35,7 +35,7 @@ To find the code for an issue, search for `on(6)` in `assets/js/` or `data-plant
 | 12 | Light grey text that fails contrast: list prices, delivery text, fine print, brand names. | everywhere | `fix-contrast` |
 | 13 | Fine print at 10 px: the return policy and the subscription terms. | product page, checkout | `visual-assist`, `magnifier` |
 | 14 | The header and the deal ticker stay stuck to the top, so they cover half the screen when zoomed in. | everywhere | `unpin-sticky` |
-| 15 | The page is at least 1280 px wide, so at 200% zoom you have to scroll sideways. | everywhere | `reflow-column` |
+| 15 | The page is at least 1280 px wide, so at 200% zoom you have to scroll sideways. Off unless you ask for it by number (`?issues=15`), because on a small screen it looks like a broken store. | everywhere | `reflow-column` |
 | 16 | The real arrival date is only in a tooltip that opens on mouse hover ("Details"). | product page | `persistent-hover` |
 
 ## Motor
@@ -68,7 +68,7 @@ To find the code for an issue, search for `on(6)` in `assets/js/` or `data-plant
 
 | # | what's wrong | where | adapter |
 |---|---|---|---|
-| 33 | The product video plays by itself, with sound, on a loop. | Redbird Basics charger page | `mute-sounds`, `motion-reducer` |
+| 33 | The product video plays by itself, on a loop, with no pause button. It's muted unless you ask for this problem by number (`?issues=33`), then it plays with sound. | Redbird Basics charger page | `mute-sounds`, `motion-reducer` |
 | 34 | The "Best sellers" and "Customers also bought" rows scroll by themselves and have no buttons. | home, product page | `stop-auto-advance` |
 | 35 | A deal ticker scrolls across the top of every page, and the home banner changes every 4 seconds with no way to pause. | everywhere, home | `motion-reducer`, `stop-auto-advance` |
 

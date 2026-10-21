@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Build a fix - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Build a fix">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix" aria-current="page">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Steps<span aria-hidden="true">/</span><a href="build-a-fix" aria-current="page">3. Build a fix</a></nav>
+<h1>Build a fix</h1>
+<p class="lede">Describe a change in plain words, and the toolkit builds it. Try these two examples first. Each takes about 10 minutes.</p>
+
+<h2 id="what-happens-when-you-press-build-it">What happens when you press Build it</h2>
+<p>When you press <b>Build it</b>, the toolkit looks for adapters it already has that make the change. If some fit, you get a <b>skill</b>, a short list of those adapters to turn on together (no new code). If none fit, AI writes a new <b>adapter</b> (the code that makes the change). This takes about 30 seconds. The card under Build it says which one you got.</p>
+<p>Example 1 below ends up as a skill, and example 2 as a new adapter.</p>
+
+<h2 id="example-1-a-calmer-page-for-mark">Example 1: a calmer page for Mark</h2>
+<ol>
+  <li>Open the <a href="../product?id=pebble-20w-2pack&amp;issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">Pebble charger page<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. Notice the countdown, "Only 2 left in stock" and the scrolling deals bar.</li>
+  <li>In the panel, open the <b>Build your adapter</b> tab.</li>
+  <li>In <b>Who is it for?</b>, type: "Mark has ADHD and anxiety. Countdowns and messages like only 2 left make him rush."</li>
+  <li>In <b>What should change on this page?</b>, type: "Hide the countdowns and only 2 left messages, and stop things from moving."</li>
+  <li>Press <b>Build it</b>. It turns on adapters from the toolkit, and lists them.</li>
+  <li>Press <b>Turn off to compare</b>, then turn it back on.</li>
+  <li>If something is missing, open <b>Not right? Change it</b>, say what to change, and press <b>Change it</b>.</li>
+  <li>Press <b>Save</b>.</li>
+</ol>
+
+<h2 id="example-2-star-ratings-for-sam">Example 2: star ratings for Sam</h2>
+<p>Each rating is a picture of stars, so a screen reader only reads the number of ratings, like "(1,203)". No adapter in the toolkit fixes this, so AI writes one.</p>
+<ol>
+  <li>Open the <a href="../search?q=charger&amp;issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">search results for "charger"<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</li>
+  <li>In the <b>Build your adapter</b> tab, replace what's in <b>Who is it for?</b> with: "Sam is blind and shops with VoiceOver."</li>
+  <li>In <b>What should change on this page?</b>, type: "Read the star ratings out as numbers, like 4.6 out of 5 stars."</li>
+  <li>Press <b>Point at it on the page</b>, and click the stars under any product.</li>
+  <li>Press <b>Build it</b>, and wait about half a minute.</li>
+  <li>Open the list of changes under the result, and press one to see where it is on the page. The stars look the same, since the change is only for the screen reader.</li>
+</ol>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>To see the code AI wrote, open <b>Details</b> under the result. You can edit it there, and press <b>Go back to the last version</b> to undo a change.</p></div>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#what-happens-when-you-press-build-it">What happens when you press Build it</a></li><li><a href="#example-1-a-calmer-page-for-mark">Example 1: a calmer page for Mark</a></li><li><a href="#example-2-star-ratings-for-sam">Example 2: star ratings for Sam</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

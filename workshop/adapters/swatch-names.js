@@ -42,6 +42,8 @@ function closestName(color) {
 }
 
 function say(text) {
+  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
+  if (window.RB_SAY) return window.RB_SAY(text);
   let live = document.getElementById('ws-live');
   if (!live) {
     live = Object.assign(document.createElement('div'), { id: 'ws-live' });
@@ -49,7 +51,17 @@ function say(text) {
     live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
     document.body.appendChild(live);
   }
-  live.textContent = text;
+  // Messages that come at the same moment (several adapters starting together) are read
+  // together, instead of the last one replacing the rest. The region is emptied first, so
+  // the same words said twice are read twice.
+  live.waiting = (live.waiting || []).concat(text);
+  clearTimeout(live.timer);
+  live.timer = setTimeout(() => {
+    const words = live.waiting.join('. ');
+    live.waiting = [];
+    live.textContent = '';
+    setTimeout(() => { live.textContent = words; }, 60);
+  }, 50);
 }
 
 export const SwatchNames = {

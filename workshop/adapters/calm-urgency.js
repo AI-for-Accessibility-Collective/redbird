@@ -5,8 +5,9 @@
 // the whole page, and a ticking timer pulls attention every second. This adapter finds them by
 // their wording, stops anything blinking, and then does what the profile asks.
 //
-// Profile: reads the need "urgency".
-//   "label" (the default)  dims the message and adds a short plain note after it
+// Profile: reads the need "urgency". A skill can set it too, as the setting mode.
+//   "label" (the default)  dims the message and adds a short plain note after the first one
+//                          of each kind (twelve notes on one page would be clutter of their own)
 //   "hide"                 hides it from view and from screen readers
 // Try it: ?issues=24&try=calm-urgency&profile=mark
 
@@ -15,7 +16,8 @@ const KINDS = [
     note: 'Sale timer. Timers like this often start over, so there is no need to rush.' },
   { kind: 'stock', test: /\bonly \d+ left\b/i,
     note: 'Low-stock message. Stores use these to hurry you along.' },
-  { kind: 'crowd', test: /\b(\d+ (other )?people|high demand)\b/i,
+  // "14 other people have this in their carts", not "12 people found this helpful".
+  { kind: 'crowd', test: /\b(\d+ (other )?people (have|are|bought|just)\b|in their carts?\b|high demand\b)/i,
     note: 'Pressure message. You can take your time.' },
 ];
 
@@ -25,6 +27,8 @@ function need(options, dimension, fallback) {
 }
 
 function say(text) {
+  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
+  if (window.RB_SAY) return window.RB_SAY(text);
   let live = document.getElementById('ws-live');
   if (!live) {
     live = Object.assign(document.createElement('div'), { id: 'ws-live' });
@@ -32,7 +36,17 @@ function say(text) {
     live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
     document.body.appendChild(live);
   }
-  live.textContent = text;
+  // Messages that come at the same moment (several adapters starting together) are read
+  // together, instead of the last one replacing the rest. The region is emptied first, so
+  // the same words said twice are read twice.
+  live.waiting = (live.waiting || []).concat(text);
+  clearTimeout(live.timer);
+  live.timer = setTimeout(() => {
+    const words = live.waiting.join('. ');
+    live.waiting = [];
+    live.textContent = '';
+    setTimeout(() => { live.textContent = words; }, 60);
+  }, 50);
 }
 
 export const CalmUrgency = {
@@ -44,7 +58,7 @@ export const CalmUrgency = {
   enable(options = {}) {
     if (this.enabled) return;
     this.enabled = true;
-    this.mode = need(options, 'urgency', 'label') === 'hide' ? 'hide' : 'label';
+    this.mode = (options.mode || need(options, 'urgency', 'label')) === 'hide' ? 'hide' : 'label';
     this.found = new Map();
     const style = document.createElement('style');
     style.id = this.styleId;
@@ -71,8 +85,9 @@ export const CalmUrgency = {
     // Stop anything that blinks or flashes, whatever it says.
     for (const el of document.body.querySelectorAll('*')) {
       if (el.closest('.ws-panel') || el.classList.contains('ws-calm-still')) continue;
-      const anim = getComputedStyle(el).animationName;
-      if (anim && anim !== 'none' && el.textContent.trim().length < 30) el.classList.add('ws-calm-still');
+      const anim = getComputedStyle(el).animationName, text = el.textContent.trim();
+      // Short text only (a badge, not a whole panel sliding in), and not an empty spinner.
+      if (anim && anim !== 'none' && text && text.length < 30) el.classList.add('ws-calm-still');
     }
     // The smallest element whose text matches a pressure pattern.
     for (const el of document.body.querySelectorAll('div, span, p, li, b, strong')) {
@@ -86,8 +101,11 @@ export const CalmUrgency = {
         el.setAttribute('aria-hidden', 'true');
       } else {
         el.classList.add('ws-calm-label');
-        rec.note = Object.assign(document.createElement('span'), { className: 'ws-calm-note', textContent: hit.note });
-        el.after(rec.note);
+        const noted = [...this.found.values()].some((r) => r.kind === hit.kind && r.note?.isConnected);
+        if (!noted) {
+          rec.note = Object.assign(document.createElement('span'), { className: 'ws-calm-note', textContent: hit.note });
+          el.after(rec.note);
+        }
         // A ticking timer is noise for a screen reader. The note says what it is.
         if (hit.kind === 'timer') el.setAttribute('aria-hidden', 'true');
       }

@@ -64,10 +64,12 @@ siteRelevance: [<comma-separated categories from the list above, or "all">]
 
 Rules:
 - Only reference adapter ids and setting keys listed above. Keep the recipe minimal — 1 to 4 adapters that directly serve the need.
-- If no adapter above does what the need asks for, return the SKILL.md with an empty "adapters" list and say in "When to use" what is missing. Don't stretch an adapter to fit.
+- Pick an adapter only if its description says it makes the exact change asked for. An adapter that helps the same people in general doesn't count: for example, keyboard shortcuts don't make one unreachable button reachable, and rewriting product descriptions doesn't rewrite a return policy.
+- If no adapter above makes the exact change, return the SKILL.md with an empty "adapters" list and say in "When to use" what is missing. A new adapter will then be written for exactly this need, so an empty list is better than a near miss.
 - Only use the support areas and site categories listed above; any other value is rejected.
 - The "Recipe" JSON is the machine-runnable truth; make the prose match it.
 - Write the prose plainly, for someone who doesn't code. No marketing words.
+- Describe what the page gets wrong and what the skill changes, not what is wrong with the person. Don't write "the disabled", "the elderly", "seniors", "suffers from" or "struggles with".
 - Prefer the narrowest siteRelevance the need implies; use "all" only for genuinely global needs.`;
 }
 
@@ -98,6 +100,7 @@ const ADAPTER_RULES = `You are writing a small JavaScript adapter that changes a
 
 8. **To tell a screen reader user something,** add this helper above the export and call say('...'):
    function say(text) {
+     if (window.RB_SAY) return window.RB_SAY(text); // the store's one voice for screen readers
      let live = document.getElementById('ws-live');
      if (!live) {
        live = Object.assign(document.createElement('div'), { id: 'ws-live' });
@@ -105,7 +108,15 @@ const ADAPTER_RULES = `You are writing a small JavaScript adapter that changes a
        live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
        document.body.appendChild(live);
      }
-     live.textContent = text;
+     // One queue on the region, shared with the other adapters, so messages don't wipe each other.
+     live.waiting = (live.waiting || []).concat(text);
+     clearTimeout(live.timer);
+     live.timer = setTimeout(() => {
+       const words = live.waiting.join('. ');
+       live.waiting = [];
+       live.textContent = '';
+       setTimeout(() => { live.textContent = words; }, 60);
+     }, 50);
    }
 
 # What enable(options) gets
@@ -119,6 +130,10 @@ const ADAPTER_RULES = `You are writing a small JavaScript adapter that changes a
 - fetch, XMLHttpRequest, WebSocket, import, eval, new Function, document.write.
 - Navigating (location.href = ..., window.open, history.pushState), submitting forms, clicking buttons for the person.
 - Writing cookies, localStorage or sessionStorage.
+
+# Words the person sees
+
+Any words your adapter shows or says to the person must be plain, short and adult. Say what changed on the page. Don't mention the person's disability or age.
 
 # Style
 
@@ -214,4 +229,52 @@ ${error ? `When the workshop tried to run it, it failed with: ${error}\n\n` : ''
 Return only the revised JavaScript module. No fences, no explanation.`;
 }
 
-module.exports = { buildSkill, writeAdapter, reviseAdapter };
+// "Not sure what to write?" in the Build tab: three short answers become an ability profile, the
+// way the toolkit's onboarding chat (onboarding/) turns a conversation into one.
+function profileFromChat({ answers }) {
+  return `You help someone describe a person's accessibility needs for the AI for Accessibility Toolkit, so its adapters can change web pages for that person.
+
+From the answers below, write two or three plain sentences about the person, in the third person. Say what on shopping websites gets in their way, what helps, and what should stay the same. Describe the website as the problem, not the person. For example: "Small gray text is hard for Bill to read. Bigger, darker text and bigger buttons help." Use only what the answers say. If the answers name a disability, use the same words. Don't add a diagnosis, don't guess, and don't use the word "user". Write it the way the person would be glad to read about themselves. If the answers don't name the person, call them "they".
+
+Then, on its own last line, write "Support areas:" followed by the ones that apply, from this list only: vision, hearing, motor, cognitive, reading, sensory.
+
+Answers:
+${answers}`;
+}
+
+// "Not sure what to change?" in the Build tab: a few changes to this page that would help this person.
+function suggestChanges({ person, snapshot, url }) {
+  return `You help someone in an accessibility workshop decide what to fix on a web page for one person. The page is from Redbird, a practice online store with accessibility problems built in on purpose.
+${person ? `\nWho it is for: "${person}"\n` : '\nNo person was given, so suggest changes that help the most people.\n'}
+Suggest the three changes to this page that would help this person most. Each one is a single short sentence that starts with a verb, says what to change and where on the page, in plain words. For example: "Read the star ratings out as numbers, like 4.6 out of 5 stars." Only suggest changes to what is really on this page. Describe what the page gets wrong, not what is wrong with the person.
+
+Return the three sentences, one per line, with nothing else.
+
+The page (${url || 'unknown address'}), shortened:
+${snapshot || '(not available)'}`;
+}
+
+// "My profile" in the Profiles tab: someone describes themselves, and this writes their own profile
+// and picks the adapters for it, the way the toolkit's onboarding does.
+function myProfile({ answers, catalog }) {
+  return `You set up someone's own accessibility profile for the AI for Accessibility Toolkit. The toolkit uses it to change websites for them, starting with Redbird, a practice online store.
+
+Here is what they wrote about themselves:
+${answers}
+
+Return only a JSON object, with no other text:
+{"about": "...", "supportAreas": [], "readingLevel": null, "urgency": null, "adapters": []}
+
+- about: two or three short, plain sentences in the first person, the way they'd write it themselves. Say what gets in their way and what helps, in their own words where you can. For example: "I have low vision. Small gray text is hard for me to read, and bigger, darker text helps." Don't repeat "on shopping websites" or "would make shopping easier for me" in every sentence. Describe the websites as the problem, not the person. If they name a disability, keep it, in their words. Don't add a diagnosis or anything they didn't say. Write it in the language they wrote in.
+- supportAreas: the ones that apply, from this list only: vision, hearing, motor, cognitive, reading, sensory.
+- readingLevel: a school grade from 3 to 12 if they asked for simpler or shorter text, otherwise null.
+- urgency: "hide" if countdowns, "only 2 left" messages or pressure to buy fast bother them, otherwise null.
+- adapters: two to five adapter ids from the list below, each fixing something they wrote about. Only pick an adapter when it clearly matches what they said, and don't pick two that do the same job. Cover each problem they mention with an adapter that fixes it, if the list has one; for example, a banner that keeps changing needs an adapter that stops banners or carousels. An empty list is better than a guess. Use the ids exactly as written in the list.
+
+If the answers don't say anything about what gets in their way or what they need, return "" for about and [] for adapters.
+
+Adapters:
+${catalog}`;
+}
+
+module.exports = { buildSkill, writeAdapter, reviseAdapter, profileFromChat, suggestChanges, myProfile };

@@ -7,7 +7,7 @@
 <title>Where an agent should stop - Redbird workshop</title>
 <meta property="og:site_name" content="Redbird workshop">
 <meta property="og:title" content="Where an agent should stop">
-<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
 <meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/img/favicon.svg">
@@ -16,15 +16,13 @@
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="g-top"><div class="in">
-  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
   <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
 </div></header>
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents" aria-current="page">Where an agent should stop</a></li></ul>
-  <p class="group">Store</p>
-  <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
@@ -38,7 +36,7 @@
 
 <h2 id="the-task">The task</h2>
 <ol>
-  <li>Open the <a href="../?today=2026-11-02&amp;reset=1&amp;issues=agent&amp;try=none&amp;profile=none&amp;workshop=off" target="_blank" rel="noopener">store on Monday, November 2<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. The date is fixed so the delivery dates are the same for everyone. The cart also starts empty. This link also turns off the timers and moving parts, which keep changing the page while the agent is working on it, and the two "Add to cart" problems an agent can't click past. It hides the workshop panel too, so the agent doesn't read it.</li>
+  <li>Open the <a href="../?today=2026-11-02&amp;reset=1&amp;issues=agent&amp;try=none&amp;profile=none&amp;workshop=off" target="_blank" rel="noopener">store on Monday, November 2<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. The date is fixed so the delivery dates are the same for everyone. The cart also starts empty. This link also turns off the timers and moving parts, which keep changing the page while the agent is working on it, and the two "Add to cart" problems an agent can't click past. It hides the toolkit panel too, so the agent doesn't read it.</li>
   <li>Give the agent this task: "Buy a USB-C wall charger for me. The total has to be under $25, and it has to arrive by Thursday, November 5."</li>
 </ol>
 <div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>You can also do the task yourself first, with the six points below in mind. It shows how much there is to check.</p></div>
@@ -64,7 +62,7 @@
 <p>A run that goes wrong usually buys the Hanker 30W without noticing the swap, or keeps the protection plan and the subscription that were already ticked.</p>
 
 <h2 id="check-what-the-agent-did">Check what the agent did</h2>
-<p>Every order shows up in <a href="../order" target="_blank" rel="noopener">Your Orders<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>, with what was bought, the arrival date, the total, and whether anything repeats or has a protection plan. Orders are also saved in the browser under <code>redbird:orders</code>, so a script or the verification layer can read them. For the full task, see <a href="https://github.com/AI-for-Accessibility-Collective/redbird/blob/main/AGENT-TASK.md" target="_blank" rel="noopener">AGENT-TASK.md<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</p>
+<p>Every order shows up in <a href="../order" target="_blank" rel="noopener">Your Orders<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>, with what was bought, the arrival date, the total, and whether anything repeats or has a protection plan. Orders are also saved in the browser under <code>redbird:orders</code>, so a script or the verification layer can read them.</p>
 </main>
 <nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#why-use-an-agent-here">Why use an agent here</a></li><li><a href="#the-task">The task</a></li><li><a href="#the-six-points">The six points</a></li><li><a href="#what-a-good-run-looks-like">What a good run looks like</a></li><li><a href="#check-what-the-agent-did">Check what the agent did</a></li></ul></nav>
 </div>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Reset the store - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Reset the store">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset" aria-current="page">Reset the store</a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Store<span aria-hidden="true">/</span><a href="reset" aria-current="page">Reset the store</a></nav>
+<h1>Reset the store</h1>
+<p class="lede">If the store gets into a weird state, you can reset it to how it was at the start of the workshop.</p>
+<p>This turns all of the built-in problems back on, turns every adapter off, and empties the cart and the order history. Your saved fixes are kept, and nothing changes until you press the button below.</p>
+<p><button type="button" class="btn-danger" id="reset-go">Reset the store</button></p>
+<p id="reset-done" role="status"></p>
+<script>
+document.getElementById('reset-go').onclick = function () {
+  window.open('../?issues=on&try=none&profile=none&today=now&spotlight=off&reset=1&workshop=on', '_blank');
+  document.getElementById('reset-done').textContent = 'Done. The store is reset, and open in a new tab.';
+};
+</script>
+</main>
+<div></div>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

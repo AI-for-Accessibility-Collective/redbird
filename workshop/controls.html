@@ -7,7 +7,7 @@
 <title>Store controls - Redbird workshop</title>
 <meta property="og:site_name" content="Redbird workshop">
 <meta property="og:title" content="Store controls">
-<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
 <meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/img/favicon.svg">
@@ -16,15 +16,13 @@
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="g-top"><div class="in">
-  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
   <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
 </div></header>
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
-  <p class="group">Store</p>
-  <ul class="sub"><li><a href="controls" aria-current="page">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
@@ -34,8 +32,7 @@
 
 <h2 id="what-this-browser-has-set-now">What this browser has set now</h2>
 <dl class="ctl-now" id="ctl-now">
-  <div><dt>Planted problems</dt><dd data-now="issues">Checking...</dd></div>
-  <div><dt>Workshop panel</dt><dd data-now="workshop">Checking...</dd></div>
+  <div><dt>Problems built into the store</dt><dd data-now="issues">Checking...</dd></div>
   <div><dt>Store date</dt><dd data-now="today">Checking...</dd></div>
   <div><dt>Profile</dt><dd data-now="profile">Checking...</dd></div>
   <div><dt>Adapters</dt><dd data-now="try">Checking...</dd></div>
@@ -47,18 +44,12 @@
 <p>Pick what you want, then open the store with the link at the bottom. The link opens in a new tab, so this page stays open.</p>
 <form class="ctl" id="ctl" novalidate>
   <fieldset>
-    <legend>Planted problems</legend>
+    <legend>Problems built into the store</legend>
     <label><input type="radio" name="issues" value="on"> All of them</label>
-    <label><input type="radio" name="issues" value="agent"> For an AI agent (all except the ones that move or change on their own, and the two "Add to cart" problems an agent can't get past)</label>
     <label><input type="radio" name="issues" value="off"> None</label>
     <label><input type="radio" name="issues" value="some"> Only these:</label>
     <label class="ctl-sub" for="ctl-some">Issue numbers, e.g., 6, 24</label>
     <input type="text" id="ctl-some" inputmode="numeric" autocomplete="off">
-  </fieldset>
-  <fieldset>
-    <legend>Workshop panel</legend>
-    <label><input type="radio" name="workshop" value="on"> Show it</label>
-    <label><input type="radio" name="workshop" value="off"> Hide it (for AI agent runs, so the agent doesn't read the panel)</label>
   </fieldset>
   <fieldset>
     <legend>Store date</legend>
@@ -66,14 +57,15 @@
     <label><input type="radio" name="today" value="pin"> Pin it to:</label>
     <label class="ctl-sub" for="ctl-date">Date</label>
     <input type="date" id="ctl-date">
-    <p class="ctl-hint">Pinning the date keeps delivery dates the same on every run, e.g., for the agent task.</p>
+    <p class="ctl-hint">Pinning the date keeps the delivery dates the same every time, in this tab.</p>
   </fieldset>
   <fieldset>
     <legend>Profile</legend>
     <label><input type="radio" name="profile" value="none"> None</label>
     <label><input type="radio" name="profile" value="sam"> Sam (blind, uses a screen reader)</label>
     <label><input type="radio" name="profile" value="mark"> Mark (ADHD and anxiety)</label>
-    <label><input type="radio" name="profile" value="dario"> Dario (dyslexia)</label>
+    <label><input type="radio" name="profile" value="dario"> Dario (cognitive disability)</label>
+    <label><input type="radio" name="profile" value="bill"> Bill (older adult)</label>
   </fieldset>
   <fieldset>
     <legend>Adapters</legend>
@@ -81,7 +73,7 @@
     <label><input type="radio" name="try" value="none"> Turn them all off</label>
   </fieldset>
   <fieldset>
-    <legend>Spotlight (a badge on each planted problem)</legend>
+    <legend>Show accessibility problems (a badge on each one)</legend>
     <label><input type="radio" name="spotlight" value="off"> Off</label>
     <label><input type="radio" name="spotlight" value="on"> On</label>
   </fieldset>
@@ -104,24 +96,21 @@
 
 <h2 id="shortcuts">Shortcuts</h2>
 <ul>
-  <li><a href="../?issues=on&amp;workshop=on&amp;profile=none&amp;try=none&amp;today=now&amp;spotlight=off&amp;reset=1" target="_blank" rel="noopener">The workshop store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>: every planted problem, the panel shown, no profile or adapters, an empty cart.</li>
+  <li><a href="../?issues=on&amp;workshop=on&amp;profile=none&amp;try=none&amp;today=now&amp;spotlight=off&amp;reset=1" target="_blank" rel="noopener">The workshop store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>: every built-in problem, the panel shown, no profile or adapters, an empty cart.</li>
   <li><a href="../?issues=on&amp;workshop=on&amp;profile=none&amp;try=none&amp;today=now&amp;spotlight=on&amp;reset=1" target="_blank" rel="noopener">The workshop store with the spotlight on<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</li>
-  <li><a href="../?issues=off&amp;workshop=on&amp;profile=none&amp;try=none&amp;today=now&amp;spotlight=off&amp;reset=1" target="_blank" rel="noopener">A clean store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> with nothing planted, to compare against.</li>
-  <li><a href="../?issues=agent&amp;today=2026-11-02&amp;reset=1&amp;try=none&amp;profile=none&amp;workshop=off" target="_blank" rel="noopener">The AI agent task<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> from <a href="agents">Where an agent should stop</a>, with the date pinned to Monday, November 2 and the panel hidden.</li>
-  <li><a href="../?issues=agent&amp;today=2026-10-21&amp;reset=1&amp;try=none&amp;profile=none&amp;workshop=off" target="_blank" rel="noopener">The charger run for the verification layer<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>, with the date pinned to Wednesday, October 21 and the panel hidden.</li>
+  <li><a href="../?issues=off&amp;workshop=on&amp;profile=none&amp;try=none&amp;today=now&amp;spotlight=off&amp;reset=1" target="_blank" rel="noopener">A clean store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> with none of the problems, to compare against.</li>
 </ul>
 
 <h2 id="settings-you-can-add-to-a-store-link">Settings you can add to a store link</h2>
 <p>These are what the controls above set. Add them to the end of any store link after a <code>?</code>, joined with <code>&amp;</code>. Each one stays set in your browser until you change it, except <code>reset</code>, which happens once.</p>
 <div class="table-wrap"><table>
   <tr><th scope="col">Setting</th><th scope="col">Values</th><th scope="col">What it does</th></tr>
-  <tr><td><code>issues</code></td><td><code>on</code>, <code>agent</code>, <code>off</code>, or numbers like <code>6,24</code></td><td>Which planted problems are on. <code>agent</code> is all of them except the ones that move or change on their own (19, 24, 33, 34, 35) and the two "Add to cart" problems (3, 21).</td></tr>
-  <tr><td><code>workshop</code></td><td><code>on</code>, <code>off</code></td><td>Shows or hides the workshop panel. It shows unless something hides it, e.g., an AI agent link.</td></tr>
+  <tr><td><code>issues</code></td><td><code>on</code>, <code>off</code>, or numbers like <code>6,24</code></td><td>Which built-in problems are on. that move or change on their own (19, 24, 33, 34, 35) and the two "Add to cart" problems (3, 21).</td></tr>
   <tr><td><code>today</code></td><td>a date like <code>2026-11-02</code>, or <code>now</code></td><td>Pins the store's date, so delivery dates are the same on every run. <code>now</code> goes back to the real date.</td></tr>
   <tr><td><code>reset</code></td><td><code>1</code></td><td>Empties the cart and the order history.</td></tr>
-  <tr><td><code>try</code></td><td>adapter names joined with commas, like <code>swatch-names,calm-urgency</code>, <code>mine</code>, or <code>none</code></td><td>Which adapters run on the store. <code>mine</code> is the adapter you made in the panel's Build tab.</td></tr>
-  <tr><td><code>profile</code></td><td><code>sam</code>, <code>mark</code>, <code>dario</code>, <code>none</code></td><td>Turns on the toolkit's settings for that person.</td></tr>
-  <tr><td><code>spotlight</code></td><td><code>on</code>, <code>off</code></td><td>Puts a numbered badge on each planted problem on the page.</td></tr>
+  <tr><td><code>try</code></td><td>adapter names joined with commas, like <code>swatch-names,calm-urgency</code>, <code>mine</code>, or <code>none</code></td><td>Which adapters run on the store. <code>mine</code> is the adapter you made in the panel's Build your own tab.</td></tr>
+  <tr><td><code>profile</code></td><td><code>sam</code>, <code>mark</code>, <code>dario</code>, <code>bill</code>, <code>none</code></td><td>Turns on the toolkit's settings for that person.</td></tr>
+  <tr><td><code>spotlight</code></td><td><code>on</code>, <code>off</code></td><td>Puts a numbered badge on each problem on the page.</td></tr>
   <tr><td><code>from</code></td><td>an example adapter's name, like <code>swatch-names</code></td><td>Copies that example into "your adapter" in the panel, so you can change it.</td></tr>
 </table></div>
 
@@ -129,7 +118,7 @@
 (function () {
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var json = function (k) { try { return JSON.parse(get(k) || 'null'); } catch (e) { return null; } };
-  var PEOPLE = { sam: 'Sam (blind, uses a screen reader)', mark: 'Mark (ADHD and anxiety)', dario: 'Dario (dyslexia)', alex: 'Dario (dyslexia)', riley: 'Mark (ADHD and anxiety)' };
+  var PEOPLE = { sam: 'Sam (blind, uses a screen reader)', mark: 'Mark (ADHD and anxiety)', dario: 'Dario (cognitive disability)', bill: 'Bill (older adult)', alex: 'Dario (cognitive disability)', riley: 'Mark (ADHD and anxiety)' };
   var longDate = function (iso) {
     var d = new Date(iso + 'T10:00:00');
     return isNaN(d) ? iso : d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -150,7 +139,6 @@
     var items = cart.reduce(function (n, it) { return n + (Number(it && it.qty) || 1); }, 0);
     var say = {
       issues: issues === 'on' ? 'All of them' : issues === 'agent' ? 'For an AI agent' : issues === 'off' ? 'None' : 'Only these: ' + issues.split(',').join(', '),
-      workshop: workshop ? 'Shown' : 'Hidden',
       today: today ? 'Pinned to ' + longDate(today) : 'The real date',
       profile: PEOPLE[profile] || 'None',
       try: tries.length ? tries.join(', ') : 'None',
@@ -158,15 +146,13 @@
       cart: items + (items === 1 ? ' item' : ' items') + ' in the cart, ' + orders.length + (orders.length === 1 ? ' order' : ' orders'),
     };
     Object.keys(say).forEach(function (k) { document.querySelector('[data-now="' + k + '"]').textContent = say[k]; });
-    // Start the form from the current settings.
-    pick('issues', ['on', 'agent', 'off'].indexOf(issues) >= 0 ? issues : 'some');
-    if (['on', 'agent', 'off'].indexOf(issues) < 0) document.getElementById('ctl-some').value = issues.split(',').join(', ');
-    pick('workshop', workshop ? 'on' : 'off');
-    pick('today', today ? 'pin' : 'now');
-    document.getElementById('ctl-date').value = today || '2026-11-02';
-    pick('profile', PEOPLE[profile] ? ({ alex: 'dario', riley: 'mark' }[profile] || profile) : 'none');
+    // The form starts from the workshop's defaults: every problem on, the real date, nobody in particular.
+    pick('issues', 'on');
+    pick('today', 'now');
+    document.getElementById('ctl-date').value = '2026-11-06';
+    pick('profile', 'none');
     pick('try', 'keep');
-    pick('spotlight', spot ? 'on' : 'off');
+    pick('spotlight', 'off');
   }
 
   // The store link for what is picked.
@@ -177,7 +163,7 @@
       var nums = document.getElementById('ctl-some').value.split(/[^0-9]+/).filter(Boolean);
       q.push('issues=' + (nums.length ? nums.join(',') : 'off'));
     } else q.push('issues=' + issues);
-    q.push('workshop=' + chosen('workshop'));
+    q.push('workshop=on');
     var date = document.getElementById('ctl-date').value;
     q.push('today=' + (chosen('today') === 'pin' && date ? date : 'now'));
     q.push('profile=' + chosen('profile'));

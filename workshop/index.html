@@ -7,7 +7,7 @@
 <title>Redbird workshop - Redbird workshop</title>
 <meta property="og:site_name" content="Redbird workshop">
 <meta property="og:title" content="Redbird workshop">
-<meta property="og:description" content="Fix a fake online store for people with disabilities, using the AI for Accessibility Toolkit.">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
 <meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/img/favicon.svg">
@@ -16,55 +16,43 @@
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="g-top"><div class="in">
-  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 2 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
   <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
 </div></header>
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./" aria-current="page">Get started</a></li></ul><p class="group">Morning</p><ul class="sub"><li><a href="tour">Tour the store</a></li><li><a href="framework">Profile, adaptation, verification</a></li></ul><p class="group">Build</p><ul class="sub"><li><a href="make-a-skill">Make a skill</a></li><li><a href="describe-a-fix">Describe a fix</a></li><li><a href="build-your-own">Build your own</a></li><li><a href="test-and-share">Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li><li><a href="agents">Where an agent should stop</a></li></ul>
-  <p class="group">Store</p>
-  <ul class="sub"><li><a href="controls">Store controls</a></li><li><a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">Reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></li></ul>
+  <ul><li><a href="./" aria-current="page">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a></nav>
 <h1>Redbird workshop</h1>
-<p class="lede">Build an accessibility fix for one person's need on Redbird, a practice online store, using the AI for Accessibility Toolkit. You only need a browser, and most people build their fix without writing code.</p>
+<p class="lede">In this workshop, you build an accessibility fix for a user on Redbird, a practice online store, using the AI for Accessibility Toolkit.</p>
 
-<h2 id="what-you-ll-build">What you'll build</h2>
-<p>By the end of the day, you'll have a working fix on Redbird for the need your group chose, and a link to show it. There are two ways to make one:</p>
+<ol>
+  <li><a href="tour">Try the toolkit</a> as one of four shoppers.</li>
+  <li><a href="framework">Learn the framework</a>: ability profiles, adaptations and verification.</li>
+  <li><a href="build-a-fix">Build a fix</a>, following two examples.</li>
+  <li><a href="build-your-own">Build your own</a> for the person your group picked.</li>
+  <li><a href="test-and-share">Test it and share it</a>.</li>
+</ol>
+<p>Steps 1 and 2 happen during the morning's toolkit intro and framework sessions, and steps 3 to 5 during the afternoon's building sessions.</p>
+
+<h2 id="the-toolkit-panel">The toolkit panel</h2>
+<p>Each store link in this guide opens Redbird with the toolkit's panel next to it. The panel has four tabs:</p>
 <ul>
-  <li><b>A skill</b> turns on adapters the toolkit already has, for one need. You describe the need, and AI picks the adapters. For example, a skill for Mark can stop the moving deals bar and hide "Only 2 left in stock".</li>
-  <li><b>An adapter</b> is new code that changes the page. You describe the fix in plain words, and AI writes the code. For example, an adapter can read the star ratings out to a screen reader as "4.6 out of 5 stars".</li>
+  <li><b>Profiles</b> is where you make your own profile, or pick someone to shop as. It shows which adapters are on for them.</li>
+  <li><b>Adapter Library</b> has a switch for every adapter.</li>
+  <li>In <b>Build your adapter</b>, you describe a change and get a fix for it: a skill made of the toolkit's adapters, or a new adapter that AI writes.</li>
+  <li><b>Audit</b> finds the accessibility problems on the page, and can fix them all at once.</li>
 </ul>
 
-<h2 id="where-redbird-fits-in-the-day">Where Redbird fits in the day</h2>
-<div class="table-wrap"><table>
-  <tr><th scope="col">Session</th><th scope="col">On Redbird</th></tr>
-  <tr><td>1. Welcome and toolkit intro</td><td><a href="tour">Tour the store</a> as Sam, Mark or Dario</td></tr>
-  <tr><td>3. Framework</td><td><a href="framework">Profile, adaptation, verification</a>: where each one is in the toolkit</td></tr>
-  <tr><td>8. Prototyping and building, part 1</td><td><a href="make-a-skill">Make a skill</a>, <a href="describe-a-fix">Describe a fix</a>, then <a href="build-your-own">Build your own</a></td></tr>
-  <tr><td>8. Building, part 2</td><td><a href="test-and-share">Test it and share it</a></td></tr>
-</table></div>
-<p>The other sessions (refining the scenario, the card game, storyboarding and the premortem) happen on paper. Bring what you decide there to the building session: who you're building for, what to change on the page, and how you'll check that it worked.</p>
-
-<h2 id="why-a-practice-store">Why a practice store</h2>
-<p>Most of the web still doesn't work well for people with disabilities. In 2026, WebAIM found accessibility failures on 95.9% of the top million home pages (<a href="https://webaim.org/projects/million/" target="_blank" rel="noopener">The WebAIM Million<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>). Usually these stay broken until the site's owner fixes them. Instead, the <a href="https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit" target="_blank" rel="noopener">AI for Accessibility Toolkit<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> changes the page in the person's own browser.</p>
-<p>Redbird has 36 problems like the ones on real shopping sites, built in on purpose. For example, the color choices have no names a screen reader can say, delivery says "5–7 business days" instead of a date, and a protection plan is already ticked when you buy. You can turn each problem on or off, so you can see exactly what a fix changes. Nothing here buys anything or reaches a real person.</p>
-
-<h2 id="the-workshop-panel">The Workshop panel</h2>
-<p>Store links in these guides open the Workshop panel on the side of the store. It has four tabs:</p>
-<ul>
-  <li><b>Setup</b>: pick who you're shopping as, and switch adapters on and off.</li>
-  <li><b>Build</b>: make a skill, or describe a fix for AI to write.</li>
-  <li><b>Changes</b>: everything the adapters changed, before and after, and what a screen reader hears.</li>
-  <li><b>Checks</b>: the toolkit's checks, and badges on the problems built into the page.</li>
-</ul>
-<p>To make the panel smaller, press the – button at its top right. To move it to the other side of the page, press the arrow.</p>
-<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>If the store gets into a weird state, <a href="../?issues=on&amp;try=none&amp;profile=none&amp;reset=1&amp;workshop=on" target="_blank" rel="noopener">reset the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. This turns the problems back on, stops the adapters and empties the cart. Your skills and your adapter are kept.</p></div>
+<h2 id="redbird-s-built-in-problems">Redbird's built-in problems</h2>
+<p>We built 36 accessibility problems into Redbird on purpose, the same kinds that real shopping sites have. For example, the color choices have no names a screen reader can say, delivery says "5–7 business days" instead of a date, and countdowns start over every time you visit.</p>
+<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>If the store gets into a weird state, you can <a href="reset">reset it</a>. Your saved fixes are kept.</p></div>
 </main>
-<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#what-you-ll-build">What you'll build</a></li><li><a href="#where-redbird-fits-in-the-day">Where Redbird fits in the day</a></li><li><a href="#why-a-practice-store">Why a practice store</a></li><li><a href="#the-workshop-panel">The Workshop panel</a></li></ul></nav>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#the-toolkit-panel">The toolkit panel</a></li><li><a href="#redbird-s-built-in-problems">Redbird's built-in problems</a></li></ul></nav>
 </div>
 </div>
 <script src="guide.js"></script>
