@@ -54,7 +54,7 @@ function say(text) {
 
 export const ReadingLevel = {
   enabled: false,
-  changed: null, // element → its original child nodes
+  changed: null, // element → a box holding its original child nodes
   observer: null,
 
   async enable(options = {}) {
@@ -118,7 +118,14 @@ export const ReadingLevel = {
   },
 
   swap(el, original, plain) {
-    this.changed.set(el, [...el.childNodes]);
+    // The paragraph's own nodes wait in a box that is not on the page, not in a plain list.
+    // Other adapters change those nodes too: abbreviation-expand wraps "MSRP" in an underlined
+    // mark, and takes the mark off by swapping it back inside whatever holds it. In a plain
+    // list nothing held it, so the mark stayed, and came back with the paragraph even after
+    // abbreviation-expand was turned off.
+    const kept = document.createElement('div');
+    kept.append(...el.childNodes);
+    this.changed.set(el, kept);
     const note = document.createElement('span');
     note.style.cssText = 'display:block;font-size:12.5px;color:#5f6368;margin-top:4px';
     note.textContent = 'Rewritten in plain language. ';
@@ -145,7 +152,9 @@ export const ReadingLevel = {
     this.enabled = false;
     this.run = null;
     this.observer.disconnect();
-    for (const [el, nodes] of this.changed) el.replaceChildren(...nodes);
+    // Put back whatever is in the box now: the store's own text, with another adapter's marks
+    // only if that adapter is still on.
+    for (const [el, kept] of this.changed) el.replaceChildren(...kept.childNodes);
     this.changed.clear();
     say('Original text restored');
   },

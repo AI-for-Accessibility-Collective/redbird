@@ -22,7 +22,7 @@
   var base = document.currentScript.src.replace(/loader\.js.*$/, '');
   // The toolkit's adapters load straight from its GitHub repo, pinned to one version so the
   // workshop doesn't change under people. Bump the commit to pick up newer adapters.
-  var TOOLKIT = 'https://cdn.jsdelivr.net/gh/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit@9176bd110abdccc46ce519fd3b0265eafd9ffd18/tools/';
+  var TOOLKIT = 'https://cdn.jsdelivr.net/gh/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit@5906f4307bf80ee50818b18549f4911a0f233551/tools/';
   var AXE = 'https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js';
   // Libraries some toolkit adapters expect on the page, as the extension provides them.
   var NEEDS = { 'reader-mode': ['Readability', 'https://cdn.jsdelivr.net/npm/@mozilla/readability@0.5.0/Readability.js'] };
@@ -1173,7 +1173,7 @@
   }
   function meSays(text) { var m = $('#ws-me-msg'); if (m) m.textContent = text; say(text, true); }
   // Two adapters that do the same job fight on the page; when the AI picks both, the first is kept.
-  var CLASH = [['pause-moving-things', 'stop-auto-advance'], ['reading-level', 'simplify-text'], ['visual-assist', 'bionic-reading']];
+  var CLASH = [['pause-moving-things', 'stop-auto-advance'], ['reading-level', 'simplify-text']];
   function makeMine() {
     var a = ['#ws-me1', '#ws-me2', '#ws-me3'].map(function (q) { return $(q).value.trim(); });
     if (!a[0] && !a[1]) { meSays('Answer the first two questions first.'); $('#ws-me1').focus(); return; }
