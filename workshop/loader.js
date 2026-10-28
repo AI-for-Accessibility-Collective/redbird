@@ -1709,7 +1709,7 @@
             '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-ideasgo">Suggest changes</button></div>' +
             '<ul class="ws-plain" id="ws-idealist"></ul></details></li>' +
         '<li><div class="ws-row"><button type="button" class="ws-btn" id="ws-build" aria-describedby="ws-build-help">Build it</button></div>' +
-          '<p class="ws-help" id="ws-build-help">If the toolkit has adapters that do this, you get a skill that turns them on. If not, AI writes a new adapter, which takes about 30 seconds.</p>' +
+          '<p class="ws-help" id="ws-build-help">If the toolkit has adapters that do this, you get a skill that turns them on. If not, AI writes a new adapter, which takes about 30 seconds. If the panel’s check then finds the problem still there, the AI tries once more by itself.</p>' +
           '<details class="ws-more"><summary>What’s the difference?</summary>' +
             '<p class="ws-help"><b>An adapter</b> is code that changes one thing on a page, like stopping animations.</p>' +
             '<p class="ws-help"><b>A skill</b> has no code. It lists a few adapters to turn on together for a user’s need.</p></details></li>' +
@@ -1801,15 +1801,32 @@
   function build() {
     var need = $('#ws-need').value.trim();
     if (!need) { msg('Write what should change first.'); $('#ws-need').focus(); return; }
-    asking = { thread: [{ who: 'you', text: need }], base: baseline() };
+    asking = { thread: [{ who: 'you', text: need }], base: baseline(), targets: targetIssues(target && target.from !== '#ws-point3' ? target : null) };
     if (readKey('redbird:need-new') === need) return writeNew(need, $('#ws-build'));
     var done = wait($('#ws-build'), 'Looking for adapters that do this…');
-    ask('buildSkill', { need: need, person: person(), catalog: catalog(), settings: settingsLines() }).then(parseSkill).then(function (s) {
+    ask('buildSkill', { need: askFor({ need: need }), person: person(), catalog: catalog(), settings: settingsLines() }).then(parseSkill).then(function (s) {
       done();
       if (s.adapters.length) return useSkill(need, s);
       writeNew(need, $('#ws-build'));
     }, function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
+  // The planted problems a fix is for: the ones a store link turned on by number (the guide's links
+  // do this), or else the ones at the part of the page the person pointed at.
+  function targetIssues(pointed) {
+    var v = (window.RB_ISSUES && window.RB_ISSUES.value) || '';
+    if (/^\d+(,\d+)*$/.test(v)) return v.split(',').map(Number).slice(0, 3);
+    return ((pointed && pointed.issues) || []).slice(0, 3);
+  }
+  // What the AI is told about them, so it knows when the fix is done. It goes after the person's own
+  // words, in the request the store's AI already takes.
+  function problemText(nums) {
+    var parts = (nums || []).map(function (n) {
+      var i = window.RB_ISSUE_INFO && window.RB_ISSUE_INFO(n);
+      return i && ('Problem ' + n + ', "' + i.title + '": ' + i.what + (i.done ? ' It is fixed when ' + i.done : ''));
+    }).filter(Boolean);
+    return parts.length ? cut('\n\nThis is about a problem Redbird has on purpose, which the workshop checks for after the adapter runs. ' + parts.join(' '), 1000) : '';
+  }
+  function askFor(r) { return ((r && r.need) || '') + problemText((asking && asking.targets) || (r && r.targets)); }
   // The AI's "// What changed: …" line is shown in the conversation, not kept in the code.
   function splitNote(code) {
     var m = code.match(/^\s*\/\/\s*What changed:\s*(.+)\n/i);
@@ -1820,8 +1837,9 @@
     var from = asking || result || {};
     r.thread = (from.thread || []).slice();
     r.base = from.base || null;
+    r.targets = from.targets || r.targets || [];
     var n = r.thread.filter(function (t) { return t.who === 'version'; }).length + 1;
-    r.thread.push({ who: 'version', n: n, note: note, code: r.code || null, adapters: r.adapters });
+    r.thread.push({ who: 'version', n: n, note: note, code: r.code || null, adapters: r.adapters, auto: !!from.auto });
     // Old versions' code goes after a while, so the conversation fits in the browser's storage.
     var vs = r.thread.filter(function (t) { return t.who === 'version' && t.code; });
     vs.slice(0, Math.max(0, vs.length - 12)).forEach(function (t) { t.code = null; });
@@ -1845,7 +1863,7 @@
   function writeNew(need, btn, keep) {
     var done = wait(btn, 'No adapter does this yet, so AI is writing one. This takes about 30 seconds…');
     var pointed = target && target.from !== '#ws-point3' ? target : null;
-    ask('writeAdapter', { description: need, person: person(), snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() })
+    ask('writeAdapter', { description: askFor({ need: need }), person: person(), snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() })
       .then(function (code) { finishAdapter(need, cleanCode(code), 'Done. AI wrote a new adapter, and it’s on.', keep); })
       .catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
@@ -1860,7 +1878,9 @@
   }
   // What should change next. A built adapter is changed by the AI that wrote it. A skill goes back
   // to the Engineer, and if it now finds no adapter that fits, AI writes a new one for the need and the change.
-  function change(feedback, error) {
+  // auto: the panel's own check found a problem, so this is the AI's second try by itself. It is the
+  // plain version of what the check found, shown in the conversation; feedback is what the AI gets.
+  function change(feedback, error, auto) {
     // Code written by hand (in Details, or from the guide) has no fix card: make one, so the AI
     // can fix the code that's running.
     var running = readKey(MY_KEY);
@@ -1872,24 +1892,30 @@
     if (!result) return;
     if (!feedback && !error) { msg('Say what should change first.'); $('#ws-fb').focus(); return; }
     var asked = turns().filter(function (t) { return t.who === 'you'; }).slice(1).map(function (t) { return '- ' + t.text; }).join('\n');
-    asking = { thread: turns().concat({ who: 'you', text: feedback || 'Fix this error: ' + String(error).replace(/^Stopped with an error:\s*/, '') }), base: result.base || null };
-    var btn = $(error ? '#ws-repair' : '#ws-change');
-    var pointed = (target && target.from === '#ws-point2' ? target : null) || result.target;
+    var turn = auto ? { who: 'check', text: typeof auto === 'string' ? auto : feedback } : { who: 'you', text: feedback || 'Fix this error: ' + String(error).replace(/^Stopped with an error:\s*/, '') };
+    var mine = target && target.from === '#ws-point2' ? target : null;
+    asking = { thread: turns().concat(turn), base: result.base || null, auto: !!auto,
+      targets: (result.targets || []).concat(targetIssues(mine).filter(function (n) { return (result.targets || []).indexOf(n) === -1; })).slice(0, 3) };
+    var btn = $(auto ? '#ws-change' : error ? '#ws-repair' : '#ws-change') || $('#ws-build');
+    var pointed = mine || result.target;
+    var working = auto ? 'The check found a problem, so the AI is trying again…' : error ? 'Asking the AI to fix the error…' : 'Changing the adapter…';
     if (result.code) {
-      var done = wait(btn, error ? 'Asking the AI to fix the error…' : 'Changing the adapter…');
-      ask('reviseAdapter', { code: result.code, description: result.need, feedback: feedback || '', error: error || '', history: asked, person: person(),
+      var done = wait(btn, working);
+      ask('reviseAdapter', { code: result.code, description: askFor(result), feedback: cut(feedback || '', 590), error: error || '', history: asked, person: person(),
         snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() })
         .then(function (code) {
           var sp = splitNote(cleanCode(code));
           result = nextResult(Object.assign({}, result, { code: sp.code, target: pointed }), sp.note || (error ? 'Fixed the error.' : 'Changed the adapter.'));
           keep(DRAFT_KEY, result);
-          if (!error) writeKey(FB_KEY, null);
-          install(result.code, error ? 'Fixed. It’s running again.' : 'Changed. Check the page.', idsOf(result));
+          if (!error && !auto) writeKey(FB_KEY, null);
+          install(result.code, auto ? 'The AI tried again. Check the page.' : error ? 'Fixed. It’s running again.' : 'Changed. Check the page.', idsOf(result));
         }).catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
       return;
     }
+    // A skill whose adapters didn't fix the problem gets a new adapter written for it.
+    if (auto) return writeNew(result.need, btn, result.adapters);
     var done2 = wait(btn, 'Trying again…');
-    ask('buildSkill', { need: result.need, person: person(), catalog: catalog(), settings: settingsLines(), previous: result.md, feedback: feedback })
+    ask('buildSkill', { need: askFor(result), person: person(), catalog: catalog(), settings: settingsLines(), previous: result.md, feedback: feedback })
       .then(parseSkill).then(function (s) {
         done2();
         writeKey(FB_KEY, null);
@@ -1941,19 +1967,97 @@
               worse: (RANK[(b || {}).status] || 1) < (RANK[(a || {}).status] || 1) && !!b });
           });
           c.issues.sort(function (x, y) { return x.issue - y.issue; });
+          // The problems this fix is for, whether or not this version changed them.
+          c.target = (result.targets || []).map(function (n) {
+            var b = now[n], a = was[n];
+            return { issue: n, title: (b || a || window.RB_ISSUE_INFO(n) || {}).title || '', status: b ? b.status : a ? 'fixed' : 'gone', words: b ? issueWords(b) : 'fixed', left: b ? b.left || [] : [] };
+          }).filter(function (t) { return t.status !== 'gone'; });
         }
-        v.checks = c;
-        keep(DRAFT_KEY, result);
-        renderResult();
-        var words = document.createElement('div');
-        words.innerHTML = checkWords(c);
-        say('Version ' + v.n + ': ' + words.textContent, true);
+        // New code also gets switched off in a hidden copy of the page, to see whether it puts the page back.
+        return (result.code && base && base.page === c.page ? undoCheck() : Promise.resolve(null)).then(function (u) {
+          if (versions().slice(-1)[0] !== v) return;
+          if (u) c.left = u.left.slice(0, 6);
+          v.checks = c;
+          keep(DRAFT_KEY, result);
+          renderResult();
+          var words = document.createElement('div');
+          words.innerHTML = checkWords(c);
+          say('Version ' + v.n + ': ' + words.textContent, true);
+          tryAgain(c);
+        });
       });
+  }
+  // Turns the adapter off in a hidden copy of this page and lists what it left behind, using the same
+  // test hooks as the starter folder's tests (RB_TEST). The person's own page doesn't change.
+  function undoCheck() {
+    return new Promise(function (done) {
+      var q = new URLSearchParams(location.search);
+      ['reset', 'from', 'need', 'new', 'spotlight'].forEach(function (k) { q.delete(k); });
+      q.set('try', 'mine'); q.set('workshop', 'off'); q.set('rbtest', '1');
+      var f = document.createElement('iframe'), poll = 0, timer = 0;
+      function finish(r) { clearInterval(poll); clearTimeout(timer); f.remove(); done(r || null); }
+      timer = setTimeout(finish, 45000);
+      f.setAttribute('aria-hidden', 'true');
+      f.tabIndex = -1;
+      f.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:900px;border:0;visibility:hidden';
+      f.onload = function () {
+        var w = f.contentWindow;
+        poll = setInterval(function () {
+          if (!w || !w.RB_TEST) return;
+          clearInterval(poll);
+          w.document.querySelectorAll('video, audio').forEach(function (m) { m.muted = true; });
+          w.RB_TEST.ready('mine').then(function () { return w.RB_TEST.undo('mine'); })
+            .then(function (u) { finish({ left: u.left || [], error: u.error }); }, function () { finish(null); });
+        }, 200);
+      };
+      f.src = location.pathname + '?' + q;
+      document.body.appendChild(f);
+    });
+  }
+  // What was left behind, in words the AI can act on.
+  function leftWords(rows) {
+    return rows.slice(0, 3).map(function (r) {
+      if (r.type === 'attr') return r.attr + ' on ' + r.tag + ' is still ' + (r.now == null ? 'missing' : '"' + cut(r.now, 40) + '"');
+      if (r.type === 'text') return r.tag + ' still has the new text';
+      if (r.type === 'removed') return 'the store\u2019s ' + r.tag + ' was removed or replaced and is not back';
+      if (r.type === 'style') return 'the added style sheet is still there';
+      return 'the added ' + r.tag + ' is still there';
+    }).join('; ');
+  }
+  // After a version's check: when it stopped with an error, or a problem this fix is for is still
+  // there, the AI gets one more try by itself, told what the check found. Once per request.
+  function tryAgain(c) {
+    var t = turns(), lastYou = -1;
+    t.forEach(function (x, i) { if (x.who === 'you') lastYou = i; });
+    if (t.slice(lastYou + 1).some(function (x) { return x.who === 'check'; })) return;
+    var why = [], plain = []; // what the AI is told, and what the person sees in the conversation
+    if (c.error) {
+      why.push('It stopped with an error: ' + String(c.error).replace(/^(Stopped with an error|It logged an error):\s*/, '') + '.');
+      plain.push('It stopped with an error.');
+    }
+    (c.target || []).forEach(function (x) {
+      if (!/^(present|partly)$/.test(x.status)) return;
+      var what = 'Problem ' + x.issue + ' (' + x.title.charAt(0).toLowerCase() + x.title.slice(1) + ') is still ' + x.words + ' on this page';
+      why.push(what + (x.left.length ? ', for example at ' + x.left.slice(0, 3).join(', ') : '') + '.');
+      plain.push(what + '.');
+    });
+    if (c.left && c.left.length) {
+      why.push('When it is turned off, it leaves the page changed: ' + leftWords(c.left) + '. Make disable() put back exactly what enable() changed, and change the store\u2019s elements in place instead of replacing them.');
+      plain.push('Turning it off didn\u2019t put the page back: ' + c.left.length + ' change' + (c.left.length === 1 ? '' : 's') + ' stayed.');
+    }
+    if (!why.length || (!result.code && !(c.target || []).length)) return;
+    change(why.join(' '), c.error && result.code ? c.error : '', plain.join(' '));
   }
   function checkWords(c) {
     if (!c) return '';
     var out = [];
     if (c.error) out.push('<span class="ws-err">It stopped with an error.</span>');
+    if (c.left && c.left.length) out.push('<span class="ws-err">Turning it off leaves ' + c.left.length + ' change' + (c.left.length === 1 ? '' : 's') + ' on the page.</span>');
+    (c.target || []).forEach(function (x) {
+      if (/^(present|partly)$/.test(x.status) && !c.issues.some(function (y) { return y.issue === x.issue; })) {
+        out.push('<span class="ws-err">Problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ') is still ' + esc(x.words) + ' on this page.</span>');
+      }
+    });
     c.issues.forEach(function (x) {
       var what = 'problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ')';
       if (x.worse) out.push('<span class="ws-err">It makes ' + what + ' worse on this page: it was ' + esc(x.was) + ' before, and now it is ' + esc(x.now) + '.</span>');
@@ -1987,6 +2091,7 @@
     return '<ol class="ws-thread">' + turns().map(function (t) {
       if (t.who === 'you') return '<li class="ws-you"><span class="ws-who">You asked</span> ' + esc(t.text) + '</li>';
       if (t.who === 'back') return '<li class="ws-you"><span class="ws-who">You went back to version ' + t.n + '</span></li>';
+      if (t.who === 'check') return '<li class="ws-you"><span class="ws-who">The panel’s check</span> ' + esc(t.text) + ' The AI tried again by itself.</li>';
       var checks = t.checks ? '<span class="ws-checks">' + checkWords(t.checks) + '</span>' : t === last && t === on ? '<span class="ws-checks">Checking…</span>' : '';
       return '<li class="ws-ver"><span class="ws-who">Version ' + t.n + (t === on ? ' <span class="ws-tag">on now</span>' : '') + '</span> ' + esc(t.note || '') + ' ' + checks +
         (t !== on && (t.code || (!result.code && t.adapters)) ? ' <button type="button" class="ws-link" data-ver="' + t.n + '">Go back to version ' + t.n + '</button>' : '') + '</li>';
@@ -2064,7 +2169,9 @@
       toolkitAdapters: (f.adapters || []).filter(function (a) { return a.id !== 'mine'; }),
       pointedAt: (f.target || {}).html || '',
       conversation: (f.thread || []).filter(function (t) { return t.who !== 'back'; }).map(function (t) {
-        return t.who === 'you' ? { who: 'person', text: t.text } : { who: 'version ' + t.n, text: t.note || '' };
+        if (t.who === 'you') return { who: 'person', text: t.text };
+        if (t.who === 'check') return { who: 'panel check', text: t.text + ' The AI tried again by itself.' };
+        return { who: 'version ' + t.n, text: t.note || '' };
       }),
     };
   }
@@ -2249,7 +2356,7 @@
   var POINT = { '#ws-point': ['#ws-need', '#ws-target'], '#ws-point2': ['#ws-fb', '#ws-target2'], '#ws-point3': ['#ws-note', '#ws-target3'] };
   function setTarget(el) {
     stopPick();
-    target = { html: snapshot(el, 3000), label: describe(el), from: pickFrom };
+    target = { html: snapshot(el, 3000), label: describe(el), from: pickFrom, issues: window.RB_ISSUES_AT ? window.RB_ISSUES_AT(el) : [] };
     renderTarget();
     status('Pointing at ' + target.label + '.');
     var box = $(POINT[pickFrom][0]);
