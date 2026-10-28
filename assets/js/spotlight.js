@@ -926,7 +926,16 @@
   // What the spotlight sees, for tests and agents: [{ issue, title, status, places, still }].
   // status is fixed, partly, present (not fixed), nocheck or waiting.
   function report() {
-    return present().map(function (n) { return { issue: n, title: ISSUES[n].title, status: state[n].status, places: state[n].places.length, still: state[n].still }; });
+    return present().map(function (n) {
+      var s = state[n];
+      return { issue: n, title: ISSUES[n].title, status: s.status, places: s.places.length, still: s.still,
+        // Where it's still broken, like a CSS selector and the start of its text, for tests and agents.
+        left: s.places.filter(function (p) { return p.bad && p.el; }).slice(0, 4).map(function (p) {
+          var el = p.el, at = el.tagName.toLowerCase() + (el.id ? '#' + el.id : el.classList[0] ? '.' + el.classList[0] : '');
+          var words = text(el).slice(0, 40);
+          return at + (words ? ' “' + words + (text(el).length > 40 ? '…' : '') + '”' : '');
+        }) };
+    });
   }
   if (quiet) {
     window.RB_ISSUE_REPORT = function () { check(); return report(); };

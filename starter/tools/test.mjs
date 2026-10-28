@@ -48,9 +48,19 @@ function short(s, n = 120) { s = String(s ?? '').replace(/\s+/g, ' ').trim(); re
 // Where on the page: the element like a CSS selector, then what it says.
 function where(c) { return c.tag + (/“/.test(c.where) ? ' ' + c.where.slice(c.where.indexOf('“')) : ''); }
 function value(v) { return v == null ? 'not set' : '“' + short(v, 60) + '”'; }
+// Two texts that start the same are shown from where they differ, so a change near the end
+// isn't cut off on both sides.
+function differ(a, b) {
+  a = String(a ?? '').replace(/\s+/g, ' ').trim(); b = String(b ?? '').replace(/\s+/g, ' ').trim();
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  const from = i > 30 ? i - 15 : 0;
+  const cut = (s) => (from ? '…' : '') + short(s.slice(from), 70);
+  return [cut(a), cut(b)];
+}
 function what(c) {
   if (c.type === 'attr') return `${c.attr} is ${value(c.now)} (was ${value(c.before)})`;
-  if (c.type === 'text') return `the text is “${short(c.now, 60)}” (was “${short(c.before, 60)}”)`;
+  if (c.type === 'text') { const [was, now] = differ(c.before, c.now); return `the text is “${now}” (was “${was}”)`; }
   if (c.type === 'added') return 'added this';
   if (c.type === 'style') return 'added a style sheet';
   return 'removed this';
@@ -140,22 +150,35 @@ async function testPage(browser, base, pagePath, checks) {
   const better = [], worse = [];
   for (const n of moved) {
     const s = was[n] || now[n];
-    const row = `${n} (${s.title}): ${status(was[n])} without the adapter, ${status(now[n])} with it`;
+    // A problem that was on the page and no longer shows up anywhere was fixed in every place.
+    const gone = was[n] && !now[n];
+    const row = `${n} (${s.title}): ${status(was[n])} without the adapter, ${gone ? 'fixed with it (it no longer shows up anywhere on the page)' : status(now[n]) + ' with it'}`;
     const rank = (x) => (!x ? 3 : { fixed: 3, partly: 2 }[x.status] ?? 1);
     if (rank(now[n]) < rank(was[n])) worse.push(row); else better.push(row);
   }
-  const missed = watched.filter((n) => now[n] && now[n].status !== 'fixed' && now[n].status !== 'waiting' && pagePath === fix.page);
+  // Some can't be checked from the page (nocheck), and some only show after an action (waiting).
+  const missed = watched.filter((n) => now[n] && /^(present|partly)$/.test(now[n].status) && pagePath === fix.page);
+  const later = watched.filter((n) => now[n] && /^(nocheck|waiting)$/.test(now[n].status) && pagePath === fix.page);
   if (missed.length) {
     problems.push('missed');
     lines.push(`- PROBLEM: fix.json says this adapter fixes planted problem ${missed.join(' and ')}, but on this page it is still ${missed.map((n) => status(now[n])).join(' and ')}.`);
+    for (const n of missed) if ((now[n].left || []).length) lines.push(`  - Problem ${n} is still at: ${now[n].left.join(', ')}${now[n].still > now[n].left.length ? ', …' : ''}`);
+  }
+  for (const n of later) {
+    lines.push(now[n].status === 'waiting'
+      ? `- Planted problem ${n} only shows after something happens on the page (e.g., a failed payment), so this test can't see it. Write a check in checks/ that makes it happen, then looks at what the adapter did.`
+      : `- Planted problem ${n} can't be checked automatically. Write a check in checks/ for what the person needs, or try it yourself.`);
   }
   if (better.length) lines.push('- Planted problems:', ...better.map((r) => '  - ' + r));
   else lines.push('- It didn’t fix or break any planted problem on this page.');
   if (worse.length) { problems.push('worse'); lines.push('- PROBLEM: it made a planted problem worse:', ...worse.map((r) => '  - ' + r)); }
 
   if (!changes.length) {
-    lines.push('- It changed nothing on this page.');
-    if (pagePath === fix.page) problems.push('nothing');
+    // On the fix's own page that is a problem, unless what it fixes only shows after an action.
+    if (pagePath === fix.page && !later.some((n) => now[n].status === 'waiting')) {
+      problems.push('nothing');
+      lines.push('- PROBLEM: it changed nothing on this page.');
+    } else lines.push('- It changed nothing on this page.');
   } else {
     const els = new Set(changes.map((c) => c.el)).size;
     lines.push(`- It changed ${els} thing${els === 1 ? '' : 's'} on the page:`, ...byElement(changes, 5));
@@ -163,15 +186,38 @@ async function testPage(browser, base, pagePath, checks) {
   if (heard.length) lines.push(`- It said out loud: ${heard.slice(0, 3).map((h) => '“' + short(h.text, 100) + '”').join(', ')}`);
 
   // Your own checks, on the page with the adapter on.
+  let ran = 0;
   for (const c of checks) {
     if (c.broken) { problems.push('check'); lines.push(`- PROBLEM: checks/${c.name} didn’t load: ${short(c.broken, 200)}`); continue; }
     try {
       const results = [].concat((await c.run({ page, path: pagePath, fix })) || []);
       for (const r of results) {
+        ran++;
         if (!r.ok) problems.push('check');
         lines.push(`- ${r.ok ? 'Check passed' : 'PROBLEM: check failed'} (${c.name}): ${short(r.says, 300)}`);
       }
     } catch (e) { problems.push('check'); lines.push(`- PROBLEM: checks/${c.name} stopped with an error: ${short(e.message, 300)}`); }
+  }
+
+  // A planted problem this test can't see on its own has to be covered by a check. Once the checks
+  // have run (and, e.g., made a payment fail), look at it again.
+  if (later.length) {
+    if (!ran) {
+      problems.push('unchecked');
+      lines.push(`- PROBLEM: nothing checks planted problem ${later.join(' and ')} yet, so this test would pass even if the adapter didn't work. Add a check in checks/ (see checks/README.md).`);
+    } else {
+      const again = Object.fromEntries((await page.evaluate(() => window.RB_ISSUE_REPORT()).catch(() => [])).map((s) => [s.issue, s]));
+      for (const n of later) {
+        const s2 = again[n];
+        if (s2 && /^(present|partly)$/.test(s2.status)) {
+          problems.push('missed');
+          lines.push(`- PROBLEM: after the checks ran, planted problem ${n} is ${status(s2)}.`);
+          if ((s2.left || []).length) lines.push(`  - Problem ${n} is still at: ${s2.left.join(', ')}`);
+        } else if (s2 && s2.status === 'fixed') lines.push(`- After the checks ran, planted problem ${n} is fixed.`);
+      }
+      const more = (await page.evaluate(() => window.RB_TEST.changes('local')).catch(() => [])).filter((c) => !changes.some((x) => x.n === c.n));
+      if (more.length) lines.push(`- While the checks ran, it changed ${new Set(more.map((c) => c.el)).size} more thing${more.length === 1 ? '' : 's'}:`, ...byElement(more, 3));
+    }
   }
 
   // What a screen reader hears where it changed things: with the adapter, then after turning it off.

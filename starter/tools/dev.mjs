@@ -19,7 +19,12 @@ export const STORE = (process.env.REDBIRD || 'https://redbird-workshop.vercel.ap
 const LOCAL = { adapter: '/__rb/adapter.js', events: '/__rb/events', feedback: '/__rb/feedback', fix: '/__rb/fix.json', store: STORE };
 
 export function readFix() {
-  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'fix.json'), 'utf8')); } catch (e) { return {}; }
+  let text;
+  try { text = fs.readFileSync(path.join(ROOT, 'fix.json'), 'utf8'); } catch (e) { return {}; }
+  try { return JSON.parse(text); } catch (e) {
+    console.error(`fix.json isn't valid JSON (${e.message}), so it's being ignored. Fix it and run this again.`);
+    return {};
+  }
 }
 
 // The store page to open, with the adapter on: the page in fix.json, plus any toolkit adapters it uses.
