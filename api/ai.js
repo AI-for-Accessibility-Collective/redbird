@@ -81,6 +81,8 @@ const TASKS = {
   }),
   profileFromChat: (b) => ({ text: builders.profileFromChat({ answers: clip(b.answers, MAX_DESC) }) }),
   myProfile: (b) => ({ long: true, text: builders.myProfile({ answers: clip(b.answers, MAX_DESC), catalog: clip(b.catalog, 8000) }) }),
+  reviseProfile: (b) => ({ long: true, text: builders.reviseProfile({ about: clip(b.about, MAX_DESC), on: clip(b.on, 600), off: clip(b.off, 600),
+    earlier: clip(b.earlier, MAX_DESC), said: clip(b.said, MAX_NOTE), catalog: clip(b.catalog, 8000) }) }),
   suggestChanges: (b) => ({ text: builders.suggestChanges({ person: clip(b.person, MAX_NOTE), snapshot: clip(b.snapshot, MAX_PAGE), url: clip(b.url, 300) }) }),
   columnHeader: ({ sampleData }) => ({
     text: `These are values from one table column: ${clip(JSON.stringify(sampleData), 1500)}\nReturn a short column header (1 to 3 words) only.`,

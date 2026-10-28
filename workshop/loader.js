@@ -187,6 +187,15 @@
     if (id === 'me') { var m = myProfile(); return m && m.adapters ? m.adapters.filter(function (n) { return ADAPTERS[n]; }) : []; }
     return PEOPLE[id] ? PEOPLE[id][1] : TOOLKIT_PROFILES[id][2];
   }
+  // Fixes the person added to their own profile come on with it: a skill's adapters, and the code of
+  // one adapter they built (only one runs as "your adapter" at a time).
+  function myFixes() { var m = myProfile(); return (m && m.fixes) || []; }
+  function withMyFixes(ids) {
+    myFixes().forEach(function (f) { (f.adapters || []).forEach(function (a) { if (a.id !== 'mine' && ADAPTERS[a.id] && ids.indexOf(a.id) === -1) ids.push(a.id); }); });
+    var coded = myFixes().filter(function (f) { return f.code; })[0];
+    if (coded && ids.indexOf('mine') === -1) ids.push('mine');
+    return { ids: ids, code: coded ? coded.code : null };
+  }
   function nameOf(id) { return id === 'me' ? 'My profile' : PEOPLE[id] ? PEOPLE[id][0] : TOOLKIT_PROFILES[id][0] + ' (toolkit profile)'; }
   // A workshop shopper's profile is a file next to this one; a toolkit profile is its name and description.
   function loadProfile(id) {
@@ -196,7 +205,11 @@
   }
   // My profile is the default: the person's own profile comes first, the made-up shoppers after.
   if (!isPerson(profileName)) profileName = 'me';
-  var profile = loadProfile(profileName);
+  // In a starter folder the store runs at another address, without the person's profile, so it
+  // comes from the folder's fix.json.
+  var profile = (LOCAL && LOCAL.fix && profileName === 'me' ? fetch(LOCAL.fix, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (f) {
+    if (f && f.profile && f.profile.freeText) localStorage.setItem(ME_KEY, JSON.stringify(Object.assign({ name: 'My profile', adapters: [] }, f.profile)));
+  }).catch(function () {}) : Promise.resolve()).then(function () { return loadProfile(profileName); });
 
   // ── Small helpers ─────────────────────────────────────────────────────────
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -1161,6 +1174,15 @@
   // store's problems aren't all on (after an agent link) does it reload, to put them back.
   function switchProfile(id) {
     var ids = id === 'none' ? [] : learnedSet(id);
+    if (id === 'me') {
+      var mf = withMyFixes(ids.slice());
+      ids = mf.ids;
+      // Their own adapter's code goes in as "your adapter", which starts on a fresh page.
+      if (mf.code && mf.code !== readKey(MY_KEY)) {
+        try { localStorage.setItem('redbird:profile', 'me'); } catch (e) {}
+        return install(mf.code, 'Using your profile, with your own adapter.', ids, 'profiles');
+      }
+    }
     if (!window.RB_ISSUES || RB_ISSUES.value !== 'on') return go({ profile: id, try: ids.join(',') || 'none', issues: 'on' });
     return (id === 'none' ? Promise.resolve(null) : loadProfile(id))
       .then(function (prof) {
@@ -1195,13 +1217,20 @@
     var me = myProfile(), el = $('#ws-persona');
     if (me && !editing) {
       el.innerHTML = '<figure class="ws-persona" tabindex="-1"><figcaption>My profile</figcaption><blockquote>“' + esc(me.freeText) + '”</blockquote></figure>' +
-        '<div class="ws-row" id="ws-me-acts"><button type="button" class="ws-btn ws-quiet" id="ws-me-edit">Change it</button>' +
-        '<button type="button" class="ws-btn ws-quiet" id="ws-me-file">Save it as a file</button>' +
-        '<button type="button" class="ws-link" id="ws-me-del">Delete it</button></div>' +
+        mineThread(me) +
+        '<label class="ws-lab" for="ws-me-say">What should change about your profile?</label>' +
+        '<textarea id="ws-me-say" class="ws-input" rows="2" placeholder="e.g., Moving banners distract me too"></textarea>' +
+        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-me-change">Change it</button></div>' +
+        '<p class="ws-help" id="ws-me-msg"></p>' +
+        '<div class="ws-row" id="ws-me-acts"><button type="button" class="ws-btn ws-quiet" id="ws-me-file">Save it as a file</button>' +
+          '<button type="button" class="ws-link" id="ws-me-edit">Answer the questions again</button>' +
+          '<button type="button" class="ws-link" id="ws-me-del">Delete it</button></div>' +
         '<p class="ws-help">It’s kept in this browser, and it remembers which adapters you turn on or off. The toolkit’s browser extension can load the file with Import profile.</p>';
+      $('#ws-me-change').onclick = reviseMine;
       $('#ws-me-edit').onclick = function () { fillMine(true); $('#ws-me1').focus(); };
       $('#ws-me-file').onclick = saveMine;
       $('#ws-me-del').onclick = askDelete;
+      el.querySelectorAll('[data-mever]').forEach(function (b) { b.onclick = function () { backToMine(+b.getAttribute('data-mever')); }; });
       return;
     }
     var a = (me && me.answers) || ['', '', ''];
@@ -1217,6 +1246,84 @@
     if (me) $('#ws-me-cancel').onclick = function () { fillMine(); $('#ws-me-edit').focus(); };
   }
   function meSays(text) { var m = $('#ws-me-msg'); if (m) m.textContent = text; say(text, true); }
+  // The profile's versions, like a fix's: what the person said, and what changed. The last three show.
+  function versionsOf(me) {
+    if (!me.versions || !me.versions.length) me.versions = [{ n: 1, said: null, changed: 'Made from your answers.', about: me.freeText, adapters: me.adapters || [] }];
+    return me.versions;
+  }
+  // The version on now says what changed; the earlier ones fold away, each with a way back to it.
+  function mineThread(me) {
+    var vs = versionsOf(me), now = me.current || vs[vs.length - 1].n;
+    if (vs.length < 2) return '';
+    var line = function (v) {
+      return '<li class="ws-ver"><span class="ws-who">Version ' + v.n + (v.n === now ? ' <span class="ws-tag">on now</span>' : '') + '</span> ' +
+        (v.said ? 'You said: “' + esc(cut(v.said, 120)) + '” ' : '') + esc(v.changed || '') +
+        (v.n !== now ? ' <button type="button" class="ws-link" data-mever="' + v.n + '">Go back to version ' + v.n + '</button>' : '') + '</li>';
+    };
+    var cur = vs.filter(function (v) { return v.n === now; })[0] || vs[vs.length - 1], rest = vs.filter(function (v) { return v !== cur; }).reverse();
+    return '<ol class="ws-thread">' + line(cur) + '</ol>' +
+      '<details class="ws-more"><summary>Earlier versions (' + rest.length + ')</summary><ol class="ws-thread">' + rest.map(line).join('') + '</ol></details>';
+  }
+  // Saves a profile the AI wrote (from the three answers, or from what the person just said) as the
+  // next version, and shops as it. A new version starts with the adapters it lists.
+  function storeMine(d, said, answers) {
+    var ids = (d.adapters || []).filter(function (n, i, all) { return ADAPTERS[n] && n !== 'mine' && all.indexOf(n) === i; });
+    CLASH.forEach(function (c) { if (ids.indexOf(c[0]) !== -1) ids = ids.filter(function (n) { return n !== c[1]; }); });
+    ids = ids.slice(0, said ? 6 : 5);
+    var old = myProfile();
+    var me = { name: 'My profile', freeText: String(d.about).trim(), adapters: ids, answers: answers || (old && old.answers) || [], updatedAt: Date.now(),
+      supportAreas: (d.supportAreas || []).filter(function (x) { return /^(vision|hearing|motor|cognitive|reading|sensory)$/.test(x); }),
+      fields: { needs: [] }, fixes: (old && old.fixes) || [] };
+    var grade = Number(d.readingLevel);
+    if (grade >= 3 && grade <= 12) me.fields.readingLevel = grade;
+    if (d.urgency === 'hide' || d.urgency === 'label') me.fields.needs.push({ dimension: 'urgency', value: d.urgency, strength: 'preference', unit: 'enum' });
+    var vs = said && old ? versionsOf(old) : [];
+    me.versions = vs.concat({ n: vs.length + 1, said: said || null, changed: said ? String(d.changed || '').trim() || 'Updated your profile.' : 'Made from your answers.',
+      about: me.freeText, adapters: ids, supportAreas: me.supportAreas, fields: me.fields }).slice(-12);
+    localStorage.setItem(ME_KEY, JSON.stringify(me));
+    var all = learned(); delete all.me; localStorage.setItem(LEARN_KEY, JSON.stringify(all)); // this version's adapters are the ones it lists
+    return Promise.resolve(switchProfile('me')).then(function () {
+      var f = $('#ws-persona figure');
+      if (f) f.focus();
+      if (!ids.length) status('Made your profile. None of the adapters matched what you wrote, so none are on. Turn any on in the Adapter Library, and they’re saved to your profile.');
+      else if (said) status(me.versions[me.versions.length - 1].changed);
+    });
+  }
+  function parseMine(text) {
+    var d = null;
+    try { d = JSON.parse((String(text).match(/\{[\s\S]*\}/) || ['null'])[0]); } catch (e) {}
+    if (!d || typeof d !== 'object' || (d.about != null && typeof d.about !== 'string')) throw new Error('the AI’s answer wasn’t a profile');
+    d.about = d.about || '';
+    return d;
+  }
+  // "What should change about your profile?": one thing the person says, worked into the profile.
+  function reviseMine() {
+    var box = $('#ws-me-say'), said = box.value.trim(), me = myProfile();
+    if (!said) { meSays('Say what should change first.'); box.focus(); return; }
+    var on = learnedSet('me'), off = ((learned().me || {}).off) || [];
+    var earlier = versionsOf(me).filter(function (v) { return v.said; }).map(function (v) { return '- ' + v.said; }).join('\n');
+    var btn = $('#ws-me-change');
+    btn.disabled = true;
+    meSays('Changing your profile…');
+    var done = function () { btn.disabled = false; };
+    var input = { about: me.freeText, on: on.map(function (n) { return n + ' (' + (ADAPTERS[n] || {}).help + ')'; }).join('; '), off: off.join(', '), earlier: earlier, said: said, catalog: catalog() };
+    ask('reviseProfile', input).then(parseMine).catch(function () { return ask('reviseProfile', input).then(parseMine); })
+      .then(function (d) {
+        done();
+        if (!d.about.trim()) { meSays('That didn’t change anything. Say it another way?'); box.focus(); return; }
+        return storeMine(d, said);
+      }).catch(function (e) { done(); meSays('That didn’t work: ' + e.message + '. Try again.'); });
+  }
+  function backToMine(n) {
+    var me = myProfile(), v = versionsOf(me).filter(function (x) { return x.n === n; })[0];
+    if (!v) return;
+    me.freeText = v.about; me.adapters = v.adapters; me.current = n;
+    if (v.supportAreas) me.supportAreas = v.supportAreas;
+    if (v.fields) me.fields = v.fields;
+    localStorage.setItem(ME_KEY, JSON.stringify(me));
+    var all = learned(); delete all.me; localStorage.setItem(LEARN_KEY, JSON.stringify(all));
+    return Promise.resolve(switchProfile('me')).then(function () { status('Back to version ' + n + ' of your profile.'); });
+  }
   // Two adapters that do the same job fight on the page; when the AI picks both, the first is kept.
   var CLASH = [['pause-moving-things', 'stop-auto-advance'], ['reading-level', 'simplify-text']];
   function makeMine() {
@@ -1230,34 +1337,12 @@
     var stop = function () { clearInterval(tick); btn.textContent = label; btn.disabled = false; };
     meSays('Making your profile…');
     var input = { catalog: catalog(), answers: 'What gets in my way on shopping websites: ' + (a[0] || '-') + '\nWhat would make shopping websites easier for me: ' + (a[1] || '-') + '\nWhat I don’t want changed: ' + (a[2] || '-') };
-    var parse = function (text) {
-      var d = null;
-      try { d = JSON.parse((String(text).match(/\{[\s\S]*\}/) || ['null'])[0]); } catch (e) {}
-      if (!d || typeof d !== 'object' || (d.about != null && typeof d.about !== 'string')) throw new Error('the AI’s answer wasn’t a profile');
-      d.about = d.about || ''; // nothing to go on: the answers didn't say what gets in their way
-      return d;
-    };
     // One more try if the answer doesn't come back or isn't a profile.
-    ask('myProfile', input).then(parse).catch(function () { return ask('myProfile', input).then(parse); })
+    ask('myProfile', input).then(parseMine).catch(function () { return ask('myProfile', input).then(parseMine); })
       .then(function (d) {
         clearInterval(tick);
         if (!d.about.trim()) { stop(); meSays('Say a bit more about what gets in your way, then try again.'); $('#ws-me1').focus(); return; }
-        var ids = (d.adapters || []).filter(function (n, i, all) { return ADAPTERS[n] && n !== 'mine' && all.indexOf(n) === i; });
-        CLASH.forEach(function (c) { if (ids.indexOf(c[0]) !== -1) ids = ids.filter(function (n) { return n !== c[1]; }); });
-        ids = ids.slice(0, 5);
-        var me = { name: 'My profile', freeText: String(d.about).trim(), adapters: ids, answers: a, updatedAt: Date.now(),
-          supportAreas: (d.supportAreas || []).filter(function (x) { return /^(vision|hearing|motor|cognitive|reading|sensory)$/.test(x); }),
-          fields: { needs: [] } };
-        var grade = Number(d.readingLevel);
-        if (grade >= 3 && grade <= 12) me.fields.readingLevel = grade;
-        if (d.urgency === 'hide' || d.urgency === 'label') me.fields.needs.push({ dimension: 'urgency', value: d.urgency, strength: 'preference', unit: 'enum' });
-        localStorage.setItem(ME_KEY, JSON.stringify(me));
-        var all = learned(); delete all.me; localStorage.setItem(LEARN_KEY, JSON.stringify(all)); // a new profile starts fresh
-        return Promise.resolve(switchProfile('me')).then(function () {
-          var f = $('#ws-persona figure');
-          if (f) f.focus();
-          if (!ids.length) status('Made your profile. None of the adapters matched what you wrote, so none are on. Turn any on in the Adapter Library, and they’re saved to your profile.');
-        });
+        return storeMine(d, null, a);
       })
       .catch(function (e) { stop(); meSays('That didn’t work: ' + e.message + '. Try again.'); });
   }
@@ -2241,6 +2326,9 @@
       issues: issues.sort(function (a, b) { return a - b; }),
       toolkitAdapters: (f.adapters || []).filter(function (a) { return a.id !== 'mine'; }),
       pointedAt: (f.target || {}).html || '',
+      // The whole profile, the same thing adapters get as options.profile. The folder's store reads it.
+      profile: currentProfile ? { name: currentProfile.name || '', freeText: currentProfile.freeText || '', supportAreas: currentProfile.supportAreas || [],
+        fields: currentProfile.fields || {} } : null,
       conversation: (f.thread || []).filter(function (t) { return t.who !== 'back'; }).map(function (t) {
         if (t.who === 'you') return { who: 'person', text: t.text };
         if (t.who === 'check') return { who: 'panel check', text: t.text + ' The AI tried again by itself.' };
@@ -2357,6 +2445,9 @@
         '<p class="ws-help">' + esc(cut(f.need || f.description || idsOf(f).map(label).join(', '), 160)) + '</p>' +
         '<div class="ws-row">' + (on ? '' : '<button type="button" class="ws-link" data-fon="' + i + '" aria-label="Turn on ' + esc(f.name) + '">Turn on</button>') +
           '<button type="button" class="ws-link" data-fshare="' + i + '" aria-label="Share ' + esc(f.name) + '">Share</button>' +
+          (!myProfile() ? '' : myFixes().some(function (x) { return x.name === f.name; })
+            ? '<button type="button" class="ws-link" data-fmeout="' + i + '" aria-label="Take ' + esc(f.name) + ' out of my profile">Take out of my profile</button>'
+            : '<button type="button" class="ws-link" data-fme="' + i + '" aria-label="Add ' + esc(f.name) + ' to my profile">Add to my profile</button>') +
           '<button type="button" class="ws-link" data-fdel="' + i + '" aria-label="Delete ' + esc(f.name) + '">Delete</button></div>' +
         '<div class="ws-msg" id="ws-f' + i + '"></div></li>';
     }).join('') + '</ul>';
@@ -2577,6 +2668,14 @@
         if (f.code) return install(f.code, 'Turned on ' + f.name + '.', idsOf(f));
         if (!applySet(idsOf(f), settingsOf(f.adapters))) msg('Turned on ' + f.name + '.');
       } else if (t.hasAttribute('data-fshare')) { i = +t.getAttribute('data-fshare'); share(list[i], '#ws-f' + i); }
+      else if (t.hasAttribute('data-fme') || t.hasAttribute('data-fmeout')) {
+        var add = t.hasAttribute('data-fme'), fx = list[+t.getAttribute(add ? 'data-fme' : 'data-fmeout')], me = myProfile();
+        me.fixes = (me.fixes || []).filter(function (x) { return x.name !== fx.name && (!add || !fx.code || !x.code); });
+        if (add) me.fixes.push({ name: fx.name, adapters: fx.adapters, code: fx.code || null });
+        localStorage.setItem(ME_KEY, JSON.stringify(me));
+        renderSaved();
+        msg(add ? fx.name + ' is in your profile now. It turns on whenever you shop as My profile.' : fx.name + ' is out of your profile.');
+      }
       else if (t.hasAttribute('data-fdel')) {
         i = +t.getAttribute('data-fdel');
         var gone = list.splice(i, 1)[0];

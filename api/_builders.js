@@ -287,4 +287,32 @@ Adapters:
 ${catalog}`;
 }
 
-module.exports = { buildSkill, writeAdapter, reviseAdapter, profileFromChat, suggestChanges, myProfile };
+// "What should change about your profile?" in the Profiles tab: the person says one thing, and this
+// updates their profile and its adapters, keeping everything else they said and chose.
+function reviseProfile({ about, on, off, earlier, said, catalog }) {
+  return `You update someone's own accessibility profile for the AI for Accessibility Toolkit. The toolkit uses it to change websites for them, starting with Redbird, a practice online store.
+
+Their profile now, in their words:
+${about || '(empty)'}
+
+Adapters on for them now: ${on || 'none'}
+Adapters they turned off themselves: ${off || 'none'}
+${earlier ? `What they asked for before:\n${earlier}\n` : ''}
+What they just said:
+${said}
+
+Return only a JSON object, with no other text:
+{"about": "...", "supportAreas": [], "readingLevel": null, "urgency": null, "adapters": [], "changed": "..."}
+
+- about: their profile with what they just said worked in, two to four short, plain sentences in the first person, the way they'd write it. Keep everything else it says unless they took it back. Describe the websites as the problem, not the person. Don't add a diagnosis or anything they didn't say. Write it in the language they wrote in.
+- supportAreas: the ones that apply now, from this list only: vision, hearing, motor, cognitive, reading, sensory.
+- readingLevel: a school grade from 3 to 12 if they want simpler or shorter text, otherwise null.
+- urgency: "hide" if countdowns, "only 2 left" messages or pressure to buy fast bother them, otherwise null.
+- adapters: the adapters to have on from now: the ones on now, plus any from the list below that fix what they just said, minus any they asked to stop. Don't turn back on one they turned off unless they ask for it. Don't pick two that do the same job. At most 6. Use the ids exactly as written in the list.
+- changed: one short, plain sentence for them saying what changed, like "Added bigger text and thicker focus outlines." If nothing in the list fits what they said, say so plainly.
+
+Adapters:
+${catalog}`;
+}
+
+module.exports = { buildSkill, writeAdapter, reviseAdapter, profileFromChat, suggestChanges, myProfile, reviseProfile };
