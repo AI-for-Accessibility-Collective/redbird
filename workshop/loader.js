@@ -41,6 +41,7 @@
   // A starter folder's server (tools/dev.mjs) serves the store on this computer and sets RB_LOCAL.
   // "local" is then the adapter.js in that folder, and the page reloads when the file is saved.
   var LOCAL = window.RB_LOCAL || null;
+  if (!LOCAL) names = names.filter(function (n) { return n !== 'local'; }); // there is no folder to run
   // ?rbtest=1: the folder's tests (tools/test.mjs) are driving this page, through RB_TEST below.
   var testing = qs.has('rbtest');
   // Old names from before the profiles were renamed still work, from saved settings or old links.
@@ -265,7 +266,7 @@
         if (!/^data-/.test(r.attributeName)) this.add(who, 'attr', t, r.attributeName, r.oldValue);
         return;
       }
-      if (r.type === 'characterData') { this.text(who, el, r.oldValue, [t]); return; }
+      if (r.type === 'characterData') { this.text(who, el, r.oldValue, [t], true); return; }
       var added = Array.prototype.filter.call(r.addedNodes, function (n) { return n.id !== 'ws-live' && (n.nodeType === 1 || squash(n.data)); });
       var removed = Array.prototype.filter.call(r.removedNodes, function (n) { return !self.owned.get(n) && (n.nodeType === 1 || squash(n.data)); });
       if (removed.length && added.length) {
@@ -297,12 +298,13 @@
       return e;
     },
     // Text changes in one element add up: the words that went, and the nodes that replaced them.
-    text: function (who, el, before, nodes) {
+    // inPlace: the words of an existing text node changed, rather than nodes being swapped.
+    text: function (who, el, before, nodes, inPlace) {
       var e = this.add(who, 'text', el, '', null);
       if (!e) return null;
       e.parts = e.parts || [];
       var seen = e.parts.some(function (p) { return p.nodes.some(function (n) { return nodes.indexOf(n) !== -1; }); });
-      if (!seen) e.parts.push({ before: before || '', nodes: nodes });
+      if (!seen) e.parts.push({ before: before || '', nodes: nodes, inPlace: !!inPlace });
       return e;
     },
     // The toolkit's fixes: compare an element before and after its fix, however long the AI took.
@@ -562,7 +564,8 @@
   var MY_KEY = 'redbird:my-adapter';
   // What the Build tab keeps in this browser.
   var SKILLS_KEY = 'redbird:fixes', PERSON_KEY = 'redbird:person', NEED_KEY = 'redbird:need', DRAFT_KEY = 'redbird:build',
-    PREV_KEY = 'redbird:my-adapter-prev', SETTINGS_KEY = 'redbird:settings', NOTE_KEY = 'redbird:build-note';
+    PREV_KEY = 'redbird:my-adapter-prev', SETTINGS_KEY = 'redbird:settings', NOTE_KEY = 'redbird:build-note',
+    FB_KEY = 'redbird:next-change', FOLDER_NOTE_KEY = 'redbird:folder-note';
   // Settings a skill can give an adapter: the keys, and what the Engineer is told about them.
   var SETTINGS = {
     'visual-assist': [['fontScale', 'lineHeight', 'letterSpacing', 'enhanceFocus'], 'fontScale (1 to 2, text size), lineHeight (1 to 2.5), letterSpacing (0 to 0.3, in em), enhanceFocus (true or false)'],
@@ -623,7 +626,7 @@
       return fetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error('your folder has no adapter.js');
         return r.text();
-      }).then(function (code) { return import(URL.createObjectURL(new Blob([code], { type: 'text/javascript' }))); });
+      }).then(function (code) { localCode = code; return import(URL.createObjectURL(new Blob([code], { type: 'text/javascript' }))); });
     }
     if (EXAMPLES.indexOf(name) !== -1) return import(base + 'adapters/' + name + '.js');
     var lib = NEEDS[name];
@@ -632,7 +635,7 @@
     return Promise.all([toolkit(), lib ? loadScript(lib[1], lib[0]) : null])
       .then(function () { return import(url).catch(function () { return import(url + '?retry=1'); }); });
   }
-  var loading = {}, adapters = {}, errors = {}, enabling = {};
+  var loading = {}, adapters = {}, errors = {}, enabling = {}, localCode = null;
   function ensure(name) {
     loading[name] = loading[name] || loadModule(name).then(function (mod) {
       var a = WRAP[name] ? WRAP[name](mod) : Object.keys(mod).map(function (k) { return mod[k]; }).find(function (v) { return v && typeof v.enable === 'function'; });
@@ -686,6 +689,7 @@
     learn(name, on);
     if (rendered) root.querySelectorAll('input[data-ad="' + name + '"]').forEach(function (x) { x.checked = on; });
     if (on) turnOn(name); else turnOff(name);
+    if (name === 'local') listen();
     renderSaved();
     renderResult();
     renderOnList();
@@ -1814,14 +1818,16 @@
   // keep: adapters from the toolkit to keep next to the new one (a skill someone asked to change).
   function writeNew(need, btn, keep) {
     var done = wait(btn, 'No adapter does this yet, so AI is writing one. This takes about 30 seconds…');
-    ask('writeAdapter', { description: need, person: person(), snapshot: snapshot(document.body, 14000), target: target ? target.html : '', url: here() })
+    var pointed = target && target.from !== '#ws-point3' ? target : null;
+    ask('writeAdapter', { description: need, person: person(), snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() })
       .then(function (code) { finishAdapter(need, cleanCode(code), 'Done. AI wrote a new adapter, and it’s on.', keep); })
       .catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
   function finishAdapter(need, code, text, kept) {
     var adapters = (kept || []).filter(function (a) { return a.id !== 'mine'; }).concat({ id: 'mine', settings: {} });
     var sp = splitNote(code);
-    result = nextResult({ name: kebab(need.split(/\s+/).slice(0, 5).join(' ')), need: need, description: need, adapters: adapters, md: '', code: sp.code, target: target },
+    result = nextResult({ name: kebab(need.split(/\s+/).slice(0, 5).join(' ')), need: need, description: need, adapters: adapters, md: '', code: sp.code,
+      target: target && target.from !== '#ws-point3' ? target : null },
       sp.note || 'AI wrote a new adapter.');
     keep(DRAFT_KEY, result);
     install(sp.code, text, idsOf(result));
@@ -1840,9 +1846,9 @@
     if (!result) return;
     if (!feedback && !error) { msg('Say what should change first.'); $('#ws-fb').focus(); return; }
     var asked = turns().filter(function (t) { return t.who === 'you'; }).slice(1).map(function (t) { return '- ' + t.text; }).join('\n');
-    asking = { thread: turns().concat({ who: 'you', text: feedback || 'Fix the error: ' + error }), base: result.base || null };
+    asking = { thread: turns().concat({ who: 'you', text: feedback || 'Fix this error: ' + String(error).replace(/^Stopped with an error:\s*/, '') }), base: result.base || null };
     var btn = $(error ? '#ws-repair' : '#ws-change');
-    var pointed = target || result.target;
+    var pointed = (target && target.from === '#ws-point2' ? target : null) || result.target;
     if (result.code) {
       var done = wait(btn, error ? 'Asking the AI to fix the error…' : 'Changing the adapter…');
       ask('reviseAdapter', { code: result.code, description: result.need, feedback: feedback || '', error: error || '', history: asked, person: person(),
@@ -1851,6 +1857,7 @@
           var sp = splitNote(cleanCode(code));
           result = nextResult(Object.assign({}, result, { code: sp.code, target: pointed }), sp.note || (error ? 'Fixed the error.' : 'Changed the adapter.'));
           keep(DRAFT_KEY, result);
+          if (!error) writeKey(FB_KEY, null);
           install(result.code, error ? 'Fixed. It’s running again.' : 'Changed. Check the page.', idsOf(result));
         }).catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
       return;
@@ -1859,6 +1866,7 @@
     ask('buildSkill', { need: result.need, person: person(), catalog: catalog(), settings: settingsLines(), previous: result.md, feedback: feedback })
       .then(parseSkill).then(function (s) {
         done2();
+        writeKey(FB_KEY, null);
         if (s.adapters.length) return useSkill(result.need, s);
         writeNew(result.need + '. ' + feedback, btn, result.adapters);
       }, function (e) { done2(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
@@ -1909,7 +1917,9 @@
         v.checks = c;
         keep(DRAFT_KEY, result);
         renderResult();
-        say('Version ' + v.n + ': ' + checkWords(c).replace(/<[^>]+>/g, ''), true);
+        var words = document.createElement('div');
+        words.innerHTML = checkWords(c);
+        say('Version ' + v.n + ': ' + words.textContent, true);
       });
   }
   function checkWords(c) {
@@ -1918,10 +1928,10 @@
     if (c.error) out.push('<span class="ws-err">It stopped with an error.</span>');
     c.issues.forEach(function (x) {
       var what = 'problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ')';
-      if (x.worse) out.push('<span class="ws-err">It makes ' + what + ' worse on this page: ' + esc(x.now) + ', was ' + esc(x.was) + '.</span>');
+      if (x.worse) out.push('<span class="ws-err">It makes ' + what + ' worse on this page: it was ' + esc(x.was) + ' before, and now it is ' + esc(x.now) + '.</span>');
       else if (x.status === 'fixed') out.push('It fixes ' + what + ' on this page.');
       else if (x.status === 'partly') out.push('It partly fixes ' + what + ' on this page: ' + esc(x.now.replace(/^partly fixed \((.*)\)$/, '$1')) + '.');
-      else out.push('On this page, ' + what + ' is ' + esc(x.now) + ', was ' + esc(x.was) + '.');
+      else out.push(what.charAt(0).toUpperCase() + what.slice(1) + ' is now ' + esc(x.now) + ' on this page (was ' + esc(x.was) + ').');
     });
     if (!c.changes) out.push('It changed nothing on this page.');
     else if (!c.issues.length) out.push('It made ' + c.changes + ' change' + (c.changes === 1 ? '' : 's') + ' on this page.');
@@ -1934,12 +1944,14 @@
     return result.thread;
   }
   function versions() { return turns().filter(function (t) { return t.who === 'version'; }); }
-  // Which version is on the page: the one whose code is running, or the last one for a skill.
+  // Which version is on the page: the newest one whose code is running, or for a skill, the newest
+  // one whose adapters are the ones turned on.
   function runningVersion() {
     var vs = versions(), code = readKey(MY_KEY);
     if (!result || !same(idsOf(result), names)) return null;
-    if (!result.code) return vs[vs.length - 1] || null;
-    for (var i = vs.length - 1; i >= 0; i--) if (vs[i].code === code) return vs[i];
+    for (var i = vs.length - 1; i >= 0; i--) {
+      if (result.code ? vs[i].code === code : vs[i].adapters && same(vs[i].adapters.map(function (a) { return a.id; }), names)) return vs[i];
+    }
     return null;
   }
   function threadHTML() {
@@ -2001,11 +2013,12 @@
       (result.code ? codeBox('')
         : '<details class="ws-more"><summary>Details</summary><p class="ws-help">As a SKILL.md file, the toolkit’s format for skills:</p><pre class="ws-pre" tabindex="0">' + esc(result.md) + '</pre></details>') +
       (LOCAL ? '' : '<details class="ws-more" id="ws-dlbox"><summary>Keep building in code</summary>' +
-        '<p class="ws-help">Download this fix as a folder you can keep changing with a coding agent like Claude Code or Codex. It has the code, this conversation, a way to run the store with it, and tests.</p>' +
+        '<p class="ws-help">Download this fix as a folder, so you can keep changing it with a coding agent (e.g., Claude Code or Codex) and test it on the store. The folder has the code and this conversation.</p>' +
         '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-dl">Download the folder</button></div><p class="ws-msg" id="ws-dlmsg"></p></details>') +
       '</div>';
     fillCode();
     renderTarget();
+    $('#ws-fb').value = readKey(FB_KEY) || '';
     ids.forEach(function (n) { var slot = el.querySelector('[data-slot="' + n + '"]'); if (slot) updateChanges(slot, n); });
   }
   // ── Keep building in code ─────────────────────────────────────────────────
@@ -2047,8 +2060,8 @@
       '<div id="ws-folder-state"></div>' +
       '<label class="ws-lab" for="ws-note">What’s still wrong, or what should change?</label>' +
       '<textarea id="ws-note" class="ws-input" rows="2" aria-describedby="ws-note-help" placeholder="e.g., VoiceOver still reads the price in the cart as dollar 18 99"></textarea>' +
-      '<p class="ws-help" id="ws-note-help">It goes at the bottom of feedback.md in your folder, with this page’s address. Then ask the coding agent to read it.</p>' +
-      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-send">Send to the coding agent</button>' +
+      '<p class="ws-help" id="ws-note-help">It goes at the bottom of feedback.md in your folder, with this page’s address.</p>' +
+      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-send">Add note for the coding agent</button>' +
         '<button type="button" class="ws-link" id="ws-point3" aria-pressed="false">Point at it on the page</button></div>' +
       '<p class="ws-help" id="ws-target3"></p><p class="ws-msg" id="ws-folder-msg"></p>' +
       '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-lshare">Share it</button></div><div class="ws-msg" id="ws-lshare-msg"></div>' +
@@ -2057,6 +2070,8 @@
   function folderState() {
     var el = rendered && $('#ws-folder-state');
     if (!el) return;
+    var box = $('#ws-note');
+    if (box && !box.value) box.value = readKey(FOLDER_NOTE_KEY) || '';
     if (names.indexOf('local') === -1) { el.innerHTML = '<p class="ws-help">It’s off. <button type="button" class="ws-link" id="ws-lon">Turn it on</button></p>'; return; }
     if (errors.local) { el.innerHTML = '<p class="ws-err">' + esc(errors.local) + '</p><p class="ws-help">Send the error to the coding agent, or run npm test in the folder.</p>'; return; }
     var slot = el.querySelector('[data-slot="local"]');
@@ -2067,16 +2082,18 @@
   function sendNote() {
     var box = $('#ws-note'), text = box.value.trim();
     if (!text) { folderMsg('Write what’s wrong first.'); box.focus(); return; }
-    var done = wait($('#ws-send'), 'Sending…');
-    var note = { text: text + (errors.local ? '\n\nThe panel shows this error: ' + errors.local : ''), page: here(), pointedAt: target ? target.html : '', pointedAtLabel: target ? target.label : '' };
+    var done = wait($('#ws-send'), 'Adding the note…');
+    var pointed = target && target.from === '#ws-point3' ? target : null;
+    var note = { text: text + (errors.local ? '\n\nThe panel shows this error: ' + errors.local : ''), page: here(), pointedAt: pointed ? pointed.html : '', pointedAtLabel: pointed ? pointed.label : '' };
     fetch(LOCAL.feedback, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) }).then(function (r) {
       if (!r.ok) throw new Error();
       done();
+      msg('');
       box.value = '';
-      target = null;
-      renderTarget();
-      folderMsg('Sent. It’s at the bottom of feedback.md.');
-    }).catch(function () { done(); folderMsg('Couldn’t send it. Is npm run dev still running in the folder?'); });
+      writeKey(FOLDER_NOTE_KEY, null);
+      if (pointed) { target = null; renderTarget(); }
+      folderMsg('Added to the bottom of feedback.md. Ask the coding agent to read it.');
+    }).catch(function () { done(); msg(''); folderMsg('Couldn’t add it. Is npm run dev still running in the folder?'); });
   }
   // A share link for the live store, carrying adapter.js and the toolkit adapters fix.json names.
   function shareLocal() {
@@ -2204,7 +2221,7 @@
   var POINT = { '#ws-point': ['#ws-need', '#ws-target'], '#ws-point2': ['#ws-fb', '#ws-target2'], '#ws-point3': ['#ws-note', '#ws-target3'] };
   function setTarget(el) {
     stopPick();
-    target = { html: snapshot(el, 3000), label: describe(el) };
+    target = { html: snapshot(el, 3000), label: describe(el), from: pickFrom };
     renderTarget();
     status('Pointing at ' + target.label + '.');
     var box = $(POINT[pickFrom][0]);
@@ -2212,8 +2229,8 @@
   }
   function renderTarget() {
     Object.keys(POINT).forEach(function (k) {
-      var el = $(POINT[k][1]);
-      if (el) el.innerHTML = target ? 'Pointing at ' + esc(cut(target.label, 60)) + ' <button type="button" class="ws-link" data-untarget aria-label="Stop pointing at ' + esc(cut(target.label, 60)) + '">×</button>' : '';
+      var el = $(POINT[k][1]), mine = target && (target.from || '#ws-point') === k;
+      if (el) el.innerHTML = mine ? 'Pointing at ' + esc(cut(target.label, 60)) + ' <button type="button" class="ws-link" data-untarget aria-label="Stop pointing at ' + esc(cut(target.label, 60)) + '">×</button>' : '';
     });
   }
 
@@ -2278,6 +2295,12 @@
     p.oninput = function () { writeKey(PERSON_KEY, p.value.trim() || null); };
     need.value = readKey(NEED_KEY) || (result && result.need) || '';
     need.oninput = function () { writeKey(NEED_KEY, need.value.trim() || null); };
+    // The page reloads for every new version, and each time adapter.js is saved, so half-written
+    // notes are kept until they're sent.
+    pane.addEventListener('input', function (e) {
+      if (e.target.id === 'ws-fb') writeKey(FB_KEY, e.target.value || null);
+      if (e.target.id === 'ws-note') writeKey(FOLDER_NOTE_KEY, e.target.value || null);
+    });
     $('#ws-build').onclick = build;
     $('#ws-askgo').onclick = askProfile;
     $('#ws-ideasgo').onclick = suggest;
@@ -2390,11 +2413,24 @@
   });
 
   // Saving adapter.js in the starter folder runs it again on a fresh page.
-  if (LOCAL && LOCAL.events && window.EventSource) {
-    new EventSource(LOCAL.events).onmessage = function (e) {
-      if (e.data === 'adapter.js' && names.indexOf('local') !== -1) location.reload();
-    };
+  // Browsers keep only a few connections open to one address, so only a visible tab with the
+  // folder's adapter on listens. A tab that comes back checks whether the file changed meanwhile.
+  var events = null;
+  function listen() {
+    if (!LOCAL || !LOCAL.events || !window.EventSource || names.indexOf('local') === -1) return;
+    if (document.hidden) { if (events) { events.close(); events = null; } return; }
+    if (events) return;
+    events = new EventSource(LOCAL.events);
+    events.onmessage = function (e) { if (e.data === 'adapter.js') location.reload(); };
   }
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && !events && localCode != null && names.indexOf('local') !== -1) {
+      fetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); })
+        .then(function (code) { if (code !== localCode) location.reload(); }, function () {});
+    }
+    listen();
+  });
+  listen();
 
   // ── For the starter folder's tests ────────────────────────────────────────
   // tools/test.mjs opens a page with ?rbtest=1 and uses these to see what an adapter did and
@@ -2410,8 +2446,12 @@
   // adapter ran, since putting the old words back counts as a new change to the same element.
   function testStill(e) {
     if (e.type === 'removed') return !e.el.isConnected;
-    if (e.type === 'text' && beforeAll && beforeAll.has(e.el)) return e.el.isConnected && squash(e.el.textContent) !== beforeAll.get(e.el)['#text'];
-    return live(e);
+    if (e.type !== 'text') return live(e);
+    if (beforeAll && beforeAll.has(e.el)) return e.el.isConnected && squash(e.el.textContent) !== beforeAll.get(e.el)['#text'];
+    // Drawn after the page loaded: a node edited in place is back when it has its old words again.
+    return e.parts.some(function (p) {
+      return p.inPlace ? p.nodes[0].isConnected && p.nodes[0].data !== p.before : p.nodes.some(function (n) { return n.isConnected; });
+    });
   }
   // Like a CSS selector, so a coding agent can find it: span.swatch, button#buy.
   function testTag(el) {
