@@ -23,7 +23,7 @@ The panel's Build tab makes fixes without writing code, using the same two build
 
 ## Keep building in code
 
-To keep changing a fix with a coding agent like Claude Code or Codex, open **Keep building in code** under the fix in the Build tab and download it as a folder. The folder is a copy of [`starter/`](../starter/) with the fix's code and conversation in it: `npm run dev` runs the store on your computer with the adapter on and reloads it when the file changes, and `npm test` tests it on the store's pages. Its `README.md` is for people and its `AGENTS.md` is for the coding agent.
+To keep changing a fix with a coding agent like Claude Code or Codex, open **Keep building in code** under the fix in the Build tab and download it as a folder. The folder is a copy of [`starter/`](../starter/) with the fix's code and conversation in it. `npm run dev` runs the store on your computer with the adapter on and reloads it when the file changes, `npm test` tests it on the store's pages, and `npm run page` prints a page's markup after the store's scripts render it. Its `README.md` is for people and its `AGENTS.md` is for the coding agent.
 
 ## The four examples
 
