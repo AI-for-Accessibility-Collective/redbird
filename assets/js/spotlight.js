@@ -198,11 +198,13 @@
         });
       } },
     3: { title: '"Add to cart" is not a button',
+      done: 'every “Add to cart” is a real button (or has role="button" and tabindex="0"), so Tab reaches it and Enter or Space adds the item to the cart.',
       what: '"Add to cart" is a clickable box, not a real button, so the keyboard skips it.',
       who: 'Keyboard users and screen reader users',
       notice: 'Press Tab through the page: focus jumps over "Add to cart", and Enter can\'t press it.',
       find: function () { return places(['[data-buy="cart"]', '.btn-cart[data-add]', '[data-fbt]'], notButton); } },
     4: { title: 'Star ratings are only a picture',
+      done: 'a screen reader reads every star rating as a number, like “4.6 out of 5 stars”.',
       what: 'The rating is a picture of stars. A screen reader hears only the count, like "(12,408)".',
       who: BLIND,
       notice: 'Turn on VoiceOver and move to the stars: it reads how many ratings there are, but not the rating.',
@@ -210,11 +212,13 @@
         return places(['.pdp-info .stars', '.card .stars', '.stars', '.rv-head'], function (el) { return !/out of 5|\d(\.\d)? stars?\b/i.test(spoken(el)); });
       } },
     5: { title: 'Prices are read in pieces',
+      done: 'a screen reader reads every price as one amount, like “$18.99”.',
       what: 'Each price is split into three pieces, so it is read as "dollar, 18, 99".',
       who: 'Screen reader users',
       notice: 'Turn on VoiceOver and move to a price: it reads the dollars and the cents as separate numbers.',
       find: function () { return places(['.price-block .price', '.card .price', '.price'], function (el) { return !/\$\s?\d[\d,]*\.\d\d/.test(spoken(el)); }); } },
     6: { title: 'Color choices have no names',
+      done: 'every color choice has a name a screen reader can say, and the keyboard can pick one.',
       what: 'Color choices are plain colored circles with no names, and the keyboard can\'t reach them.',
       who: BLIND + ', keyboard users, and people who are color blind',
       notice: 'Press Tab on the product page: the focus skips these color circles, and VoiceOver can\'t say which color is which.',
@@ -228,6 +232,7 @@
         });
       } },
     7: { title: '"Sponsored" is hidden in an image',
+      done: 'every sponsored result has a label that says it is an ad, and a screen reader reads it too.',
       what: '"Sponsored" is faint text inside an image with no alt text, so ads look like normal results.',
       who: 'Screen reader users and people with low vision',
       notice: 'Turn on VoiceOver on a result: nothing says it is an ad. Then look closely: "Sponsored" is pale grey.',
@@ -307,6 +312,7 @@
         }, function (el) { return !el.matches('label') || !!el.querySelector('input[type=checkbox]'); });
       } },
     18: { title: 'The price filter only works by dragging',
+      done: 'the price filter can be set without dragging, for example with boxes for a minimum and maximum price, or with the arrow keys, and the results change to match.',
       what: 'The price filter is a slider you can only drag with a mouse.',
       who: 'Keyboard users, switch users and people with limited hand control',
       notice: 'Press Tab to the price filter and try the arrow keys: you can\'t reach it, and nothing moves.',
@@ -319,6 +325,7 @@
         });
       } },
     19: { title: 'The checkout timer can\'t be extended', nocheck: true,
+      done: 'the person can still place the order after the 5 minutes are up, or can get more time. Hiding the timer does not fix it, since the cart still runs out.',
       what: 'Checkout says your cart is held for 5:00 and counts down. You can\'t get more time, and then you can\'t order.',
       who: 'Anyone who needs more time, like screen reader users, people with motor or cognitive disabilities, and people who type slowly',
       notice: 'Wait five minutes on this page: "Place your order" stops working, and nothing offers more time.',
@@ -338,6 +345,7 @@
         });
       } },
     22: { title: 'Photos only switch on mouse hover',
+      done: 'every photo thumbnail can be reached with Tab and pressed with Enter, Space or a click, and that switches the big photo.',
       what: 'The small photos only change the big photo on mouse hover. They can\'t be clicked or reached with the keyboard.',
       who: 'Keyboard users, touch screen users and screen reader users',
       notice: 'Press Tab on the product page: the focus never reaches the small photos next to the big one.',
@@ -360,6 +368,7 @@
         });
       } },
     25: { title: 'Product titles are stuffed with keywords',
+      done: 'every product title on the page is short: the brand and what the product is, not a list of keywords. This includes the product page heading, search results, sponsored cards, the rows of products and the cart.',
       what: 'Product titles are long lists of keywords, so similar products look the same.',
       who: 'People with cognitive disabilities, screen reader users, and anyone comparing products',
       notice: 'Compare the charger titles: they start with the same words, so it\'s hard to tell them apart.',
@@ -379,11 +388,13 @@
       notice: 'Read the description: can you say in one sentence what the product does?',
       find: function () { return places('#desc', function (el) { var t = text(el); return JARGON.some(function (j) { return t.indexOf(j) !== -1; }); }); } },
     28: { title: 'The policy is one long legal sentence',
+      done: 'the return policy is short, plain sentences (none longer than about 25 words), with every fact kept.',
       what: 'The return policy and the subscription terms are each one long legal sentence.',
       who: 'People with cognitive or reading disabilities, and people reading in a second language',
       notice: 'Count the sentences in the policy: there is one, and it is over 100 words long.',
       find: function () { return places('p.policy', function (el) { return longestSentence(text(el)) > 40; }); } },
     29: { title: 'A double-negative checkbox',
+      done: 'the checkbox reads as one plain question, like “Send me Redbird offers and partner promotions”, a tick means yes, and the old double-negative sentence is gone.',
       what: 'A checkbox that is already ticked says "Uncheck this box if you do not wish to not receive Redbird offers".',
       who: 'People with cognitive disabilities, and anyone in a hurry',
       notice: 'Read the checkbox under Review: does a tick mean you get emails or not?',
@@ -394,6 +405,7 @@
         });
       } },
     30: { title: 'Payment errors are system codes',
+      done: 'when a payment fails, the message says in plain words what went wrong and what to do next, with no error codes. Each kind of error (a wrong card number, a ZIP code that does not match, an expired card) gets its own explanation.',
       what: 'Payment errors are system codes like "Error 402: AVS mismatch" instead of what to do next.',
       who: 'People with cognitive disabilities, and everyone else',
       notice: 'Choose "Add a new card", enter 4242 4242 4242 4242, 12/30 and ZIP 10001, then press "Place your order".',
@@ -923,6 +935,29 @@
   }
 
   // ── Start ─────────────────────────────────────────────────────────────────
+  // What the workshop panel tells the AI about a planted problem, and which ones are at an element
+  // someone pointed at (problems that cover the whole page don't count).
+  window.RB_ISSUE_INFO = function (n) {
+    var i = ISSUES[n];
+    return i ? { issue: Number(n), title: i.title, what: i.what || '', notice: i.notice || '', done: i.done || '' } : null;
+  };
+  // Only the closest ones: the element itself, something inside it, or else the nearest box around it.
+  window.RB_ISSUES_AT = function (el) {
+    check();
+    var best = Infinity, found = [];
+    present().forEach(function (n) {
+      if (ISSUES[n].wide) return;
+      state[n].places.forEach(function (p) {
+        if (!p.el || p.el === document.body || p.el === document.documentElement) return;
+        var d = p.el === el || el.contains(p.el) ? 0 : -1;
+        if (d < 0 && p.el.contains(el)) for (var a = el, k = 0; a; a = a.parentElement, k++) if (a === p.el) { d = k; break; }
+        if (d < 0) return;
+        if (d < best) { best = d; found = []; }
+        if (d === best && found.indexOf(n) === -1) found.push(n);
+      });
+    });
+    return found;
+  };
   // What the spotlight sees, for tests and agents: [{ issue, title, status, places, still }].
   // status is fixed, partly, present (not fixed), nocheck or waiting.
   function report() {
