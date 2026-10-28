@@ -6,7 +6,7 @@ The person you're working with may not code, and may use a screen reader, only a
 
 ## Start here
 
-1. Read `fix.json`: who the adapter is for (`person`), what they asked for (`need`), the page it's about (`page`), the planted problems it fixes (`issues`), and the conversation so far.
+1. Read `fix.json`: who the adapter is for (`person`, and their whole ability profile in `profile`), what they asked for (`need`), the page it's about (`page`), the planted problems it fixes (`issues`), and the conversation so far. The store gives `profile` to the adapter as `options.profile`.
 2. Read `feedback.md`. When the person presses "Add note for the coding agent" in the store, their note is added at the bottom, with the page and what they pointed at.
 3. Read `adapter.js`, and the example in `examples/` that is closest to what they want.
 4. Start the store with `npm run dev` in the background and keep it running, then give the person the link it prints. It serves the store at http://localhost:5179 with `adapter.js` on every page, and reloads the page each time `adapter.js` is saved.
