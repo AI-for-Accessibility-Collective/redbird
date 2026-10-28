@@ -88,7 +88,9 @@ const ADAPTER_RULES = `You are writing a small JavaScript adapter that changes a
    };
    Rename MyAdapter after what it does, in PascalCase (e.g. StarReader). No other exports, no top-level await.
 
-3. **disable() undoes everything.** Before changing an attribute, text or style, remember the old value (a Map from element to its old values works well) and put it back in disable(). Remove anything you added, disconnect observers and remove event listeners.
+3. **disable() undoes everything.** Before changing an attribute, text or style, remember the old value (a Map from element to its old values works well) and put it back in disable(): an attribute that wasn't there before gets removed with removeAttribute. Remove anything you added and remove event listeners. In disable(), set enabled to false and disconnect observers FIRST, then put things back, so nothing changes the page again while you undo it.
+
+   **Change the store's own elements in place.** Set their attributes and text. Never remove, replace or clone an element the store made (for example, rebuilding a checkbox or a label): the store keeps using its own elements, and disable() could not put the original back.
 
 4. **Do the work in a method on the object and call it with this.apply()** (or another method name). The panel watches calls to the object's own methods to show what changed, so changes made inside a method get credited to the adapter. If the page adds content later, use a MutationObserver whose callback calls this.apply() again, at most twice a second, and make apply() skip elements it already changed.
 
@@ -124,9 +126,12 @@ const ADAPTER_RULES = `You are writing a small JavaScript adapter that changes a
 - options.profile: the person, or null. options.profile.freeText is their needs in their own words; options.profile.fields.readingLevel is a US school grade or null.
 - options.today: a Date for "today" in the store (use it for date math, not new Date()).
 - options.rewrite(text, instructions): asks an AI model to rewrite text by your instructions (at most 600 characters of instructions and 6000 of text). Returns a Promise of the new text, or null if AI isn't available. Use it only when the fix needs judgment, like plain-language rewrites or short summaries. Always handle null (leave the page as it was).
+- When you know the right words, write them in the code instead of asking the AI. For example, a plain question for a checkbox, or one plain explanation for each kind of error message the page can show. A rewrite of a confusing sentence can flip its meaning, and the old words stay on the page until the answer comes back.
+- An AI answer can come back late. Before using it, check that this.enabled is still true and that the element still shows the text you asked about; otherwise ignore it.
 
 # Forbidden
 
+- Reading the store's own scripts or data (window.RB_CATALOG or anything else starting with RB_, apart from RB_SAY). Work only from what is on the page, so the adapter also works on other shops.
 - fetch, XMLHttpRequest, WebSocket, import, eval, new Function, document.write.
 - Navigating (location.href = ..., window.open, history.pushState), submitting forms, clicking buttons for the person.
 - Writing cookies, localStorage or sessionStorage.
