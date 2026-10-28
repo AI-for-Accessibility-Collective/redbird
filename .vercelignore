@@ -1,6 +1,6 @@
-outputs/
-tools-local/
-tools/
-docs/
+/outputs/
+/tools-local/
+/tools/
+/docs/
 __pycache__/
 .DS_Store
