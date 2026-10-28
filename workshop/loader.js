@@ -1974,9 +1974,10 @@
           }).filter(function (t) { return t.status !== 'gone'; });
         }
         // New code also gets switched off in a hidden copy of the page, to see whether it puts the page back.
-        return (result.code && base && base.page === c.page ? undoCheck() : Promise.resolve(null)).then(function (u) {
+        return (base && base.page === c.page ? hiddenCheck() : Promise.resolve(null)).then(function (u) {
           if (versions().slice(-1)[0] !== v) return;
-          if (u) c.left = u.left.slice(0, 6);
+          if (u && u.left) c.left = u.left.slice(0, 6);
+          if (u && u.tried && u.tried.length) c.tried = u.tried;
           v.checks = c;
           keep(DRAFT_KEY, result);
           renderResult();
@@ -1987,31 +1988,45 @@
         });
       });
   }
-  // Turns the adapter off in a hidden copy of this page and lists what it left behind, using the same
-  // test hooks as the starter folder's tests (RB_TEST). The person's own page doesn't change.
-  function undoCheck() {
-    return new Promise(function (done) {
-      var q = new URLSearchParams(location.search);
-      ['reset', 'from', 'need', 'new', 'spotlight'].forEach(function (k) { q.delete(k); });
-      q.set('try', 'mine'); q.set('workshop', 'off'); q.set('rbtest', '1');
-      var f = document.createElement('iframe'), poll = 0, timer = 0;
-      function finish(r) { clearInterval(poll); clearTimeout(timer); f.remove(); done(r || null); }
-      timer = setTimeout(finish, 45000);
-      f.setAttribute('aria-hidden', 'true');
-      f.tabIndex = -1;
-      f.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:900px;border:0;visibility:hidden';
-      f.onload = function () {
-        var w = f.contentWindow;
-        poll = setInterval(function () {
-          if (!w || !w.RB_TEST) return;
-          clearInterval(poll);
-          w.document.querySelectorAll('video, audio').forEach(function (m) { m.muted = true; });
-          w.RB_TEST.ready('mine').then(function () { return w.RB_TEST.undo('mine'); })
-            .then(function (u) { finish({ left: u.left || [], error: u.error }); }, function () { finish(null); });
-        }, 200);
-      };
-      f.src = location.pathname + '?' + q;
-      document.body.appendChild(f);
+  // In a hidden copy of this page: tries the fix the way the person would, with the store's ready-made
+  // checks for the problems it is for (workshop/checks.js), then turns a new adapter off and lists
+  // what it left behind. It uses the same test hooks as the starter folder's tests (RB_TEST), and the
+  // person's own page doesn't change.
+  function hiddenCheck() {
+    var ids = idsOf(result), targets = result.targets || [];
+    return loadScript(base + 'checks.js', 'RB_CHECKS').catch(function () {}).then(function () {
+      var own = targets.filter(function (n) { return window.RB_CHECKS && window.RB_CHECKS[n]; });
+      if (!result.code && !own.length) return null;
+      return new Promise(function (done) {
+        var q = new URLSearchParams(location.search);
+        ['reset', 'from', 'need', 'new', 'spotlight'].forEach(function (k) { q.delete(k); });
+        q.set('try', ids.join(',')); q.set('workshop', 'off'); q.set('rbtest', '1');
+        var f = document.createElement('iframe'), poll = 0, timer = 0;
+        function finish(r) { clearInterval(poll); clearTimeout(timer); f.remove(); done(r || null); }
+        timer = setTimeout(finish, 60000);
+        f.setAttribute('aria-hidden', 'true');
+        f.tabIndex = -1;
+        f.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:900px;border:0;visibility:hidden';
+        f.onload = function () {
+          var w = f.contentWindow;
+          poll = setInterval(function () {
+            if (!w || !w.RB_TEST) return;
+            clearInterval(poll);
+            w.document.querySelectorAll('video, audio').forEach(function (m) { m.muted = true; });
+            var tried = [];
+            Promise.all(ids.map(function (n) { return w.RB_TEST.ready(n); })).then(function () {
+              return own.reduce(function (p, n) {
+                return p.then(function () { return window.RB_CHECKS[n](w); }).then(function (rs) {
+                  (rs || []).forEach(function (r) { tried.push({ issue: n, ok: !!r.ok, says: String(r.says || '') }); });
+                }, function () {});
+              }, Promise.resolve());
+            }).then(function () { return result.code ? w.RB_TEST.undo('mine') : { left: [] }; })
+              .then(function (u) { finish({ left: u.left || [], tried: tried }); }, function () { finish({ tried: tried }); });
+          }, 200);
+        };
+        f.src = location.pathname + '?' + q;
+        document.body.appendChild(f);
+      });
     });
   }
   // What was left behind, in words the AI can act on.
@@ -2041,6 +2056,14 @@
       why.push(what + (x.left.length ? ', for example at ' + x.left.slice(0, 3).join(', ') : '') + '.');
       plain.push(what + '.');
     });
+    var failed = (c.tried || []).filter(function (x) { return !x.ok; });
+    failed.forEach(function (x) {
+      why.push('Trying it the way the person would (the workshop\u2019s check for problem ' + x.issue + '): ' + x.says + '.');
+      plain.push('Trying it: ' + x.says + '.');
+    });
+    // What already works, so the next version doesn't break it while fixing the rest.
+    var kept = (c.tried || []).filter(function (x) { return x.ok && failed.some(function (y) { return y.issue === x.issue; }); });
+    if (kept.length) why.push('Keep these working: ' + kept.map(function (x) { return x.says; }).join('; ') + '.');
     if (c.left && c.left.length) {
       why.push('When it is turned off, it leaves the page changed: ' + leftWords(c.left) + '. Make disable() put back exactly what enable() changed, and change the store\u2019s elements in place instead of replacing them.');
       plain.push('Turning it off didn\u2019t put the page back: ' + c.left.length + ' change' + (c.left.length === 1 ? '' : 's') + ' stayed.');
@@ -2053,6 +2076,7 @@
     var out = [];
     if (c.error) out.push('<span class="ws-err">It stopped with an error.</span>');
     if (c.left && c.left.length) out.push('<span class="ws-err">Turning it off leaves ' + c.left.length + ' change' + (c.left.length === 1 ? '' : 's') + ' on the page.</span>');
+    (c.tried || []).forEach(function (x) { out.push((x.ok ? '' : '<span class="ws-err">') + 'Trying it: ' + esc(x.says) + '.' + (x.ok ? '' : '</span>')); });
     (c.target || []).forEach(function (x) {
       if (/^(present|partly)$/.test(x.status) && !c.issues.some(function (y) { return y.issue === x.issue; })) {
         out.push('<span class="ws-err">Problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ') is still ' + esc(x.words) + ' on this page.</span>');

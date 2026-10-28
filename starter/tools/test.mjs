@@ -102,6 +102,11 @@ async function open(page, url, adapter) {
   return ready;
 }
 
+async function loadChecks(page) {
+  await page.addScriptTag({ url: '/workshop/checks.js' }).catch(() => {});
+  return page.evaluate(() => Object.keys(window.RB_CHECKS || {}).map(Number)).catch(() => []);
+}
+
 async function checksIn() {
   const dir = path.join(ROOT, 'checks');
   if (!fs.existsSync(dir)) return [];
@@ -131,6 +136,9 @@ async function testPage(browser, base, pagePath, checks) {
   const after = await page.evaluate(() => window.RB_ISSUE_REPORT());
   const changes = await page.evaluate(() => window.RB_TEST.changes('local'));
   const heard = (await page.evaluate(() => window.RB_TEST.heard())).filter((h) => h.who === 'local');
+  // The store's ready-made checks for some planted problems (workshop/checks.js): they try the fix
+  // the way the person would, like making a payment fail.
+  const builtIn = await loadChecks(page);
 
   const errors = [];
   for (const e of [ready.error, ...logged].filter(Boolean).map((e) => String(e).replace(/^Stopped with an error:\s*/, '').split(/\s+at\s+\S+\s*\(/)[0].trim())) {
@@ -165,6 +173,7 @@ async function testPage(browser, base, pagePath, checks) {
     for (const n of missed) if ((now[n].left || []).length) lines.push(`  - Problem ${n} is still at: ${now[n].left.join(', ')}${now[n].still > now[n].left.length ? ', …' : ''}`);
   }
   for (const n of later) {
+    if (builtIn.includes(n)) { lines.push(`- Planted problem ${n} can't be seen from the page alone, so the ready-made check below tries it the way the person would.`); continue; }
     lines.push(now[n].status === 'waiting'
       ? `- Planted problem ${n} only shows after something happens on the page (e.g., a failed payment), so this test can't see it. Write a check in checks/ that makes it happen, then looks at what the adapter did.`
       : `- Planted problem ${n} can't be checked automatically. Write a check in checks/ for what the person needs, or try it yourself.`);
@@ -202,9 +211,10 @@ async function testPage(browser, base, pagePath, checks) {
   // A planted problem this test can't see on its own has to be covered by a check. Once the checks
   // have run (and, e.g., made a payment fail), look at it again.
   if (later.length) {
-    if (!ran) {
+    if (!ran && later.some((n) => !builtIn.includes(n))) {
       problems.push('unchecked');
-      lines.push(`- PROBLEM: nothing checks planted problem ${later.join(' and ')} yet, so this test would pass even if the adapter didn't work. Add a check in checks/ (see checks/README.md).`);
+      const none = later.filter((n) => !builtIn.includes(n));
+      lines.push(`- PROBLEM: nothing checks planted problem ${none.join(' and ')} yet, so this test would pass even if the adapter didn't work. Add a check in checks/ (see checks/README.md).`);
     } else {
       const again = Object.fromEntries((await page.evaluate(() => window.RB_ISSUE_REPORT()).catch(() => [])).map((s) => [s.issue, s]));
       for (const n of later) {
@@ -242,6 +252,23 @@ async function testPage(browser, base, pagePath, checks) {
     lines.push(`- PROBLEM: turning it off left ${left} thing${left === 1 ? '' : 's'} changed. disable() should undo these:`,
       ...byElement(undo.left, 5));
   } else if (changes.length && !undo.error) lines.push('- Turning it off put the page back.');
+
+  // The ready-made checks for the problems this fix is about, on a fresh copy of the page, since they
+  // change it (they type, press buttons and let the cart timer run out).
+  const mine = watched.filter((n) => builtIn.includes(n) && (now[n] || was[n]) && pagePath === fix.page);
+  if (mine.length) {
+    const fresh = await context.newPage();
+    fresh.on('pageerror', (e) => logged.push(e.message));
+    await open(fresh, link(base, pagePath, { try: ['local', ...toolkit].join(',') }), 'local');
+    await loadChecks(fresh);
+    for (const n of mine) {
+      const results = await fresh.evaluate((k) => window.RB_CHECKS[k](window), n).catch((e) => [{ ok: false, says: 'the check stopped: ' + e.message.split('\n')[0] }]);
+      for (const r of results) {
+        if (!r.ok) problems.push('built-in');
+        lines.push(`- ${r.ok ? 'Ready-made check passed' : 'PROBLEM: ready-made check failed'} (problem ${n}): ${short(r.says, 300)}`);
+      }
+    }
+  }
 
   await context.close();
   return { lines, problems };
