@@ -994,7 +994,7 @@
       if (!f.code) return;
       var here = on && f.code === code;
       if (here) shown = true;
-      html += '<div class="ws-ad"><label class="ws-check"><input type="checkbox" data-fix="' + i + '"' + (here ? ' checked' : '') + '> <span class="ws-name">' + esc(f.name) + '</span></label>' +
+      html += '<div class="ws-ad"><label class="ws-check"><input type="checkbox" data-fix="' + i + '"' + (here ? ' checked' : '') + '> <span class="ws-name">' + esc(titleOf(f)) + '</span></label>' +
         '<p class="ws-help ws-for">Built by you</p><p class="ws-help">' + esc(cut(f.need || f.description || '', 140)) + '</p>' +
         (here ? '<div class="ws-state" data-state="mine"></div>' : '') + '</div>';
     });
@@ -1084,7 +1084,7 @@
       if (cb.matches && cb.matches('input[data-fix]')) {
         var f = fixes()[Number(cb.getAttribute('data-fix'))], others = names.filter(function (n) { return n !== 'mine'; });
         if (!f) return;
-        if (cb.checked) install(f.code, 'Turned on ' + f.name + '.', others.concat('mine'), 'adapters');
+        if (cb.checked) install(f.code, 'Turned it on.', others.concat('mine'), 'adapters');
         else applySet(others, skillSettings);
         return;
       }
@@ -1222,10 +1222,11 @@
         '<textarea id="ws-me-say" class="ws-input" rows="2" placeholder="e.g., Moving banners distract me too"></textarea>' +
         '<div class="ws-row"><button type="button" class="ws-btn" id="ws-me-change">Change it</button></div>' +
         '<p class="ws-help" id="ws-me-msg"></p>' +
-        '<div class="ws-row" id="ws-me-acts"><button type="button" class="ws-btn ws-quiet" id="ws-me-file">Save it as a file</button>' +
-          '<button type="button" class="ws-link" id="ws-me-edit">Answer the questions again</button>' +
-          '<button type="button" class="ws-link" id="ws-me-del">Delete it</button></div>' +
-        '<p class="ws-help">It’s kept in this browser, and it remembers which adapters you turn on or off. The toolkit’s browser extension can load the file with Import profile.</p>';
+        '<details class="ws-more" id="ws-me-more"><summary>More</summary>' +
+          '<p class="ws-help">It’s kept in this browser, and it remembers which adapters you turn on or off. The toolkit’s browser extension can load the file with Import profile.</p>' +
+          '<div class="ws-row" id="ws-me-acts"><button type="button" class="ws-btn ws-quiet" id="ws-me-file">Save it as a file</button>' +
+            '<button type="button" class="ws-link" id="ws-me-edit">Answer the questions again</button>' +
+            '<button type="button" class="ws-link" id="ws-me-del">Delete it</button></div></details>';
       $('#ws-me-change').onclick = reviseMine;
       $('#ws-me-edit').onclick = function () { fillMine(true); $('#ws-me1').focus(); };
       $('#ws-me-file').onclick = saveMine;
@@ -1243,7 +1244,7 @@
       '<p class="ws-help" id="ws-me-msg"></p>' +
       '<p class="ws-help">AI reads your answers to write the profile. The profile is kept only in this browser.</p></div>';
     $('#ws-me-go').onclick = makeMine;
-    if (me) $('#ws-me-cancel').onclick = function () { fillMine(); $('#ws-me-edit').focus(); };
+    if (me) $('#ws-me-cancel').onclick = function () { fillMine(); $('#ws-me-more').open = true; $('#ws-me-edit').focus(); };
   }
   function meSays(text) { var m = $('#ws-me-msg'); if (m) m.textContent = text; say(text, true); }
   // The profile's versions, like a fix's: what the person said, and what changed. The last three show.
@@ -1364,7 +1365,7 @@
     $('#ws-me-acts').innerHTML = '<span class="ws-help">Delete your profile from this browser?</span>' +
       '<button type="button" class="ws-btn ws-quiet" id="ws-me-yes">Delete it</button><button type="button" class="ws-link" id="ws-me-no">Keep it</button>';
     $('#ws-me-no').focus();
-    $('#ws-me-no').onclick = function () { fillMine(); $('#ws-me-del').focus(); };
+    $('#ws-me-no').onclick = function () { fillMine(); $('#ws-me-more').open = true; $('#ws-me-del').focus(); };
     $('#ws-me-yes').onclick = function () {
       localStorage.removeItem(ME_KEY);
       var all = learned(); delete all.me; localStorage.setItem(LEARN_KEY, JSON.stringify(all));
@@ -1622,6 +1623,10 @@
     var json = '```json\n' + JSON.stringify({ adapters: s.adapters.map(function (a) { return { id: a.id, settings: settingsOf([a])[a.id] || {} }; }) }, null, 2) + '\n```';
     var md = /```json\s*\n[\s\S]*?\n```/.test(s.md) ? s.md.replace(/```json\s*\n[\s\S]*?\n```/, json) : s.md + '\n\n## Recipe\n' + json;
     return md.replace(/^name:.*$/m, 'name: ' + s.name);
+  }
+  function titleOf(f) {
+    var t = squash((f && (f.need || f.description || f.name)) || 'My fix');
+    return cut(t.charAt(0).toUpperCase() + t.slice(1), 80);
   }
   function kebab(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'my-fix'; }
   function idsOf(s) { return s.adapters.map(function (a) { return a.id; }); }
@@ -2287,8 +2292,8 @@
           '<div class="ws-chg-slot" data-slot="' + esc(a.id) + '"></div></li>';
       }).join('') + '</ul>';
     el.innerHTML = '<div class="ws-card">' +
-      '<button type="button" class="ws-link ws-newfix" id="ws-close" aria-label="New fix (' + esc(result.name) + ' stays on)">New fix</button>' +
-      '<h3 class="ws-h">' + esc(result.name) + ' <span class="ws-tag">' + (result.code ? (others.length ? 'Skill + new adapter' : 'New adapter') : 'Skill') + '</span></h3>' +
+      '<button type="button" class="ws-link ws-newfix" id="ws-close" aria-label="New fix (this one stays on)">New fix</button>' +
+      '<h3 class="ws-h">' + esc(titleOf(result)) + ' <span class="ws-tag">' + (result.code ? (others.length ? 'Skill + new adapter' : 'New adapter') : 'Skill') + '</span></h3>' +
       threadHTML() + body +
       '<label class="ws-lab" for="ws-fb">What should change next?</label>' +
       '<textarea id="ws-fb" class="ws-input" rows="2" placeholder="e.g., It missed the countdown at checkout"></textarea>' +
@@ -2306,6 +2311,7 @@
         (LOCAL ? '' : '<p class="ws-lab">Keep building in code</p>' +
           '<p class="ws-help">Download this fix as a folder, so you can keep changing it with a coding agent (e.g., Claude Code or Codex) and test it on the store.</p>' +
           '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-dl">Download the folder</button></div><p class="ws-msg" id="ws-dlmsg"></p>') +
+        (saved ? '<div class="ws-row"><button type="button" class="ws-link" id="ws-fdel-this">Delete this fix from Saved fixes</button></div>' : '') +
       '</details></div>';
     fillCode();
     renderTarget();
@@ -2440,15 +2446,14 @@
     el.innerHTML = '<h3 class="ws-h">Saved fixes</h3><ul class="ws-sks">' + list.map(function (f, i) {
       var on = same(idsOf(f), names) && (!f.code || f.code === readKey(MY_KEY));
       var kind = f.code ? (idsOf(f).length > 1 ? 'Skill + new adapter' : 'New adapter') : 'Skill';
-      return '<li class="ws-sk"><p><span class="ws-name">' + esc(f.name) + '</span> <span class="ws-tag">' + kind + '</span>' + (on ? ' <span class="ws-tag">on</span>' : '') +
+      var t = esc(titleOf(f));
+      return '<li class="ws-sk"><p><span class="ws-name">' + t + '</span> <span class="ws-tag">' + kind + '</span>' + (on ? ' <span class="ws-tag">on</span>' : '') +
           (f.from === 'shared' ? ' <span class="ws-tag">shared with you</span>' : '') + '</p>' +
-        '<p class="ws-help">' + esc(cut(f.need || f.description || idsOf(f).map(label).join(', '), 160)) + '</p>' +
-        '<div class="ws-row">' + (on ? '' : '<button type="button" class="ws-link" data-fon="' + i + '" aria-label="Turn on ' + esc(f.name) + '">Turn on</button>') +
-          '<button type="button" class="ws-link" data-fshare="' + i + '" aria-label="Share ' + esc(f.name) + '">Share</button>' +
+        '<div class="ws-row">' + (on ? '' : '<button type="button" class="ws-link" data-fon="' + i + '" aria-label="Turn on ' + t + '">Turn on</button>') +
+          '<button type="button" class="ws-link" data-fshare="' + i + '" aria-label="Share ' + t + '">Share</button>' +
           (!myProfile() ? '' : myFixes().some(function (x) { return x.name === f.name; })
-            ? '<button type="button" class="ws-link" data-fmeout="' + i + '" aria-label="Take ' + esc(f.name) + ' out of my profile">Take out of my profile</button>'
-            : '<button type="button" class="ws-link" data-fme="' + i + '" aria-label="Add ' + esc(f.name) + ' to my profile">Add to my profile</button>') +
-          '<button type="button" class="ws-link" data-fdel="' + i + '" aria-label="Delete ' + esc(f.name) + '">Delete</button></div>' +
+            ? '<button type="button" class="ws-link" data-fmeout="' + i + '" aria-label="Take ' + t + ' out of my profile">Take out of my profile</button>'
+            : '<button type="button" class="ws-link" data-fme="' + i + '" aria-label="Add ' + t + ' to my profile">Add to my profile</button>') + '</div>' +
         '<div class="ws-msg" id="ws-f' + i + '"></div></li>';
     }).join('') + '</ul>';
   }
@@ -2459,7 +2464,7 @@
     if (incoming.bad) html = '<p class="ws-err">This share link is broken. Ask for it again.</p>';
     else {
       var f = incoming.fix;
-      html = '<h3 class="ws-h">Someone shared a fix: ' + esc(f.name) + '</h3><p class="ws-help">' + esc(cut(f.need || f.description, 300)) + '</p>';
+      html = '<h3 class="ws-h">Someone shared a fix</h3><p class="ws-help">' + esc(titleOf(f)) + '</p>';
       html += f.code
         ? '<p class="ws-help">It has code they wrote, which runs only if you press Run it.</p>' +
           '<details class="ws-more"><summary>See their code</summary><pre class="ws-pre" tabindex="0">' + esc(f.code) + '</pre></details>' +
@@ -2634,7 +2639,7 @@
         saveFix(result);
         renderResult();
         renderSaved();
-        msg('Saved as “' + result.name + '”. It’s under Saved fixes, where you can share it.');
+        msg('Saved. It’s under Saved fixes, where you can share it.');
       } else if (id === 'ws-change') change($('#ws-fb').value.trim(), '');
       else if (t.hasAttribute('data-ver')) goBack(+t.getAttribute('data-ver'));
       else if (id === 'ws-dl') downloadFolder(result);
@@ -2665,8 +2670,8 @@
         f = list[+t.getAttribute('data-fon')];
         result = f;
         keep(DRAFT_KEY, result);
-        if (f.code) return install(f.code, 'Turned on ' + f.name + '.', idsOf(f));
-        if (!applySet(idsOf(f), settingsOf(f.adapters))) msg('Turned on ' + f.name + '.');
+        if (f.code) return install(f.code, 'Turned it on.', idsOf(f));
+        if (!applySet(idsOf(f), settingsOf(f.adapters))) msg('Turned it on.');
       } else if (t.hasAttribute('data-fshare')) { i = +t.getAttribute('data-fshare'); share(list[i], '#ws-f' + i); }
       else if (t.hasAttribute('data-fme') || t.hasAttribute('data-fmeout')) {
         var add = t.hasAttribute('data-fme'), fx = list[+t.getAttribute(add ? 'data-fme' : 'data-fmeout')], me = myProfile();
@@ -2674,15 +2679,13 @@
         if (add) me.fixes.push({ name: fx.name, adapters: fx.adapters, code: fx.code || null });
         localStorage.setItem(ME_KEY, JSON.stringify(me));
         renderSaved();
-        msg(add ? fx.name + ' is in your profile now. It turns on whenever you shop as My profile.' : fx.name + ' is out of your profile.');
+        msg(add ? 'It’s in your profile now, and turns on whenever you shop as My profile.' : 'It’s out of your profile.');
       }
-      else if (t.hasAttribute('data-fdel')) {
-        i = +t.getAttribute('data-fdel');
-        var gone = list.splice(i, 1)[0];
-        keep(SKILLS_KEY, list);
+      else if (id === 'ws-fdel-this') {
+        keep(SKILLS_KEY, list.filter(function (x) { return x.name !== result.name; }));
         renderSaved();
         renderResult();
-        msg('Deleted ' + gone.name + '.');
+        msg('Deleted it from Saved fixes. It’s still on this page until you start a new fix.');
       } else if (id === 'ws-in-run') {
         f = incoming.fix;
         saveFix(f);
