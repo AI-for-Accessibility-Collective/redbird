@@ -2,7 +2,7 @@
 // each time you save the file.
 //
 //   npm run dev              then open the address it prints
-//   PORT=5180 npm run dev    use another port
+//   npm run dev -- 5180      use another port (PORT=5180 works too)
 //
 // Pages, photos and the store's AI come from the live store, so there is nothing else to download
 // and nothing to install. Only adapter.js, fix.json and feedback.md come from this folder.
@@ -56,7 +56,7 @@ async function proxy(req, res) {
   const headers = {};
   for (const h of PASS) if (r.headers.get(h)) headers[h] = r.headers.get(h);
   const loc = r.headers.get('location');
-  if (loc) headers.location = loc.replace(STORE, '');
+  if (loc) headers.location = loc.replace(STORE, '') || '/';
   let body = Buffer.from(await r.arrayBuffer());
   const html = /text\/html/.test(headers['content-type'] || '');
   if (html) {
@@ -102,7 +102,7 @@ function file(res, name, type) {
   });
 }
 
-// "Send to the coding agent" in the panel adds a note to feedback.md, with the page it was on and
+// "Add note for the coding agent" in the panel adds a note to feedback.md, with the page it was on and
 // what the person pointed at.
 async function feedback(req, res) {
   let note = {};
@@ -136,14 +136,11 @@ function events(req, res) {
 
 export function start(port = Number(process.env.PORT) || 5179, { live = true } = {}) {
   const server = http.createServer((req, res) => {
-    const p = req.url.split('?')[0];
-    if (p === LOCAL.adapter) return file(res, 'adapter.js', 'text/javascript; charset=utf-8');
-    if (p === LOCAL.fix) return file(res, 'fix.json', 'application/json; charset=utf-8');
-    if (p === LOCAL.events) return events(req, res);
-    if (p === LOCAL.feedback && req.method === 'POST') return feedback(req, res);
-    if (p === '/api/ai' && req.method === 'POST') return ai(req, res);
-    if (req.method === 'GET' || req.method === 'HEAD') return proxy(req, res);
-    send(res, { status: 405, headers: { 'content-type': 'text/plain' }, body: Buffer.from('Not here\n') });
+    handle(req, res).catch((e) => {
+      console.error('Couldn’t answer ' + req.url + ': ' + e.message);
+      if (!res.headersSent) send(res, { status: 502, headers: { 'content-type': 'text/plain; charset=utf-8' }, body: Buffer.from('Something went wrong getting this from the store. Reload the page.\n') });
+      else res.end();
+    });
   });
   if (live) watch();
   return new Promise((done, fail) => {
@@ -152,13 +149,30 @@ export function start(port = Number(process.env.PORT) || 5179, { live = true } =
   });
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const port = Number(process.env.PORT) || 5179;
+// Every request goes through here. Anything that goes wrong with one request is answered with an
+// error page above, so the server keeps running.
+async function handle(req, res) {
+  const p = req.url.split('?')[0];
+  if (p === LOCAL.adapter) return file(res, 'adapter.js', 'text/javascript; charset=utf-8');
+  if (p === LOCAL.fix) return file(res, 'fix.json', 'application/json; charset=utf-8');
+  if (p === LOCAL.events) return events(req, res);
+  if (p === LOCAL.feedback && req.method === 'POST') return feedback(req, res);
+  if (p === '/api/ai' && req.method === 'POST') return ai(req, res);
+  if (req.method === 'GET' || req.method === 'HEAD') return proxy(req, res);
+  send(res, { status: 405, headers: { 'content-type': 'text/plain' }, body: Buffer.from('Not here\n') });
+}
+
+// Run directly (npm run dev), not imported by the tests. Both paths go through realpath, since
+// Node resolves links in import.meta.url, and Windows can differ in the drive letter's case.
+function same(a, b) { try { return fs.realpathSync(a).toLowerCase() === fs.realpathSync(b).toLowerCase(); } catch (e) { return false; } }
+if (process.argv[1] && same(process.argv[1], fileURLToPath(import.meta.url))) {
+  const port = Number(process.argv[2]) || Number(process.env.PORT) || 5179;
+  process.on('unhandledRejection', (e) => console.error('Something went wrong:', e && e.message ? e.message : e));
   start(port).then(() => {
     console.log(`Redbird is running with your adapter.js at:\n\n  http://localhost:${port}${startPath()}\n`);
     console.log('Save adapter.js and the page runs it again. Press Ctrl+C to stop.');
   }, (e) => {
-    if (e.code === 'EADDRINUSE') console.error(`Port ${port} is already in use. Maybe the store is already running here? Or try PORT=${port + 1} npm run dev`);
+    if (e.code === 'EADDRINUSE') console.error(`Port ${port} is already in use. Maybe the store is already running here? Or try npm run dev -- ${port + 1}`);
     else console.error(e);
     process.exit(1);
   });
