@@ -1176,6 +1176,7 @@
         renderOnList();
         var p = $('#ws-person');
         if (p && !readKey(PERSON_KEY)) p.value = prof ? prof.freeText || '' : '';
+        renderFor();
         var on = names.length + ' adapter' + (names.length === 1 ? '' : 's') + ' on.';
         status(id === 'me' ? (prof ? 'Using your profile. ' + on : 'Answer the questions below to make your profile.')
           : !prof ? 'Shopping as nobody in particular. ' + on : prof.toolkit ? 'Using the toolkit’s ' + TOOLKIT_PROFILES[id][0] + ' profile. ' + on : 'Shopping as ' + nameOf(id) + '. ' + on);
@@ -1686,38 +1687,76 @@
   // ── Build tab ─────────────────────────────────────────────────────────────
   // Three steps, top to bottom: who it's for, what should change, Build it.
   var EXAMPLE_NEEDS = ['Hide the countdowns and “only 2 left” messages', 'Read the star ratings out as numbers', 'Make the buttons bigger and easier to hit'];
+  // One box, like a chat. Before there is a fix: who it's for (one line), what should change, and
+  // starter prompts. Once there is a fix, its conversation takes this place (renderResult), with the
+  // same kind of box for the next change. From a starter folder, only the folder's card shows.
   function buildHTML() {
-    return '<div id="ws-in"></div>' + folderHTML() +
-      '<h3 class="ws-h">Build your own adapter or skill</h3>' +
-      '<ol class="ws-steps">' +
-        '<li><label class="ws-lab" for="ws-person">Who is it for?</label>' +
+    if (LOCAL) return '<div id="ws-in"></div>' + folderHTML();
+    return '<div id="ws-in"></div>' +
+      '<div id="ws-start">' +
+        '<p class="ws-help ws-for"><span id="ws-for"></span> <button type="button" class="ws-link" id="ws-for-edit" aria-expanded="false" aria-controls="ws-for-box">Change</button></p>' +
+        '<div id="ws-for-box" hidden>' +
+          '<label class="ws-lab" for="ws-person">Who is it for?</label>' +
           '<textarea id="ws-person" class="ws-input" rows="2" aria-describedby="ws-person-help" placeholder="e.g., Mark has ADHD and anxiety. Countdown timers make him rush."></textarea>' +
           '<p class="ws-help" id="ws-person-help">A sentence or two about them, like your card game’s ability profile.</p>' +
           '<details class="ws-more" id="ws-ask"><summary>Not sure what to write? Answer three questions</summary>' +
             '<label class="ws-lab" for="ws-q1">What on shopping sites gets in their way?</label><textarea id="ws-q1" class="ws-input" rows="2"></textarea>' +
             '<label class="ws-lab" for="ws-q2">What would make shopping sites easier for them?</label><textarea id="ws-q2" class="ws-input" rows="2"></textarea>' +
             '<label class="ws-lab" for="ws-q3">Is there anything they don’t want changed?</label><textarea id="ws-q3" class="ws-input" rows="2"></textarea>' +
-            '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-askgo">Write it for me</button></div></details></li>' +
-        '<li><label class="ws-lab" for="ws-need">What should change on this page?</label>' +
-          '<textarea id="ws-need" class="ws-input" rows="3" placeholder="Describe one change"></textarea>' +
-          '<p class="ws-help">For example: ' + EXAMPLE_NEEDS.map(function (t, i) {
-            return '<button type="button" class="ws-link" data-eg="' + i + '">' + esc(t) + '</button>';
-          }).join(', ') + '</p>' +
-          '<p class="ws-help"><button type="button" class="ws-link" id="ws-point" aria-pressed="false">Point at it on the page</button> <span id="ws-target"></span></p>' +
-          '<details class="ws-more" id="ws-ideas"><summary>Not sure what to change? Get ideas for this page</summary>' +
-            '<p class="ws-help">AI looks at this page and at who it’s for, and suggests three changes.</p>' +
-            '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-ideasgo">Suggest changes</button></div>' +
-            '<ul class="ws-plain" id="ws-idealist"></ul></details></li>' +
-        '<li><div class="ws-row"><button type="button" class="ws-btn" id="ws-build" aria-describedby="ws-build-help">Build it</button></div>' +
-          '<p class="ws-help" id="ws-build-help">If the toolkit has adapters that do this, you get a skill that turns them on. If not, AI writes a new adapter, which takes about 30 seconds. If the panel’s check then finds the problem still there, the AI tries once more by itself.</p>' +
-          '<details class="ws-more"><summary>What’s the difference?</summary>' +
-            '<p class="ws-help"><b>An adapter</b> is code that changes one thing on a page, like stopping animations.</p>' +
-            '<p class="ws-help"><b>A skill</b> has no code. It lists a few adapters to turn on together for a user’s need.</p></details></li>' +
-      '</ol>' +
+            '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-askgo">Write it for me</button></div></details>' +
+        '</div>' +
+        '<label class="ws-lab" for="ws-need">What should change on this page?</label>' +
+        '<textarea id="ws-need" class="ws-input" rows="3" placeholder="Describe one change"></textarea>' +
+        '<div id="ws-starters"></div>' +
+        '<p class="ws-help" id="ws-target"></p>' +
+        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-build">Build it</button>' +
+          '<button type="button" class="ws-link" id="ws-point" aria-pressed="false">Point at it on the page</button>' +
+          '<button type="button" class="ws-link" id="ws-ideasgo">Get ideas for this page</button></div>' +
+        '<ul class="ws-plain" id="ws-idealist"></ul>' +
+      '</div>' +
       '<p class="ws-msg" id="ws-msg"></p>' +
       '<div id="ws-result"></div>' +
       '<div id="ws-saved"></div>' +
       '<details class="ws-more ws-ready"><summary>Ready-made skills from the toolkit</summary><ul class="ws-sks" id="ws-ready"></ul></details>';
+  }
+  // Starter prompts from the workshop guide, for the planted problems on this page. Picking one also
+  // tells the panel which problem the fix is for, so the AI is told what "fixed" means and the
+  // ready-made check for it runs.
+  var STARTERS = {
+    3: 'Make the Add to cart box a real button that the keyboard can reach and press',
+    4: 'Read the star ratings out as numbers, like 4.6 out of 5 stars',
+    5: 'Make each price read as one number, like $18.99, for a screen reader',
+    6: 'Give the color circles names a screen reader can say',
+    7: 'Clearly label the sponsored results as ads, for screen readers too',
+    18: 'Add boxes to type a minimum and maximum price, instead of the slider you can only drag',
+    19: 'Give me more time at checkout, or stop the timer that empties the cart',
+    22: 'Let a click or the keyboard switch the product photos, not just the mouse moving over them',
+    24: 'Hide the countdowns and “only 2 left” messages',
+    25: 'Shorten the long product titles to the brand and what the product is',
+    28: 'Rewrite the return policy in short, plain sentences',
+    29: 'Rewrite the double-negative offers checkbox at checkout as a plain yes or no question',
+    30: 'Explain payment errors in plain words, with what to do next',
+    31: 'Show the real arrival date instead of “5–7 business days”',
+  };
+  var starterIssue = Number(readKey('redbird:starter-issue')) || 0;
+  function renderStarters() {
+    var el = rendered && $('#ws-starters');
+    if (!el) return;
+    var here = [];
+    try {
+      here = (window.RB_ISSUE_REPORT ? window.RB_ISSUE_REPORT() : []).filter(function (r) { return STARTERS[r.issue] && r.status !== 'fixed'; })
+        .map(function (r) { return { issue: r.issue, text: STARTERS[r.issue] }; });
+    } catch (e) {}
+    var list = here.length ? here.slice(0, 3) : EXAMPLE_NEEDS.map(function (t) { return { issue: 0, text: t }; });
+    el.innerHTML = '<p class="ws-help" id="ws-starters-lab">Or start from one of these:</p><ul class="ws-plain ws-starters" aria-labelledby="ws-starters-lab">' +
+      list.map(function (x) { return '<li><button type="button" class="ws-link" data-starter="' + x.issue + '">' + esc(x.text) + '</button></li>'; }).join('') + '</ul>';
+  }
+  // "For: Sam Saltman, blind": the person from the Profiles tab, or what was typed under Change.
+  function renderFor() {
+    var el = rendered && $('#ws-for');
+    if (!el) return;
+    var p = person(), prof = currentProfile;
+    el.textContent = 'For: ' + (!p ? 'anyone' : prof && prof.name && p === (prof.freeText || '') ? prof.name : cut(p, 80));
   }
   // The toolkit's built-in skills (toolkit/skills/builtin/*.md). Their recipes are mapped to the
   // adapters in this panel, since the toolkit's ids for its automatic fixes and captions differ.
@@ -1801,7 +1840,9 @@
   function build() {
     var need = $('#ws-need').value.trim();
     if (!need) { msg('Write what should change first.'); $('#ws-need').focus(); return; }
-    asking = { thread: [{ who: 'you', text: need }], base: baseline(), targets: targetIssues(target && target.from !== '#ws-point3' ? target : null) };
+    var targets = targetIssues(target && target.from !== '#ws-point3' ? target : null);
+    if (starterIssue && targets.indexOf(starterIssue) === -1) targets = [starterIssue].concat(targets).slice(0, 3);
+    asking = { thread: [{ who: 'you', text: need }], base: baseline(), targets: targets };
     if (readKey('redbird:need-new') === need) return writeNew(need, $('#ws-build'));
     var done = wait($('#ws-build'), 'Looking for adapters that do this…');
     ask('buildSkill', { need: askFor({ need: need }), person: person(), catalog: catalog(), settings: settingsLines() }).then(parseSkill).then(function (s) {
@@ -2074,23 +2115,28 @@
   function checkWords(c) {
     if (!c) return '';
     var out = [];
-    if (c.error) out.push('<span class="ws-err">It stopped with an error.</span>');
-    if (c.left && c.left.length) out.push('<span class="ws-err">Turning it off leaves ' + c.left.length + ' change' + (c.left.length === 1 ? '' : 's') + ' on the page.</span>');
+    if (c.error) out.push('<span class="ws-err">Stopped with an error.</span>');
+    if (c.left && c.left.length) out.push('<span class="ws-err">Turning it off leaves ' + c.left.length + ' change' + (c.left.length === 1 ? '' : 's') + '.</span>');
     (c.tried || []).forEach(function (x) { out.push((x.ok ? '' : '<span class="ws-err">') + 'Trying it: ' + esc(x.says) + '.' + (x.ok ? '' : '</span>')); });
     (c.target || []).forEach(function (x) {
       if (/^(present|partly)$/.test(x.status) && !c.issues.some(function (y) { return y.issue === x.issue; })) {
-        out.push('<span class="ws-err">Problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ') is still ' + esc(x.words) + ' on this page.</span>');
+        out.push('<span class="ws-err">Problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ') is still ' + esc(x.words) + '.</span>');
       }
     });
-    c.issues.forEach(function (x) {
+    // With a problem the fix is for, show that one (and anything made worse); the rest is one line.
+    var aim = (c.target || []).map(function (x) { return x.issue; });
+    var shown = aim.length ? c.issues.filter(function (x) { return aim.indexOf(x.issue) !== -1 || x.worse; }) : c.issues.slice(0, 3);
+    var rest = c.issues.filter(function (x) { return shown.indexOf(x) === -1 && !x.worse && /^(fixed|partly)$/.test(x.status); });
+    shown.forEach(function (x) {
       var what = 'problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ')';
-      if (x.worse) out.push('<span class="ws-err">It makes ' + what + ' worse on this page: it was ' + esc(x.was) + ' before, and now it is ' + esc(x.now) + '.</span>');
-      else if (x.status === 'fixed') out.push('It fixes ' + what + ' on this page.');
-      else if (x.status === 'partly') out.push('It partly fixes ' + what + ' on this page: ' + esc(x.now.replace(/^partly fixed \((.*)\)$/, '$1')) + '.');
-      else out.push(what.charAt(0).toUpperCase() + what.slice(1) + ' is now ' + esc(x.now) + ' on this page (was ' + esc(x.was) + ').');
+      if (x.worse) out.push('<span class="ws-err">Makes ' + what + ' worse: it was ' + esc(x.was) + ', and now it is ' + esc(x.now) + '.</span>');
+      else if (x.status === 'fixed') out.push('Fixes ' + what + '.');
+      else if (x.status === 'partly') out.push('Partly fixes ' + what + ': ' + esc(x.now.replace(/^partly fixed \((.*)\)$/, '$1')) + '.');
+      else out.push(what.charAt(0).toUpperCase() + what.slice(1) + ' is now ' + esc(x.now) + ' (was ' + esc(x.was) + ').');
     });
-    if (!c.changes) out.push('It changed nothing on this page.');
-    else if (!c.issues.length) out.push('It made ' + c.changes + ' change' + (c.changes === 1 ? '' : 's') + ' on this page.');
+    if (rest.length) out.push('Also helps with ' + rest.length + ' other planted problem' + (rest.length === 1 ? '' : 's') + '.');
+    if (!c.changes) out.push('Changed nothing on this page.');
+    else if (!c.issues.length && !(c.tried || []).length) out.push('Made ' + c.changes + ' change' + (c.changes === 1 ? '' : 's') + ' on this page.');
     return out.join(' ');
   }
   function turns() {
@@ -2139,6 +2185,8 @@
   function renderResult() {
     var el = rendered && $('#ws-result');
     if (!el) return;
+    var start = $('#ws-start');
+    if (start) start.hidden = !!result;
     if (!result) {
       // Coders who open ?try=mine get the code box straight away (Write an adapter by hand).
       el.innerHTML = names.indexOf('mine') !== -1 ? '<div class="ws-card"><h3 class="ws-h">Your adapter</h3>' + mineState() + codeBox('') + '</div>' : '';
@@ -2147,8 +2195,6 @@
     }
     var ids = idsOf(result), on = same(ids, names), saved = isSaved(result);
     var others = ids.filter(function (n) { return n !== 'mine'; });
-    var did = result.code ? (others.length ? 'A new adapter written by AI, plus ' + others.map(label).join(', ') + ' from the toolkit.' : 'A new adapter, written by AI.')
-      : ids.length + ' adapter' + (ids.length === 1 ? '' : 's') + ' from the toolkit:';
     var body = result.code
       ? mineState()
       : '<ul class="ws-plain ws-compact">' + result.adapters.map(function (a) {
@@ -2156,23 +2202,26 @@
           '<div class="ws-chg-slot" data-slot="' + esc(a.id) + '"></div></li>';
       }).join('') + '</ul>';
     el.innerHTML = '<div class="ws-card">' +
-      '<button type="button" class="ws-icon ws-close" id="ws-close" aria-label="Close ' + esc(result.name) + ' (its adapters stay as they are)" title="Close">×</button>' +
+      '<button type="button" class="ws-link ws-newfix" id="ws-close" aria-label="New fix (' + esc(result.name) + ' stays on)">New fix</button>' +
       '<h3 class="ws-h">' + esc(result.name) + ' <span class="ws-tag">' + (result.code ? (others.length ? 'Skill + new adapter' : 'New adapter') : 'Skill') + '</span></h3>' +
-      threadHTML() +
-      '<p class="ws-help">' + did + '</p>' + body +
-      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-onoff" aria-pressed="' + !on + '">' + (on ? 'Turn off to compare' : 'Turn it back on') + '</button>' +
-        '<button type="button" class="ws-btn" id="ws-save"' + (saved ? ' disabled' : '') + '>' + (saved ? 'Saved' : 'Save') + '</button></div>' +
+      threadHTML() + body +
       '<label class="ws-lab" for="ws-fb">What should change next?</label>' +
       '<textarea id="ws-fb" class="ws-input" rows="2" placeholder="e.g., It missed the countdown at checkout"></textarea>' +
-      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-change">Change it</button>' +
-        '<button type="button" class="ws-link" id="ws-point2" aria-pressed="false">Point at it on the page</button></div>' +
       '<p class="ws-help" id="ws-target2"></p>' +
-      (result.code ? codeBox('')
-        : '<details class="ws-more"><summary>Details</summary><p class="ws-help">As a SKILL.md file, the toolkit’s format for skills:</p><pre class="ws-pre" tabindex="0">' + esc(result.md) + '</pre></details>') +
-      (LOCAL ? '' : '<details class="ws-more" id="ws-dlbox"><summary>Keep building in code</summary>' +
-        '<p class="ws-help">Download this fix as a folder, so you can keep changing it with a coding agent (e.g., Claude Code or Codex) and test it on the store. The folder has the code and this conversation.</p>' +
-        '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-dl">Download the folder</button></div><p class="ws-msg" id="ws-dlmsg"></p></details>') +
-      '</div>';
+      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-change">Change it</button>' +
+        '<button type="button" class="ws-link" id="ws-point2" aria-pressed="false">Point at it on the page</button></div>' +
+      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-onoff" aria-pressed="' + !on + '">' + (on ? 'Turn off to compare' : 'Turn it back on') + '</button>' +
+        '<button type="button" class="ws-btn ws-quiet" id="ws-save"' + (saved ? ' disabled' : '') + '>' + (saved ? 'Saved' : 'Save') + '</button></div>' +
+      // Everything for coders, in one place.
+      '<details class="ws-more" id="ws-code-box"' + (openCode ? ' open' : '') + '><summary>More</summary>' +
+        (result.code
+          ? '<label class="ws-lab" for="ws-code">The code</label><textarea id="ws-code" class="ws-codearea" spellcheck="false"></textarea>' +
+            '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-runmine">Save and run</button></div>'
+          : '<p class="ws-help">As a SKILL.md file, the toolkit’s format for skills:</p><pre class="ws-pre" tabindex="0">' + esc(result.md) + '</pre>') +
+        (LOCAL ? '' : '<p class="ws-lab">Keep building in code</p>' +
+          '<p class="ws-help">Download this fix as a folder, so you can keep changing it with a coding agent (e.g., Claude Code or Codex) and test it on the store.</p>' +
+          '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-dl">Download the folder</button></div><p class="ws-msg" id="ws-dlmsg"></p>') +
+      '</details></div>';
     fillCode();
     renderTarget();
     $('#ws-fb').value = readKey(FB_KEY) || '';
@@ -2267,7 +2316,7 @@
   }
 
   function codeBox(extra) {
-    return '<details class="ws-more" id="ws-code-box"' + (openCode ? ' open' : '') + '><summary>Details</summary>' +
+    return '<details class="ws-more" id="ws-code-box"' + (openCode ? ' open' : '') + '><summary>The code</summary>' +
       '<label class="ws-help" for="ws-code">The code. You can edit it and run it again.</label>' +
       '<textarea id="ws-code" class="ws-codearea" spellcheck="false"></textarea>' +
       '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-runmine">Save and run</button>' + extra + '</div></details>';
@@ -2450,23 +2499,34 @@
   function wireBuild() {
     var pane = $('#ws-pane-build');
     var p = $('#ws-person'), need = $('#ws-need');
-    p.value = readKey(PERSON_KEY) || (currentProfile ? currentProfile.freeText || '' : '');
-    p.oninput = function () { writeKey(PERSON_KEY, p.value.trim() || null); };
-    need.value = readKey(NEED_KEY) || (result && result.need) || '';
-    need.oninput = function () { writeKey(NEED_KEY, need.value.trim() || null); };
+    if (p) {
+      p.value = readKey(PERSON_KEY) || (currentProfile ? currentProfile.freeText || '' : '');
+      p.oninput = function () { writeKey(PERSON_KEY, p.value.trim() || null); renderFor(); };
+      need.value = readKey(NEED_KEY) || '';
+      need.oninput = function () {
+        writeKey(NEED_KEY, need.value.trim() || null);
+        if (!need.value.trim()) { starterIssue = 0; writeKey('redbird:starter-issue', null); }
+      };
+      $('#ws-build').onclick = build;
+      $('#ws-askgo').onclick = askProfile;
+      $('#ws-ideasgo').onclick = suggest;
+      $('#ws-point').onclick = startPick;
+      $('#ws-for-edit').onclick = function () {
+        var box = $('#ws-for-box'), open = box.hidden;
+        box.hidden = !open;
+        this.setAttribute('aria-expanded', String(open));
+        if (open) p.focus();
+      };
+    }
     // The page reloads for every new version, and each time adapter.js is saved, so half-written
     // notes are kept until they're sent.
     pane.addEventListener('input', function (e) {
       if (e.target.id === 'ws-fb') writeKey(FB_KEY, e.target.value || null);
       if (e.target.id === 'ws-note') writeKey(FOLDER_NOTE_KEY, e.target.value || null);
     });
-    $('#ws-build').onclick = build;
-    $('#ws-askgo').onclick = askProfile;
-    $('#ws-ideasgo').onclick = suggest;
-    $('#ws-point').onclick = startPick;
     pane.addEventListener('click', function (e) { if (e.target.closest('#ws-point2, #ws-point3')) startPick({ currentTarget: e.target.closest('button') }); });
     pane.addEventListener('toggle', function (e) {
-      if (e.target.id === 'ws-code-box' && e.target.open) $('#ws-code').focus();
+      if (e.target.id === 'ws-code-box' && e.target.open && $('#ws-code')) $('#ws-code').focus();
     }, true);
     pane.addEventListener('click', function (e) {
       var t = e.target.closest('button');
@@ -2490,7 +2550,11 @@
       else if (id === 'ws-send') sendNote();
       else if (id === 'ws-lshare') shareLocal();
       else if (id === 'ws-lon') toggle('local', true);
-      else if (id === 'ws-close') { result = null; keep(DRAFT_KEY, null); renderResult(); msg(''); need.focus(); }
+      else if (id === 'ws-close') {
+        // A new fix starts with an empty box; the last one stays on the page until something else is turned on.
+        result = null; keep(DRAFT_KEY, null); writeKey(NEED_KEY, null); writeKey('redbird:starter-issue', null); starterIssue = 0;
+        need.value = ''; target = null; renderTarget(); renderResult(); renderStarters(); msg(''); need.focus();
+      }
       else if (id === 'ws-repair') change('', errors.mine || mineWarn);
       else if (id === 'ws-runmine') {
         var code = $('#ws-code').value;
@@ -2498,8 +2562,14 @@
         install(code, 'Saved your code and ran it.', result ? idsOf(result) : names.indexOf('mine') === -1 ? names.concat('mine') : names);
       } else if (t.hasAttribute('data-untarget')) { target = null; renderTarget(); (t.closest('.ws-card') ? $('#ws-fb') || $('#ws-note') : need).focus(); }
       else if (t.hasAttribute('data-ready')) useReady(READY[+t.getAttribute('data-ready')]);
-      else if (t.hasAttribute('data-idea')) { need.value = t.textContent; writeKey(NEED_KEY, need.value); $('#ws-ideas').open = false; need.focus(); }
-      else if (t.hasAttribute('data-eg')) { need.value = EXAMPLE_NEEDS[+t.getAttribute('data-eg')].replace(/[“”]/g, ''); writeKey(NEED_KEY, need.value); need.focus(); }
+      else if (t.hasAttribute('data-idea')) { need.value = t.textContent; writeKey(NEED_KEY, need.value); need.focus(); }
+      else if (t.hasAttribute('data-starter')) {
+        need.value = t.textContent.replace(/[“”]/g, '');
+        writeKey(NEED_KEY, need.value);
+        starterIssue = Number(t.getAttribute('data-starter')) || 0;
+        writeKey('redbird:starter-issue', starterIssue || null);
+        need.focus();
+      }
       else if (t.hasAttribute('data-fon')) {
         f = list[+t.getAttribute('data-fon')];
         result = f;
@@ -2523,6 +2593,8 @@
       } else if (id === 'ws-in-close') { incoming = null; $('#ws-in').innerHTML = ''; need.focus(); }
     });
     renderTarget();
+    renderFor();
+    renderStarters();
     renderResult();
     renderSaved();
     renderReady();
@@ -2823,6 +2895,8 @@
     '.ws-thread{list-style:none;margin:8px 0!important;padding:0!important;border-left:2px solid #d1d9e0}.ws-thread li{padding:4px 0 4px 10px}' +
     '.ws-who{display:block;font-size:12px;font-weight:600;color:#59636e}.ws-ver .ws-who{color:#1f2328}.ws-checks{display:block;color:#59636e;font-size:12px;margin-top:2px}' +
     '#ws-folder{border-color:#0969da;margin:0 0 12px!important}#ws-folder .ws-lab{margin-top:10px!important}' +
+    '.ws-for{margin:0 0 6px!important}.ws-starters li{padding:1px 0}#ws-starters .ws-help{margin-top:6px!important}' +
+    '.ws-newfix{position:absolute;top:6px;right:10px}#ws-result .ws-card .ws-h{padding-right:64px}#ws-code-box .ws-lab{margin-top:10px!important}' +
     '.ws-plain{list-style:none;margin-top:4px!important}.ws-plain li{padding:3px 0}.ws-block{display:block}' +
     '.ws-more{margin-top:8px!important}.ws-more summary{cursor:pointer;color:#0969da;font-size:12px}' +
     '.ws-pre{max-height:240px;overflow:auto;margin:6px 0 0;padding:8px;background:#f6f8fa;border:1px solid #d1d9e0;border-radius:6px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}' +
