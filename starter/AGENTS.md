@@ -19,13 +19,13 @@ The person you're working with may not code, and may use a screen reader, only a
 3. Run `npm test` and read `test-report.md`. Fix every line that starts with PROBLEM before saying it's ready.
 4. Tell the person in one or two plain sentences what changed and what to try, e.g., "Tab to the color circles and press the arrow keys". Don't explain the code unless they ask.
 5. Ask what's still wrong. If the tests pass but the person says it still doesn't work for them, keep working on it.
-6. Add what they asked for to the `conversation` list in `fix.json`, so the next session knows.
+6. Add what they asked for and what you changed to the `conversation` list in `fix.json`, so the next session knows. Each entry is `{ "who": "person", "text": "..." }` or `{ "who": "coding agent", "text": "..." }`. The tools ignore `fix.json` if it isn't valid JSON, and say so.
 
-When the person says how they would check it themselves (e.g., "I can Tab to the price and hear $18.99"), write that as a check in `checks/`. There is an example in `checks/README.md`.
+When the person says how they would check it themselves (e.g., "I can Tab to the price and hear $18.99"), write that as a check in `checks/`. There is an example in `checks/README.md`. Some planted problems only show up after an action, like a failed payment, and some can't be checked automatically at all, like the checkout timer. For those, `npm test` reports a PROBLEM until a check covers them.
 
 ## The adapter
 
-`adapter.js` is an ES module that exports one object with four parts:
+`adapter.js` is an ES module that exports one object with four parts (its name doesn't matter):
 
 ```js
 export const StarReader = {
@@ -39,10 +39,13 @@ export const StarReader = {
 Rules:
 
 - `disable()` has to undo everything `enable()` changed or added: every attribute, text and element. Keep a list of what you changed as you go, since the test turns the adapter off and lists anything left behind.
-- The store adds content after the page loads (e.g., search results, the cart, the "Added to cart" panel). Watch for it with a `MutationObserver`, wait about half a second after changes stop, and skip elements you already changed.
+- The store adds content after the page loads (e.g., search results, the cart, the "Added to cart" panel). Watch for it with a `MutationObserver`, wait about half a second after changes stop, and skip elements you already changed. The exception is a message that answers something the person just did, like a payment error: change it right away, since a screen reader reads it at once.
 - Never touch the workshop's own parts: anything inside `#ws-root`, `#ws-live` or `#rb-spotlight`.
-- Pick elements by what they are (roles, `data-` attributes, element types, visible text) rather than by long chains of classes. Most of each page is rendered by the store's scripts, so `curl` only gets an empty page. Run `npm run page -- "/search?q=charger"` to see the markup after it's rendered, or `npm run page -- "/search?q=charger" ".card"` for one kind of element.
+- Work only from what is on the page, the way you would on a real shop. Teams try their adapters on real websites after Redbird, so don't read the store's own data (`window.RB_CATALOG` or anything else starting with `RB_`, apart from `say()` using `RB_SAY` when it's there). Reading the store's scripts to understand how a page works is fine.
+- Pick elements by what they are (roles, `data-` attributes, element types, visible text) rather than by long chains of classes. Most of each page is rendered by the store's scripts, so `curl` only gets an empty page. Run `npm run page -- "/search?q=charger"` to see the markup after it's rendered, or `npm run page -- "/search?q=charger" ".card"` for one kind of element. For markup that only shows up after an action (e.g., a payment error), read the page's script, like http://localhost:5179/assets/js/pages/checkout.js, or write a check that does the action.
 - Use `say()` to tell screen reader users when the adapter turns on and when it turns off, and not on every change.
+- When you know the right words, write them in the code (e.g., "Do you want Redbird offers?"). Use the store's AI only for text you can't know ahead, like each product's description. A rewrite of a confusing sentence can flip its meaning, and the old words stay on the page until the answer comes back.
+- Check what the store does with what you change. For example, before rewording a checkbox, read the store's script to see what a ticked box means.
 - Only change how the page looks if that is the fix. Don't add things the person didn't ask for.
 - Keep it small and easy to read. The person may open it.
 
@@ -78,7 +81,7 @@ Answers take a few seconds and sometimes fail, so the adapter has to work withou
 
 ## The store
 
-- `issues.md` lists the 36 planted problems by number, with where each one shows up. Add `?issues=4,5` to a page to turn on only those, or `?issues=off` for none. The test turns on the ones in `fix.json`'s `issues`, or all of them if it's empty.
+- `issues.md` lists the 36 planted problems by number, with where each one shows up. If it or `examples/` is missing (they come with the folder downloaded from the panel), the store has them at http://localhost:5179/ISSUES.md and http://localhost:5179/workshop/adapters/swatch-names.js (and the other example names below). Add `?issues=4,5` to a page to turn on only those, or `?issues=off` for none. The test turns on the ones in `fix.json`'s `issues`, or all of them if it's empty.
 - Pages: `/` (home), `/search?q=charger`, `/product?id=rb-20w-usbc-charger`, `/cart`, `/checkout?cart=rb-20w-usbc-charger` (puts that product in the cart first). Other products include `hearth-oak-kettle`, `kestrel-65w-gan`, `pebble-20w-2pack` and `northloop-studio-headphones`.
 - `?today=2026-11-02` makes delivery dates the same on every run.
 - `examples/` has the workshop's example adapters: `swatch-names.js` (names and keyboard access), `calm-urgency.js` (reads the profile, hides the countdowns and "only 2 left" messages), `reading-level.js` (AI rewriting, with a fallback), `real-arrival-dates.js` (changes the delivery dates) and `pause-moving-things.js` (stops motion).

@@ -17,6 +17,8 @@ export default async function ({ page, path }) {
 }
 ```
 
+Make a check look for the right answer, not only for the wrong one being gone. For example, a check on payment errors should make the ZIP code fail and look for "ZIP" in the message, since a message with no error code can still explain the wrong thing.
+
 To check what a screen reader hears, get the ARIA snapshot of that part of the page:
 
 ```js

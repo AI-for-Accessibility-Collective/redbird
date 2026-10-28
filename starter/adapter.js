@@ -9,9 +9,19 @@
 // Every adapter has the same four parts: enabled, enable(), disable() and toggle(). disable()
 // has to put the page back exactly the way it was.
 
-// Tells screen reader users what happened, through the store's one live region.
+// Tells screen reader users what happened. On Redbird the workshop panel gives the page one voice,
+// so messages don't talk over each other. Anywhere else this makes its own polite live region.
 function say(text) {
-  if (window.RB_SAY) window.RB_SAY(text);
+  if (window.RB_SAY) return window.RB_SAY(text);
+  let live = document.getElementById('ws-live');
+  if (!live) {
+    live = Object.assign(document.createElement('div'), { id: 'ws-live' });
+    live.setAttribute('aria-live', 'polite');
+    live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
+    document.body.appendChild(live);
+  }
+  live.textContent = '';
+  setTimeout(() => { live.textContent = text; }, 60);
 }
 
 export const MyAdapter = {
