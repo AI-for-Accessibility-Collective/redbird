@@ -116,6 +116,7 @@ async function testPage(browser, base, pagePath, checks) {
   // The page as the store has it, then with the adapter.
   await open(page, link(base, pagePath, { try: 'none' }));
   const before = await page.evaluate(() => window.RB_ISSUE_REPORT());
+  logged.length = 0; // errors so far came from the store without the adapter
   const ready = await open(page, link(base, pagePath, { try: ['local', ...toolkit].join(',') }), 'local');
   const after = await page.evaluate(() => window.RB_ISSUE_REPORT());
   const changes = await page.evaluate(() => window.RB_TEST.changes('local'));
@@ -139,12 +140,17 @@ async function testPage(browser, base, pagePath, checks) {
   const better = [], worse = [];
   for (const n of moved) {
     const s = was[n] || now[n];
-    const row = `${n} (${s.title}): ${status(was[n])} without it, ${status(now[n])} with it`;
+    const row = `${n} (${s.title}): ${status(was[n])} without the adapter, ${status(now[n])} with it`;
     const rank = (x) => (!x ? 3 : { fixed: 3, partly: 2 }[x.status] ?? 1);
     if (rank(now[n]) < rank(was[n])) worse.push(row); else better.push(row);
   }
+  const missed = watched.filter((n) => now[n] && now[n].status !== 'fixed' && now[n].status !== 'waiting' && pagePath === fix.page);
+  if (missed.length) {
+    problems.push('missed');
+    lines.push(`- PROBLEM: fix.json says this adapter fixes planted problem ${missed.join(' and ')}, but on this page it is still ${missed.map((n) => status(now[n])).join(' and ')}.`);
+  }
   if (better.length) lines.push('- Planted problems:', ...better.map((r) => '  - ' + r));
-  else lines.push('- It didn’t change whether any planted problem is fixed on this page.');
+  else lines.push('- It didn’t fix or break any planted problem on this page.');
   if (worse.length) { problems.push('worse'); lines.push('- PROBLEM: it made a planted problem worse:', ...worse.map((r) => '  - ' + r)); }
 
   if (!changes.length) {
@@ -214,7 +220,7 @@ for (const p of pages) {
     found.push(p);
   }
 }
-report.push('## Summary', '', found.length ? `Look at the problems on ${found.join(', ')}.` : 'No problems found. Now try it the way the person would: with their screen reader, keyboard or zoom.');
+report.push('## Summary', '', found.length ? `Look at the problems on ${found.join(', ')}.` : 'No problems found. Now try it the way the person you’re building for would (e.g., with their screen reader, with only the keyboard, or zoomed in).');
 await browser.close();
 server.close();
 const text = report.join('\n') + '\n';
