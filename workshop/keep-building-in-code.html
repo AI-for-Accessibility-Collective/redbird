@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Keep building in code - Redbird workshop</title>
+<meta property="og:site_name" content="Redbird workshop">
+<meta property="og:title" content="Keep building in code">
+<meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
+<meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<header class="g-top"><div class="in">
+  <a class="g-brand" href="./"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14.5 6 28 13 17 22Z" fill="currentColor"/><path d="M28 13 44 18 31 22Z" fill="#F2B705"/><path d="M17 22 28 13 31 22 34 33Z" fill="currentColor" opacity=".85"/><path d="M17 22 34 33 20 40Z" fill="currentColor" opacity=".7"/><path d="M17 22 20 40 6 46Z" fill="currentColor" opacity=".55"/></svg>Redbird workshop</a>
+  <nav aria-label="Store"><a href="../?try=none&amp;workshop=on" target="_blank" rel="noopener">Open the store<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></nav>
+</div></header>
+<div class="layout">
+<nav class="side" aria-label="Workshop pages">
+  <a class="product" href="./">Redbird workshop</a>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code" aria-current="page">Keep building in code</a></li><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+</nav>
+<div class="page">
+<main id="main">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Reference<span aria-hidden="true">/</span><a href="keep-building-in-code" aria-current="page">Keep building in code</a></nav>
+<h1>Keep building in code</h1>
+<p class="lede">For teams with someone who can run a coding agent, like Claude Code or Codex. You get your fix as a folder of code, and keep changing it for as many rounds as it takes.</p>
+
+<p>The panel's AI writes a first version from one description. One description is usually not enough, so it takes several rounds to get a fix that works for the person. With the folder, you ask the agent for one change, look at the code, and run the tests before asking for the next.</p>
+
+<h2 id="get-the-folder">Get the folder</h2>
+<ol>
+  <li>Build a first version in the <b>Build your adapter</b> tab, the way <a href="build-your-own">Build your own</a> says.</li>
+  <li>Under your fix, open <b>Keep building in code</b> and press <b>Download the folder</b>. The folder has the code of your last version, who it's for, and the conversation so far.</li>
+  <li>Unzip it, open the folder in Claude Code or Codex, and say: "Read AGENTS.md and start the store."</li>
+  <li>The agent gives you a link to the store on your computer, like <code>http://localhost:5179/search?q=charger&amp;try=local</code>. Open it in Chrome. It's the same store and panel, running the adapter from your folder. Each time the agent saves the adapter, the page runs it again.</li>
+</ol>
+<p>To start from nothing instead, download a blank folder:</p>
+<p><button type="button" class="btn" data-starter>Download a blank folder</button></p>
+<p role="status" id="starter-msg"></p>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>The folder needs Node.js 18 or newer. If the agent says it can't find <code>node</code>, ask it to install Node.js.</p></div>
+
+<h2 id="who-does-what">Who does what</h2>
+<p>The fix is for one person, so build it with them in the loop. If someone on your team has the access need you're designing for, they test it. If not, one person plays them as closely as you can, for example with VoiceOver on, or with only the keyboard.</p>
+<ul>
+  <li><b>The tester</b> uses the store with their own tools and says what's wrong. They don't need to read code.</li>
+  <li><b>The coder</b> asks the agent for changes, and reads its answers out loud if the tester can't see the screen.</li>
+</ul>
+
+<h2 id="each-round">Each round</h2>
+<ol>
+  <li>The tester tries the page the way they would, and finds what's still wrong.</li>
+  <li>In the panel's <b>Build your adapter</b> tab, under <b>Your folder</b>, they write it down and press <b>Send to the coding agent</b>. They can press <b>Point at it on the page</b> first. The note goes at the bottom of <code>feedback.md</code> in the folder, with the page's address.</li>
+  <li>The coder tells the agent: "Read the new feedback and change the adapter."</li>
+  <li>The agent changes <code>adapter.js</code>, runs the tests, and says what to try. The page runs the new version by itself.</li>
+</ol>
+<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>Ask the agent for one change at a time, using the tester's own words, for example "VoiceOver reads the rating twice" or "Tab never reaches Add to cart".</p></div>
+
+<h2 id="test-it">Test it</h2>
+<p>The agent runs <code>npm test</code> after each change. It opens the store's pages in Chrome in the background and writes <code>test-report.md</code>, which you can ask the agent to read to you. For each page, it says:</p>
+<ul>
+  <li>whether the adapter stopped with an error</li>
+  <li>which planted problems it fixes, using the same checks as the red and green badges</li>
+  <li>what it changed, and what a screen reader hears there with and without it</li>
+  <li>whether turning it off puts the page back</li>
+</ul>
+<p>These tests don't check what your tester needs, like whether they can Tab to Add to cart. The checks in your verification plan do. Give the agent each check from it, like "VoiceOver reads each price as one number", and ask it to write the check in the <code>checks</code> folder. Then <code>npm test</code> runs it on every page too.</p>
+
+<h2 id="share-it">Share it</h2>
+<p>In the panel, under <b>Your folder</b>, press <b>Share it</b>. The link opens your adapter on the live store. Paste it in the workshop chat, the way <a href="test-and-share">Test it and share it</a> says.</p>
+</main>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#get-the-folder">Get the folder</a></li><li><a href="#who-does-what">Who does what</a></li><li><a href="#each-round">Each round</a></li><li><a href="#test-it">Test it</a></li><li><a href="#share-it">Share it</a></li></ul></nav>
+</div>
+</div>
+<script src="guide.js"></script>
+</body>
+</html>

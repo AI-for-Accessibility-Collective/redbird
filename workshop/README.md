@@ -21,6 +21,10 @@ The adapters and profile you pick are saved in your browser until you change the
 
 The panel's Build tab makes fixes without writing code, using the same two builders as the toolkit's extension. "Make a skill" sends a need to the toolkit's Engineer prompt, which picks existing adapters and writes a SKILL.md. "Describe a fix" sends a description and a shortened copy of the page to the Adapter Builder's prompt, and the adapter it writes runs as `?try=mine`. Both prompts are in `api/_builders.js`. Skills and adapters are saved in the browser, and their share links carry them after the `#`.
 
+## Keep building in code
+
+To keep changing a fix with a coding agent like Claude Code or Codex, open **Keep building in code** under the fix in the Build tab and download it as a folder. The folder is a copy of [`starter/`](../starter/) with the fix's code and conversation in it: `npm run dev` runs the store on your computer with the adapter on and reloads it when the file changes, and `npm test` tests it on the store's pages. Its `README.md` is for people and its `AGENTS.md` is for the coding agent.
+
 ## The four examples
 
 | file | what it fixes | try it |

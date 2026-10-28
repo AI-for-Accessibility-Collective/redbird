@@ -6,6 +6,7 @@
 //   ?try=swatch-names,motion-reducer   several at once
 //   ?profile=sam                       a workshop person (sam, mark, dario or bill), from workshop/profiles/
 //   ?try=mine                          your own adapter, typed into the panel (saved in this browser)
+//   ?try=local                         adapter.js from a starter folder, when its server (tools/dev.mjs) serves the store
 //   ?try=none                          stop running them
 //   ?workshop=off                      hide the panel, for AI agent runs (?workshop=on shows it again)
 //
@@ -37,6 +38,11 @@
     return v && v !== 'none' ? v : '';
   }
   var names = remember('redbird:try', 'try').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  // A starter folder's server (tools/dev.mjs) serves the store on this computer and sets RB_LOCAL.
+  // "local" is then the adapter.js in that folder, and the page reloads when the file is saved.
+  var LOCAL = window.RB_LOCAL || null;
+  // ?rbtest=1: the folder's tests (tools/test.mjs) are driving this page, through RB_TEST below.
+  var testing = qs.has('rbtest');
   // Old names from before the profiles were renamed still work, from saved settings or old links.
   var profileName = remember('redbird:profile', 'profile');
   profileName = { alex: 'dario', riley: 'mark' }[profileName] || profileName;
@@ -82,6 +88,7 @@
     'no-surprise-extras': { who: 'Older adults, and anyone who might buy something they didn’t mean to', help: 'On product pages, the store ticks a paid protection plan and a repeat order for you. This turns both off, with a note saying what it changed.' },
     'always-show-buttons': { who: 'People who can’t easily use a mouse, like keyboard and voice control users', help: 'In search results, “Add to cart” only shows up when the mouse is over a product, so the keyboard can’t reach it. This keeps the buttons showing.' },
     mine: { help: 'The adapter you made in Build your adapter.' },
+    local: { help: 'adapter.js from your folder. It runs again each time the file is saved.' },
     'toolkit-fixes': { help: 'Fixes what the audit finds: describes photos, names buttons and fields, fixes low contrast and the page structure.', ai: true },
     'live-region-announcer': { help: 'Reads out updates a screen reader would otherwise miss, like “Added to cart”.' },
     'skip-links': { help: 'Adds a “Skip to main content” link, so keyboard users don’t have to Tab through the whole header.' },
@@ -130,7 +137,7 @@
   };
   // [name, unused, adapters]
   var GROUPS = [
-    ['Workshop examples', '', FEATURED.concat('mine')],
+    ['Workshop examples', '', FEATURED.concat(LOCAL ? ['local', 'mine'] : 'mine')],
     ['Blind and screen reader users', '', ['live-region-announcer', 'skip-links', 'page-outline',
       'spa-focus', 'language-tag', 'describe-on-demand', 'explore-a-chart', 'math-a11y']],
     ['Low vision and color blindness', '', ['visual-assist', 'magnifier', 'focus-locator', 'link-highlighter',
@@ -611,6 +618,13 @@
         return import(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
       });
     }
+    if (name === 'local') {
+      if (!LOCAL) return Promise.reject(new Error('your folder’s server isn’t running. Start it with npm run dev'));
+      return fetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('your folder has no adapter.js');
+        return r.text();
+      }).then(function (code) { return import(URL.createObjectURL(new Blob([code], { type: 'text/javascript' }))); });
+    }
     if (EXAMPLES.indexOf(name) !== -1) return import(base + 'adapters/' + name + '.js');
     var lib = NEEDS[name];
     var url = TOOLKIT + 'adapters/' + name + '.js';
@@ -618,7 +632,7 @@
     return Promise.all([toolkit(), lib ? loadScript(lib[1], lib[0]) : null])
       .then(function () { return import(url).catch(function () { return import(url + '?retry=1'); }); });
   }
-  var loading = {}, adapters = {}, errors = {};
+  var loading = {}, adapters = {}, errors = {}, enabling = {};
   function ensure(name) {
     loading[name] = loading[name] || loadModule(name).then(function (mod) {
       var a = WRAP[name] ? WRAP[name](mod) : Object.keys(mod).map(function (k) { return mod[k]; }).find(function (v) { return v && typeof v.enable === 'function'; });
@@ -643,7 +657,7 @@
     refresh(name, 'Loading…');
     return ensure(name).then(function (a) {
       var fail = function (e) { errors[name] = 'Stopped with an error: ' + ((e && e.message) || e); warn(name)(e); refresh(name); };
-      try { Promise.resolve(a.enable(optionsFor(name))).catch(fail); } catch (e) { fail(e); }
+      try { enabling[name] = Promise.resolve(a.enable(optionsFor(name))).catch(fail); } catch (e) { fail(e); }
       refresh(name);
     }, function (e) {
       errors[name] = 'Didn’t load: ' + (e.message || String(e));
@@ -653,7 +667,7 @@
   }
   function turnOff(name) {
     // The fixes and your own adapter change the page in ways a reload undoes best.
-    if (name === 'toolkit-fixes' || name === 'mine') { location.reload(); return; }
+    if (name === 'toolkit-fixes' || name === 'mine' || name === 'local') { location.reload(); return; }
     var a = adapters[name];
     try { if (a && a.disable) a.disable(); } catch (e) { warn(name)(e); }
     refresh(name);
@@ -715,7 +729,7 @@
     return true;
   }
   // toolkit-fixes is the Audit tab's "Fix this page", so that's what it's called everywhere people see it.
-  function label(name) { return name === 'mine' ? 'your adapter' : name === 'toolkit-fixes' ? 'fix-this-page' : name; }
+  function label(name) { return name === 'mine' ? 'your adapter' : name === 'local' ? 'your folder' : name === 'toolkit-fixes' ? 'fix-this-page' : name; }
 
   // ── Panel ─────────────────────────────────────────────────────────────────
   // dockW: how wide the sidebar is.
@@ -1254,6 +1268,7 @@
     if (!rendered) return;
     summary();
     if (name === 'mine') fixState();
+    if (name === 'local') folderState();
     root.querySelectorAll('[data-slot="' + name + '"]').forEach(function (slot) { updateChanges(slot, name); });
     var el = root.querySelector('[data-state="' + name + '"]');
     if (!el) return;
@@ -1594,7 +1609,7 @@
     ['id', 'q', 'cat'].forEach(function (k) { if (qs.get(k)) q.set(k, qs.get(k)); });
     q.set('workshop', 'on');
     Object.keys(extra || {}).forEach(function (k) { q.set(k, extra[k]); });
-    return location.origin + location.pathname + '?' + q;
+    return (LOCAL ? LOCAL.store : location.origin) + location.pathname + '?' + q;
   }
   function fixLink(f) {
     var ids = idsOf(f).filter(function (n) { return n !== 'mine'; });
@@ -1642,7 +1657,7 @@
   // Three steps, top to bottom: who it's for, what should change, Build it.
   var EXAMPLE_NEEDS = ['Hide the countdowns and “only 2 left” messages', 'Read the star ratings out as numbers', 'Make the buttons bigger and easier to hit'];
   function buildHTML() {
-    return '<div id="ws-in"></div>' +
+    return '<div id="ws-in"></div>' + folderHTML() +
       '<h3 class="ws-h">Build your own adapter or skill</h3>' +
       '<ol class="ws-steps">' +
         '<li><label class="ws-lab" for="ws-person">Who is it for?</label>' +
@@ -1748,26 +1763,52 @@
   }
 
   // Build it: the Engineer first; if no adapter fits, AI writes a new one.
+  //
+  // Each fix keeps its conversation in result.thread: what the person asked ({ who: 'you' }), and
+  // each version that came back ({ who: 'version', n, note, code, adapters, checks }). The AI says
+  // in one line what each version changed, and the panel checks each version once it has run.
+  var asking = null; // the conversation so far, while the AI works on the next version
   function build() {
     var need = $('#ws-need').value.trim();
     if (!need) { msg('Write what should change first.'); $('#ws-need').focus(); return; }
+    asking = { thread: [{ who: 'you', text: need }], base: baseline() };
     if (readKey('redbird:need-new') === need) return writeNew(need, $('#ws-build'));
     var done = wait($('#ws-build'), 'Looking for adapters that do this…');
     ask('buildSkill', { need: need, person: person(), catalog: catalog(), settings: settingsLines() }).then(parseSkill).then(function (s) {
       done();
       if (s.adapters.length) return useSkill(need, s);
       writeNew(need, $('#ws-build'));
-    }, function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+    }, function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
+  }
+  // The AI's "// What changed: …" line is shown in the conversation, not kept in the code.
+  function splitNote(code) {
+    var m = code.match(/^\s*\/\/\s*What changed:\s*(.+)\n/i);
+    return m ? { code: code.slice(m[0].length).replace(/^\s*\n/, ''), note: m[1].trim() } : { code: code, note: '' };
+  }
+  // The next version of the fix, with the conversation carried over.
+  function nextResult(r, note) {
+    var from = asking || result || {};
+    r.thread = (from.thread || []).slice();
+    r.base = from.base || null;
+    var n = r.thread.filter(function (t) { return t.who === 'version'; }).length + 1;
+    r.thread.push({ who: 'version', n: n, note: note, code: r.code || null, adapters: r.adapters });
+    // Old versions' code goes after a while, so the conversation fits in the browser's storage.
+    var vs = r.thread.filter(function (t) { return t.who === 'version' && t.code; });
+    vs.slice(0, Math.max(0, vs.length - 12)).forEach(function (t) { t.code = null; });
+    asking = null;
+    return r;
   }
   function useSkill(need, s) {
-    result = { name: s.name, need: need, description: s.description, adapters: s.adapters, md: s.md, code: null };
+    result = nextResult({ name: s.name, need: need, description: s.description, adapters: s.adapters, md: s.md, code: null },
+      'Turns on ' + s.adapters.map(function (a) { return label(a.id); }).join(', ') + ' from the toolkit.');
     keep(DRAFT_KEY, result);
-    var n = s.adapters.length;
     var text = 'Done. Check the page.';
     keep(NOTE_KEY, { text: text });
     if (applySet(idsOf(result), settingsOf(result.adapters))) return;
     keep(NOTE_KEY, null);
     msg(text);
+    renderResult();
+    checkVersion();
     $('#ws-result').scrollIntoView({ block: 'nearest' });
   }
   // keep: adapters from the toolkit to keep next to the new one (a skill someone asked to change).
@@ -1775,37 +1816,43 @@
     var done = wait(btn, 'No adapter does this yet, so AI is writing one. This takes about 30 seconds…');
     ask('writeAdapter', { description: need, person: person(), snapshot: snapshot(document.body, 14000), target: target ? target.html : '', url: here() })
       .then(function (code) { finishAdapter(need, cleanCode(code), 'Done. AI wrote a new adapter, and it’s on.', keep); })
-      .catch(function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+      .catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
   function finishAdapter(need, code, text, kept) {
     var adapters = (kept || []).filter(function (a) { return a.id !== 'mine'; }).concat({ id: 'mine', settings: {} });
-    result = { name: kebab(need.split(/\s+/).slice(0, 5).join(' ')), need: need, description: need, adapters: adapters, md: '', code: code, target: target };
+    var sp = splitNote(code);
+    result = nextResult({ name: kebab(need.split(/\s+/).slice(0, 5).join(' ')), need: need, description: need, adapters: adapters, md: '', code: sp.code, target: target },
+      sp.note || 'AI wrote a new adapter.');
     keep(DRAFT_KEY, result);
-    install(code, text, idsOf(result));
+    install(sp.code, text, idsOf(result));
   }
-  // Not right? A built adapter is changed by the AI that wrote it. A skill goes back to the
-  // Engineer, and if it now finds no adapter that fits, AI writes a new one for the need and the change.
+  // What should change next. A built adapter is changed by the AI that wrote it. A skill goes back
+  // to the Engineer, and if it now finds no adapter that fits, AI writes a new one for the need and the change.
   function change(feedback, error) {
     // Code written by hand (in Details, or from the guide) has no fix card: make one, so the AI
     // can fix the code that's running.
     var running = readKey(MY_KEY);
     if (error && running && (!result || !result.code || result.code !== running)) {
       result = { name: (result && result.name) || 'my-adapter', need: (result && result.need) || 'My own adapter', description: '',
-        adapters: [{ id: 'mine', settings: {} }], md: '', code: running };
+        adapters: [{ id: 'mine', settings: {} }], md: '', code: running, thread: [{ who: 'version', n: 1, note: 'Your own code.', code: running }] };
       keep(DRAFT_KEY, result);
     }
     if (!result) return;
-    if (!feedback && !error) { msg('Say what to change first.'); $('#ws-fb').focus(); return; }
+    if (!feedback && !error) { msg('Say what should change first.'); $('#ws-fb').focus(); return; }
+    var asked = turns().filter(function (t) { return t.who === 'you'; }).slice(1).map(function (t) { return '- ' + t.text; }).join('\n');
+    asking = { thread: turns().concat({ who: 'you', text: feedback || 'Fix the error: ' + error }), base: result.base || null };
     var btn = $(error ? '#ws-repair' : '#ws-change');
+    var pointed = target || result.target;
     if (result.code) {
       var done = wait(btn, error ? 'Asking the AI to fix the error…' : 'Changing the adapter…');
-      ask('reviseAdapter', { code: result.code, description: result.need, feedback: feedback || '', error: error || '', person: person(),
-        snapshot: snapshot(document.body, 14000), target: result.target ? result.target.html : '', url: here() })
+      ask('reviseAdapter', { code: result.code, description: result.need, feedback: feedback || '', error: error || '', history: asked, person: person(),
+        snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() })
         .then(function (code) {
-          result.code = cleanCode(code);
+          var sp = splitNote(cleanCode(code));
+          result = nextResult(Object.assign({}, result, { code: sp.code, target: pointed }), sp.note || (error ? 'Fixed the error.' : 'Changed the adapter.'));
           keep(DRAFT_KEY, result);
-          install(result.code, error ? 'Fixed. It’s running again.' : 'Changed.', idsOf(result));
-        }).catch(function (e) { done(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+          install(result.code, error ? 'Fixed. It’s running again.' : 'Changed. Check the page.', idsOf(result));
+        }).catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
       return;
     }
     var done2 = wait(btn, 'Trying again…');
@@ -1814,10 +1861,112 @@
         done2();
         if (s.adapters.length) return useSkill(result.need, s);
         writeNew(result.need + '. ' + feedback, btn, result.adapters);
-      }, function (e) { done2(); msg('That didn’t work: ' + e.message + '. Try again.'); });
+      }, function (e) { done2(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
 
-  // What was built: what it turned on, a switch to compare, Save, and a box to change it.
+  // ── Checking each version ─────────────────────────────────────────────────
+  // The page before the fix, to compare each version against: which planted problems are fixed.
+  function pageKey() {
+    var q = new URLSearchParams();
+    ['id', 'q', 'cat'].forEach(function (k) { if (qs.get(k)) q.set(k, qs.get(k)); });
+    return location.pathname + (q.toString() ? '?' + q : '');
+  }
+  function baseline() {
+    try { return window.RB_ISSUE_REPORT ? { page: pageKey(), report: window.RB_ISSUE_REPORT() } : null; } catch (e) { return null; }
+  }
+  var RANK = { fixed: 3, partly: 2 };
+  function issueWords(s) {
+    if (!s) return 'gone';
+    if (s.status === 'partly') return 'partly fixed (' + s.still + ' of ' + s.places + ' places still have it)';
+    return { fixed: 'fixed', present: 'not fixed', nocheck: 'not checked automatically', waiting: 'not showing yet' }[s.status] || s.status;
+  }
+  // Once the latest version has run: did it stop with an error, how much did it change, and which
+  // planted problems on this page did it fix (or make worse) compared with the page before the fix.
+  function checkVersion() {
+    var v = versions().slice(-1)[0];
+    if (!v || v.checks || !result || !same(idsOf(result), names)) return;
+    if (v.code && v.code !== readKey(MY_KEY)) return;
+    var ids = idsOf(result);
+    Promise.all(ids.map(function (n) { return Promise.resolve(loading[n]).then(function () { return enabling[n]; }).catch(function () {}); }))
+      .then(function () { return new Promise(function (ok) { setTimeout(ok, 1500); }); })
+      .then(function () {
+        if (versions().slice(-1)[0] !== v) return;
+        var c = { page: pageKey(), error: ids.map(function (n) { return errors[n]; }).filter(Boolean)[0] || (ids.indexOf('mine') !== -1 && mineWarn) || '',
+          changes: Track.list.filter(function (e) { return ids.indexOf(e.who) !== -1 && live(e); }).length, issues: [] };
+        var base = result.base;
+        if (base && base.page === c.page && window.RB_ISSUE_REPORT) {
+          var was = {}, now = {};
+          base.report.forEach(function (s) { was[s.issue] = s; });
+          window.RB_ISSUE_REPORT().forEach(function (s) { now[s.issue] = s; });
+          Object.keys(was).concat(Object.keys(now)).filter(function (n, i, all) { return all.indexOf(n) === i; }).forEach(function (n) {
+            var a = was[n], b = now[n];
+            if (issueWords(a) === issueWords(b)) return;
+            c.issues.push({ issue: +n, title: (a || b).title, was: issueWords(a), now: issueWords(b), status: b ? b.status : 'gone',
+              worse: (RANK[(b || {}).status] || 1) < (RANK[(a || {}).status] || 1) && !!b });
+          });
+          c.issues.sort(function (x, y) { return x.issue - y.issue; });
+        }
+        v.checks = c;
+        keep(DRAFT_KEY, result);
+        renderResult();
+        say('Version ' + v.n + ': ' + checkWords(c).replace(/<[^>]+>/g, ''), true);
+      });
+  }
+  function checkWords(c) {
+    if (!c) return '';
+    var out = [];
+    if (c.error) out.push('<span class="ws-err">It stopped with an error.</span>');
+    c.issues.forEach(function (x) {
+      var what = 'problem ' + x.issue + ' (' + esc(x.title.charAt(0).toLowerCase() + x.title.slice(1)) + ')';
+      if (x.worse) out.push('<span class="ws-err">It makes ' + what + ' worse on this page: ' + esc(x.now) + ', was ' + esc(x.was) + '.</span>');
+      else if (x.status === 'fixed') out.push('It fixes ' + what + ' on this page.');
+      else if (x.status === 'partly') out.push('It partly fixes ' + what + ' on this page: ' + esc(x.now.replace(/^partly fixed \((.*)\)$/, '$1')) + '.');
+      else out.push('On this page, ' + what + ' is ' + esc(x.now) + ', was ' + esc(x.was) + '.');
+    });
+    if (!c.changes) out.push('It changed nothing on this page.');
+    else if (!c.issues.length) out.push('It made ' + c.changes + ' change' + (c.changes === 1 ? '' : 's') + ' on this page.');
+    return out.join(' ');
+  }
+  function turns() {
+    if (!result) return [];
+    // A fix from before the panel kept conversations: start one from what it has.
+    if (!result.thread) result.thread = [{ who: 'you', text: result.need || result.description || '' }, { who: 'version', n: 1, note: '', code: result.code || null, adapters: result.adapters }];
+    return result.thread;
+  }
+  function versions() { return turns().filter(function (t) { return t.who === 'version'; }); }
+  // Which version is on the page: the one whose code is running, or the last one for a skill.
+  function runningVersion() {
+    var vs = versions(), code = readKey(MY_KEY);
+    if (!result || !same(idsOf(result), names)) return null;
+    if (!result.code) return vs[vs.length - 1] || null;
+    for (var i = vs.length - 1; i >= 0; i--) if (vs[i].code === code) return vs[i];
+    return null;
+  }
+  function threadHTML() {
+    var on = runningVersion(), last = versions().slice(-1)[0];
+    return '<ol class="ws-thread">' + turns().map(function (t) {
+      if (t.who === 'you') return '<li class="ws-you"><span class="ws-who">You asked</span> ' + esc(t.text) + '</li>';
+      if (t.who === 'back') return '<li class="ws-you"><span class="ws-who">You went back to version ' + t.n + '</span></li>';
+      var checks = t.checks ? '<span class="ws-checks">' + checkWords(t.checks) + '</span>' : t === last && t === on ? '<span class="ws-checks">Checking…</span>' : '';
+      return '<li class="ws-ver"><span class="ws-who">Version ' + t.n + (t === on ? ' <span class="ws-tag">on now</span>' : '') + '</span> ' + esc(t.note || '') + ' ' + checks +
+        (t !== on && (t.code || (!result.code && t.adapters)) ? ' <button type="button" class="ws-link" data-ver="' + t.n + '">Go back to version ' + t.n + '</button>' : '') + '</li>';
+    }).join('') + '</ol>';
+  }
+  function goBack(n) {
+    var v = versions().find(function (t) { return t.n === n; });
+    if (!v) return;
+    turns().push({ who: 'back', n: n });
+    if (v.code) {
+      result.code = v.code;
+      keep(DRAFT_KEY, result);
+      return install(v.code, 'Back to version ' + n + '.', idsOf(result));
+    }
+    result.adapters = v.adapters;
+    keep(DRAFT_KEY, result);
+    if (!applySet(idsOf(result), settingsOf(result.adapters))) { msg('Back to version ' + n + '.'); renderResult(); }
+  }
+
+  // What was built: the conversation, a switch to compare, Save, and a box for what should change next.
   function renderResult() {
     var el = rendered && $('#ws-result');
     if (!el) return;
@@ -1839,19 +1988,108 @@
       }).join('') + '</ul>';
     el.innerHTML = '<div class="ws-card">' +
       '<button type="button" class="ws-icon ws-close" id="ws-close" aria-label="Close ' + esc(result.name) + ' (its adapters stay as they are)" title="Close">×</button>' +
-      '<h3 class="ws-h">' + esc(result.name) + ' <span class="ws-tag">' + (result.code ? (others.length ? 'Skill + new adapter' : 'New adapter') : 'Skill') + '</span></h3><p class="ws-help">' + did + '</p>' + body +
+      '<h3 class="ws-h">' + esc(result.name) + ' <span class="ws-tag">' + (result.code ? (others.length ? 'Skill + new adapter' : 'New adapter') : 'Skill') + '</span></h3>' +
+      threadHTML() +
+      '<p class="ws-help">' + did + '</p>' + body +
       '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-onoff" aria-pressed="' + !on + '">' + (on ? 'Turn off to compare' : 'Turn it back on') + '</button>' +
         '<button type="button" class="ws-btn" id="ws-save"' + (saved ? ' disabled' : '') + '>' + (saved ? 'Saved' : 'Save') + '</button></div>' +
-      '<details class="ws-more" id="ws-fbbox"><summary>Not right? Change it</summary>' +
-        '<label class="ws-lab" for="ws-fb">Say what to change</label>' +
-        '<textarea id="ws-fb" class="ws-input" rows="2" placeholder="e.g., It missed the countdown at checkout"></textarea>' +
-        '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-change">Change it</button></div></details>' +
-      (result.code ? codeBox(readKey(PREV_KEY) ? '<button type="button" class="ws-link" id="ws-prev">Go back to the last version</button>' : '')
+      '<label class="ws-lab" for="ws-fb">What should change next?</label>' +
+      '<textarea id="ws-fb" class="ws-input" rows="2" placeholder="e.g., It missed the countdown at checkout"></textarea>' +
+      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-change">Change it</button>' +
+        '<button type="button" class="ws-link" id="ws-point2" aria-pressed="false">Point at it on the page</button></div>' +
+      '<p class="ws-help" id="ws-target2"></p>' +
+      (result.code ? codeBox('')
         : '<details class="ws-more"><summary>Details</summary><p class="ws-help">As a SKILL.md file, the toolkit’s format for skills:</p><pre class="ws-pre" tabindex="0">' + esc(result.md) + '</pre></details>') +
+      (LOCAL ? '' : '<details class="ws-more" id="ws-dlbox"><summary>Keep building in code</summary>' +
+        '<p class="ws-help">Download this fix as a folder you can keep changing with a coding agent like Claude Code or Codex. It has the code, this conversation, a way to run the store with it, and tests.</p>' +
+        '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-dl">Download the folder</button></div><p class="ws-msg" id="ws-dlmsg"></p></details>') +
       '</div>';
     fillCode();
+    renderTarget();
     ids.forEach(function (n) { var slot = el.querySelector('[data-slot="' + n + '"]'); if (slot) updateChanges(slot, n); });
   }
+  // ── Keep building in code ─────────────────────────────────────────────────
+  // "Download the folder" gets the starter folder (workshop/starter.js makes the zip) with this
+  // fix's code, and its conversation in fix.json.
+  function fixJSON(f) {
+    var issues = [];
+    (qs.get('issues') || '').split(',').forEach(function (n) { if (/^\d+$/.test(n)) issues.push(+n); });
+    versions().forEach(function (v) {
+      ((v.checks || {}).issues || []).forEach(function (x) { if (!x.worse && issues.indexOf(x.issue) === -1) issues.push(x.issue); });
+    });
+    return {
+      name: kebab(f.name), need: f.need || f.description || '', person: person(), page: (f.base && f.base.page) || pageKey(), pages: [],
+      issues: issues.sort(function (a, b) { return a - b; }),
+      toolkitAdapters: (f.adapters || []).filter(function (a) { return a.id !== 'mine'; }),
+      pointedAt: (f.target || {}).html || '',
+      conversation: (f.thread || []).filter(function (t) { return t.who !== 'back'; }).map(function (t) {
+        return t.who === 'you' ? { who: 'person', text: t.text } : { who: 'version ' + t.n, text: t.note || '' };
+      }),
+    };
+  }
+  function downloadFolder(f) {
+    var out = $('#ws-dlmsg'), files = {};
+    out.textContent = 'Making the folder…';
+    if (f && f.code) files['adapter.js'] = f.code;
+    if (f) files['fix.json'] = JSON.stringify(fixJSON(f), null, 2) + '\n';
+    loadScript(base + 'starter.js', 'RB_STARTER').then(function () { return window.RB_STARTER.download(kebab((f && f.name) || 'my-adapter'), files); })
+      .then(function (text) { out.textContent = text; say(text, true); }, function (e) { out.textContent = 'Couldn’t make the folder: ' + e.message; });
+  }
+
+  // ── Your folder ───────────────────────────────────────────────────────────
+  // When the store runs from a starter folder (npm run dev), the Build tab starts with that folder's
+  // adapter: what it changed, a box for notes to the coding agent working in the folder (they go
+  // into its feedback.md), and Share.
+  function folderHTML() {
+    if (!LOCAL) return '';
+    return '<div class="ws-card" id="ws-folder"><h3 class="ws-h">Your folder</h3>' +
+      '<p class="ws-help">This page runs adapter.js from your folder, and runs it again each time the file is saved.</p>' +
+      '<div id="ws-folder-state"></div>' +
+      '<label class="ws-lab" for="ws-note">What’s still wrong, or what should change?</label>' +
+      '<textarea id="ws-note" class="ws-input" rows="2" aria-describedby="ws-note-help" placeholder="e.g., VoiceOver still reads the price in the cart as dollar 18 99"></textarea>' +
+      '<p class="ws-help" id="ws-note-help">It goes at the bottom of feedback.md in your folder, with this page’s address. Then ask the coding agent to read it.</p>' +
+      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-send">Send to the coding agent</button>' +
+        '<button type="button" class="ws-link" id="ws-point3" aria-pressed="false">Point at it on the page</button></div>' +
+      '<p class="ws-help" id="ws-target3"></p><p class="ws-msg" id="ws-folder-msg"></p>' +
+      '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-lshare">Share it</button></div><div class="ws-msg" id="ws-lshare-msg"></div>' +
+      '</div>';
+  }
+  function folderState() {
+    var el = rendered && $('#ws-folder-state');
+    if (!el) return;
+    if (names.indexOf('local') === -1) { el.innerHTML = '<p class="ws-help">It’s off. <button type="button" class="ws-link" id="ws-lon">Turn it on</button></p>'; return; }
+    if (errors.local) { el.innerHTML = '<p class="ws-err">' + esc(errors.local) + '</p><p class="ws-help">Send the error to the coding agent, or run npm test in the folder.</p>'; return; }
+    var slot = el.querySelector('[data-slot="local"]');
+    if (!slot) { el.innerHTML = '<div class="ws-chg-slot" data-slot="local"></div>'; slot = el.firstChild; }
+    updateChanges(slot, 'local');
+  }
+  function folderMsg(text) { var el = $('#ws-folder-msg'); if (el) el.textContent = text; if (text) say(text, true); }
+  function sendNote() {
+    var box = $('#ws-note'), text = box.value.trim();
+    if (!text) { folderMsg('Write what’s wrong first.'); box.focus(); return; }
+    var done = wait($('#ws-send'), 'Sending…');
+    var note = { text: text + (errors.local ? '\n\nThe panel shows this error: ' + errors.local : ''), page: here(), pointedAt: target ? target.html : '', pointedAtLabel: target ? target.label : '' };
+    fetch(LOCAL.feedback, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) }).then(function (r) {
+      if (!r.ok) throw new Error();
+      done();
+      box.value = '';
+      target = null;
+      renderTarget();
+      folderMsg('Sent. It’s at the bottom of feedback.md.');
+    }).catch(function () { done(); folderMsg('Couldn’t send it. Is npm run dev still running in the folder?'); });
+  }
+  // A share link for the live store, carrying adapter.js and the toolkit adapters fix.json names.
+  function shareLocal() {
+    Promise.all([
+      fetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.text(); }),
+      fetch(LOCAL.fix, { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
+    ]).then(function (r) {
+      var fx = r[1] || {};
+      share({ name: kebab(fx.name || 'my-adapter'), need: fx.need || '', description: fx.need || '', md: '', code: r[0],
+        adapters: (fx.toolkitAdapters || []).filter(function (a) { return a && ADAPTERS[a.id] && a.id !== 'mine'; }).concat({ id: 'mine', settings: {} }) }, '#ws-lshare-msg');
+    }).catch(function () { $('#ws-lshare-msg').textContent = 'Couldn’t read the folder. Is npm run dev still running?'; });
+  }
+
   function codeBox(extra) {
     return '<details class="ws-more" id="ws-code-box"' + (openCode ? ' open' : '') + '><summary>Details</summary>' +
       '<label class="ws-help" for="ws-code">The code. You can edit it and run it again.</label>' +
@@ -1916,11 +2154,13 @@
   }
 
   // Pointing at the part of the page the change is about. Its markup goes to the AI with the request.
-  var target = (result && result.target) || null, picking = false, pickBox = null;
-  function startPick() {
+  // It can start from step 2 (a new fix) or from "What should change next?" (the next version).
+  var target = (result && result.target) || null, picking = false, pickBox = null, pickFrom = '#ws-point';
+  function startPick(e) {
     if (picking) return stopPick('Stopped pointing.');
     picking = true;
-    var b = $('#ws-point');
+    pickFrom = '#' + ((e && e.currentTarget && e.currentTarget.id) || 'ws-point');
+    var b = $(pickFrom);
     b.textContent = 'Stop pointing';
     b.setAttribute('aria-pressed', 'true');
     pickBox = root.querySelector('.ws-pickbox');
@@ -1933,7 +2173,8 @@
     ['mouseover', 'focusin'].forEach(function (t) { document.removeEventListener(t, pickOver, true); });
     ['click', 'mousedown', 'pointerdown', 'mouseup', 'keydown'].forEach(function (t) { document.removeEventListener(t, pickEvent, true); });
     if (pickBox) pickBox.hidden = true;
-    var b = $('#ws-point');
+    var b = $(pickFrom);
+    if (!b) return msg && status(msg);
     b.textContent = 'Point at it on the page';
     b.setAttribute('aria-pressed', 'false');
     if (msg) status(msg);
@@ -1959,16 +2200,21 @@
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
     if (e.type === 'click') setTarget(e.target);
   }
+  // Each Point button, the box it fills in, and where it says what it's pointing at.
+  var POINT = { '#ws-point': ['#ws-need', '#ws-target'], '#ws-point2': ['#ws-fb', '#ws-target2'], '#ws-point3': ['#ws-note', '#ws-target3'] };
   function setTarget(el) {
     stopPick();
     target = { html: snapshot(el, 3000), label: describe(el) };
     renderTarget();
     status('Pointing at ' + target.label + '.');
-    $('#ws-need').focus();
+    var box = $(POINT[pickFrom][0]);
+    if (box) box.focus();
   }
   function renderTarget() {
-    var el = $('#ws-target');
-    el.innerHTML = target ? 'Pointing at ' + esc(cut(target.label, 60)) + ' <button type="button" class="ws-link" id="ws-untarget" aria-label="Stop pointing at ' + esc(cut(target.label, 60)) + '">×</button>' : '';
+    Object.keys(POINT).forEach(function (k) {
+      var el = $(POINT[k][1]);
+      if (el) el.innerHTML = target ? 'Pointing at ' + esc(cut(target.label, 60)) + ' <button type="button" class="ws-link" data-untarget aria-label="Stop pointing at ' + esc(cut(target.label, 60)) + '">×</button>' : '';
+    });
   }
 
   // A shortened copy of the page's markup for the AI: no scripts or styles, long text cut, and
@@ -2036,6 +2282,7 @@
     $('#ws-askgo').onclick = askProfile;
     $('#ws-ideasgo').onclick = suggest;
     $('#ws-point').onclick = startPick;
+    pane.addEventListener('click', function (e) { if (e.target.closest('#ws-point2, #ws-point3')) startPick({ currentTarget: e.target.closest('button') }); });
     pane.addEventListener('toggle', function (e) {
       if (e.target.id === 'ws-code-box' && e.target.open) $('#ws-code').focus();
     }, true);
@@ -2056,17 +2303,18 @@
         renderSaved();
         msg('Saved as “' + result.name + '”. It’s under Saved fixes, where you can share it.');
       } else if (id === 'ws-change') change($('#ws-fb').value.trim(), '');
+      else if (t.hasAttribute('data-ver')) goBack(+t.getAttribute('data-ver'));
+      else if (id === 'ws-dl') downloadFolder(result);
+      else if (id === 'ws-send') sendNote();
+      else if (id === 'ws-lshare') shareLocal();
+      else if (id === 'ws-lon') toggle('local', true);
       else if (id === 'ws-close') { result = null; keep(DRAFT_KEY, null); renderResult(); msg(''); need.focus(); }
       else if (id === 'ws-repair') change('', errors.mine || mineWarn);
       else if (id === 'ws-runmine') {
         var code = $('#ws-code').value;
-        if (result) { result.code = code; keep(DRAFT_KEY, result); }
+        if (result) { result = nextResult(Object.assign({}, result, { code: code }), 'You changed the code by hand.'); keep(DRAFT_KEY, result); }
         install(code, 'Saved your code and ran it.', result ? idsOf(result) : names.indexOf('mine') === -1 ? names.concat('mine') : names);
-      } else if (id === 'ws-prev') {
-        var prev = readKey(PREV_KEY);
-        writeKey(PREV_KEY, null);
-        if (prev) { result.code = prev; keep(DRAFT_KEY, result); install(prev, 'Back to the last version.', idsOf(result)); }
-      } else if (id === 'ws-untarget') { target = null; renderTarget(); need.focus(); }
+      } else if (t.hasAttribute('data-untarget')) { target = null; renderTarget(); (t.closest('.ws-card') ? $('#ws-fb') || $('#ws-note') : need).focus(); }
       else if (t.hasAttribute('data-ready')) useReady(READY[+t.getAttribute('data-ready')]);
       else if (t.hasAttribute('data-idea')) { need.value = t.textContent; writeKey(NEED_KEY, need.value); $('#ws-ideas').open = false; need.focus(); }
       else if (t.hasAttribute('data-eg')) { need.value = EXAMPLE_NEEDS[+t.getAttribute('data-eg')].replace(/[“”]/g, ''); writeKey(NEED_KEY, need.value); need.focus(); }
@@ -2097,6 +2345,7 @@
     renderSaved();
     renderReady();
     renderIncoming();
+    folderState();
     if (note) {
       msg(note.text);
       setTimeout(function () {
@@ -2110,7 +2359,7 @@
   }
 
   // ── Start ─────────────────────────────────────────────────────────────────
-  if (panelOn) {
+  if (panelOn || testing) {
     Track.start();
     // Your adapter's own error messages (it logs them as "my adapter: …") show on its card.
     var warn0 = console.warn;
@@ -2119,12 +2368,17 @@
       return warn0.apply(console, arguments);
     };
   }
-  Promise.all([profile, incomingReady]).then(function (r) {
+  var started = Promise.all([profile, incomingReady]).then(function (r) {
     var prof = r[0];
     currentProfile = prof;
     baseOptions = { profile: prof && !prof.toolkit ? prof : null, today: window.RB ? RB.today() : new Date(), rewrite: rewrite, fallback: storeFallback };
     if (panelOn) panel();
+    if (testing) {
+      beforeAll = new WeakMap();
+      document.querySelectorAll('body *').forEach(function (el) { beforeAll.set(el, snap(el)); });
+    }
     names.forEach(turnOn);
+    if (panelOn) checkVersion();
     // Load the shoppers' adapters in the background, so switching between them doesn't wait on the network.
     if (panelOn) setTimeout(function () {
       var all = [];
@@ -2134,6 +2388,76 @@
       all.forEach(function (n) { ensure(n).catch(function () {}); });
     }, 2500);
   });
+
+  // Saving adapter.js in the starter folder runs it again on a fresh page.
+  if (LOCAL && LOCAL.events && window.EventSource) {
+    new EventSource(LOCAL.events).onmessage = function (e) {
+      if (e.data === 'adapter.js' && names.indexOf('local') !== -1) location.reload();
+    };
+  }
+
+  // ── For the starter folder's tests ────────────────────────────────────────
+  // tools/test.mjs opens a page with ?rbtest=1 and uses these to see what an adapter did and
+  // whether switching it off puts the page back. A change's element gets data-rbtest="<n>", so
+  // the test can find it and ask the browser what a screen reader hears there.
+  var beforeAll = null; // each element's text and attributes from before any adapter ran
+  function testNow(e) {
+    if (e.type === 'attr') return e.el.getAttribute(e.attr);
+    if (e.type === 'text') return squash(e.el.textContent);
+    return null;
+  }
+  // Whether a change is still on the page. Text is compared with what the element said before any
+  // adapter ran, since putting the old words back counts as a new change to the same element.
+  function testStill(e) {
+    if (e.type === 'removed') return !e.el.isConnected;
+    if (e.type === 'text' && beforeAll && beforeAll.has(e.el)) return e.el.isConnected && squash(e.el.textContent) !== beforeAll.get(e.el)['#text'];
+    return live(e);
+  }
+  // Like a CSS selector, so a coding agent can find it: span.swatch, button#buy.
+  function testTag(el) {
+    if (!el || el.nodeType !== 1) return 'text';
+    return el.tagName.toLowerCase() + (el.id ? '#' + el.id : el.classList && el.classList[0] ? '.' + el.classList[0] : '');
+  }
+  function testRow(e) {
+    var at = e.type === 'added' || e.type === 'style' ? e.el.parentElement : e.type === 'removed' ? null : e.el;
+    if (at && at.isConnected && at !== document.body && at !== document.documentElement) at.setAttribute('data-rbtest', e.n);
+    else at = null;
+    return {
+      n: e.n, type: e.type, attr: e.attr || '', where: describe(e.el), el: uid(e.el), tag: testTag(e.el), mark: at ? e.n : null,
+      before: e.type === 'attr' ? e.before : e.type !== 'text' ? null
+        : beforeAll && beforeAll.has(e.el) ? beforeAll.get(e.el)['#text'] : squash(e.parts.map(function (p) { return p.before; }).join(' ')),
+      now: testNow(e), inEffect: testStill(e),
+    };
+  }
+  window.RB_TEST = {
+    // Waits until the adapter has loaded and its enable() has finished.
+    ready: function (name) {
+      return started.then(function () {
+        if (!loading[name]) throw new Error(name + ' is not turned on');
+        return loading[name];
+      }).then(function () { return enabling[name]; })
+        .then(function () { return { error: errors[name] || null }; }, function (e) { return { error: errors[name] || String((e && e.message) || e) }; });
+    },
+    changes: function (name) {
+      Track.flush(Track.who);
+      return Track.list.filter(function (e) { return e.who === name; }).map(testRow);
+    },
+    // Switches the adapter off in place (the panel would reload instead), then lists the changes
+    // still in effect half a second later.
+    undo: function (name) {
+      var a = adapters[name];
+      if (!a) return Promise.resolve({ error: name + ' never loaded', left: [] });
+      var err = null;
+      try { a.disable(); } catch (e) { err = String((e && e.message) || e); }
+      return new Promise(function (done) { setTimeout(done, 500); }).then(function () {
+        Track.flush(Track.who);
+        var left = Track.list.filter(function (e) { return e.who === name && testStill(e); });
+        return { error: err, left: left.map(testRow) };
+      });
+    },
+    // What the adapters said out loud through a live region, like "Added names to 3 colors".
+    heard: function () { return Track.heard.map(function (h) { return { who: h.who, text: h.text }; }); },
+  };
 
   // ── Checks ────────────────────────────────────────────────────────────────
   function runChecks() {
@@ -2286,6 +2610,9 @@
     '.ws-msg{color:#59636e;font-size:12px;margin-top:6px!important}.ws-msg:empty{display:none}' +
     '.ws-card{margin-top:10px!important;padding:8px 12px 10px;border:1px solid #d1d9e0;border-radius:6px}.ws-card > .ws-lab:first-child{margin-top:0!important}' +
     '.ws-incard{border-color:#0969da;margin:0 0 4px!important}' +
+    '.ws-thread{list-style:none;margin:8px 0!important;padding:0!important;border-left:2px solid #d1d9e0}.ws-thread li{padding:4px 0 4px 10px}' +
+    '.ws-who{display:block;font-size:12px;font-weight:600;color:#59636e}.ws-ver .ws-who{color:#1f2328}.ws-checks{display:block;color:#59636e;font-size:12px;margin-top:2px}' +
+    '#ws-folder{border-color:#0969da;margin:0 0 12px!important}#ws-folder .ws-lab{margin-top:10px!important}' +
     '.ws-plain{list-style:none;margin-top:4px!important}.ws-plain li{padding:3px 0}.ws-block{display:block}' +
     '.ws-more{margin-top:8px!important}.ws-more summary{cursor:pointer;color:#0969da;font-size:12px}' +
     '.ws-pre{max-height:240px;overflow:auto;margin:6px 0 0;padding:8px;background:#f6f8fa;border:1px solid #d1d9e0;border-radius:6px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}' +

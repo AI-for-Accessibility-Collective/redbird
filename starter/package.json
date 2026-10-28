@@ -1,0 +1,13 @@
+{
+  "name": "redbird-adapter",
+  "private": true,
+  "type": "module",
+  "description": "One adapter for Redbird, the AI for Accessibility workshop's practice store",
+  "scripts": {
+    "dev": "node tools/dev.mjs",
+    "test": "node tools/test.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.50.0"
+  }
+}

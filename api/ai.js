@@ -75,7 +75,7 @@ const TASKS = {
     long: true,
     text: builders.reviseAdapter({
       code: clip(b.code, MAX_CODE), description: clip(b.description, MAX_DESC), feedback: clip(b.feedback, MAX_NOTE),
-      error: clip(b.error, 600), person: clip(b.person, MAX_NOTE), snapshot: clip(b.snapshot, MAX_PAGE),
+      error: clip(b.error, 600), history: clip(b.history, MAX_DESC), person: clip(b.person, MAX_NOTE), snapshot: clip(b.snapshot, MAX_PAGE),
       target: clip(b.target, 3000), url: clip(b.url, 300),
     }),
   }),

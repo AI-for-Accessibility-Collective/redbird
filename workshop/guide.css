@@ -143,3 +143,6 @@ tr:nth-child(2n) td { background: var(--subtle); }
 .btn-danger:hover { background: #a40e26; }
 .btn-danger:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
 .ex-table td:first-child { white-space: nowrap; }
+.btn { font: inherit; font-weight: 600; color: #fff; background: #1f883d; border: 1px solid rgba(31, 35, 40, .15); border-radius: 6px; padding: 8px 16px; min-height: 40px; cursor: pointer; }
+.btn:hover { background: #1a7f37; }
+.btn:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }

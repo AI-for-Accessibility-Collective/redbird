@@ -197,6 +197,9 @@ function page(snapshot, target, url) {
     `The page's markup, shortened (long text cut, repeated items collapsed):\n${snapshot || '(not available)'}`;
 }
 
+// The panel shows this line to the person as what each version did, then takes it off the code.
+const NOTE = `Start the file with one line: "// What changed: " and one short, plain sentence for the person who asked, with no code words.`;
+
 function writeAdapter({ description, name, person, snapshot, target, url }) {
   return `${ADAPTER_RULES}${page(snapshot, target, url)}
 
@@ -206,16 +209,17 @@ What the person wants changed:
 ${description}
 ${name ? `\nWhat they called it: ${name}` : ''}${about(person)}
 
+${NOTE} Say what the adapter does on the page, for example: "// What changed: The star ratings are read out as numbers, like 4.6 out of 5 stars."
 Return only the JavaScript module. No fences, no explanation.`;
 }
 
-function reviseAdapter({ code, description, feedback, error, person, snapshot, target, url }) {
+function reviseAdapter({ code, description, feedback, error, history, person, snapshot, target, url }) {
   return `${ADAPTER_RULES}${page(snapshot, target, url)}
 
 # Revising an adapter
 
 You wrote the adapter below for this request: "${description}"${about(person)}
-
+${history ? `\nSince then they also asked for these, which the code should still do:\n${history}\n` : ''}
 CURRENT CODE:
 ${code}
 
@@ -226,6 +230,7 @@ ${error ? `When the workshop tried to run it, it failed with: ${error}\n\n` : ''
 4. If it broke something, narrow it: stricter selectors, or leave out the elements it shouldn't touch.
 5. If there was an error, fix its cause.
 
+${NOTE} Say what is different from the last version, for example: "// What changed: It now also reads the stars in the reviews." Leave out the last version's "What changed" line.
 Return only the revised JavaScript module. No fences, no explanation.`;
 }
 
