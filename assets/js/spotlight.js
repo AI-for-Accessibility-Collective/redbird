@@ -17,7 +17,10 @@
   // always starts off.
   var value = new URLSearchParams(location.search).get('spotlight');
   try { localStorage.removeItem(KEY); } catch (e) { /* private window */ }
-  if ((!force && (value || 'off').toLowerCase() !== 'on') || !window.RB_ISSUES || !window.RB) return;
+  if (!window.RB_ISSUES || !window.RB) return;
+  // Off, it still checks when asked (RB_ISSUE_REPORT, below), for tests and the workshop panel,
+  // but draws nothing on the page.
+  var quiet = !force && (value || 'off').toLowerCase() !== 'on';
 
   var esc = RB.esc;
 
@@ -38,7 +41,7 @@
   // ── Small helpers ─────────────────────────────────────────────────────────
   var ui = null;
   // The spotlight's own parts and the workshop panel are never part of the store.
-  function ours(el) { return (ui && ui.contains(el)) || !!el.closest('.ws-panel, .ws-calm-note'); }
+  function ours(el) { return (ui && ui.contains(el)) || !!el.closest('#rb-spotlight, .ws-panel, .ws-calm-note'); }
   function all(sel) { return Array.prototype.filter.call(document.querySelectorAll(sel), function (el) { return !ours(el); }); }
   function text(el) { return (el.textContent || '').replace(/\s+/g, ' ').trim(); }
   function rendered(el) { return el.isConnected && el.getClientRects().length > 0; }
@@ -483,6 +486,7 @@
       next[n] = s;
     });
     state = next;
+    if (quiet) return;
     if (changed.length) say((changed.length === 1 ? 'Issue ' : 'Issues ') + changed.join(' and ') + (changed.length === 1 ? ' is' : ' are') + ' fixed now.');
     checkedOnce = true;
     render();
@@ -919,14 +923,19 @@
   }
 
   // ── Start ─────────────────────────────────────────────────────────────────
+  // What the spotlight sees, for tests and agents: [{ issue, title, status, places, still }].
+  // status is fixed, partly, present (not fixed), nocheck or waiting.
+  function report() {
+    return present().map(function (n) { return { issue: n, title: ISSUES[n].title, status: state[n].status, places: state[n].places.length, still: state[n].still }; });
+  }
+  if (quiet) {
+    window.RB_ISSUE_REPORT = function () { check(); return report(); };
+    return;
+  }
   build();
   check();
-  window.RB_SPOTLIGHT = {
-    // What the spotlight sees, for tests and agents: [{ issue, status, places, still }].
-    report: function () {
-      return present().map(function (n) { return { issue: n, status: state[n].status, places: state[n].places.length, still: state[n].still }; });
-    },
-  };
+  window.RB_ISSUE_REPORT = function () { check(); return report(); };
+  window.RB_SPOTLIGHT = { report: report };
   // Check again when the page changes (adapters change it after load), at most twice a second,
   // and every second anyway, since moving rows and tickers change without touching the page.
   var queued = false;
@@ -938,6 +947,7 @@
   watcher.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
   var ticker = setInterval(function () { if (!document.hidden) check(); }, 1000);
   window.RB_SPOTLIGHT.stop = function () {
+    quiet = true; // RB_ISSUE_REPORT still works, without the badges
     watcher.disconnect();
     clearInterval(ticker);
     document.removeEventListener('mousedown', clickAway, true);
