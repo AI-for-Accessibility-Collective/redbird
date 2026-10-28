@@ -5,7 +5,8 @@
   "description": "One adapter for Redbird, the AI for Accessibility workshop's practice store",
   "scripts": {
     "dev": "node tools/dev.mjs",
-    "test": "node tools/test.mjs"
+    "test": "node tools/test.mjs",
+    "page": "node tools/page.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.50.0"
