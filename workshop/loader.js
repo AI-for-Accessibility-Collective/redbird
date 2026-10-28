@@ -224,7 +224,7 @@
   var t0 = Date.now(), uids = new WeakMap(), nextUid = 0;
   function uid(el) { if (!uids.has(el)) uids.set(el, ++nextUid); return uids.get(el); }
   var Track = {
-    who: null, list: [], keys: {}, owned: new WeakMap(), heard: [], obs: null,
+    who: null, list: [], keys: {}, owned: new WeakMap(), heard: [], obs: null, undoing: false,
     start: function () {
       var self = this;
       this.obs = new MutationObserver(function (recs) { self.take(recs, self.who); });
@@ -305,6 +305,7 @@
       e.parts = e.parts || [];
       var seen = e.parts.some(function (p) { return p.nodes.some(function (n) { return nodes.indexOf(n) !== -1; }); });
       if (!seen) e.parts.push({ before: before || '', nodes: nodes, inPlace: !!inPlace });
+      if (!this.undoing) e.wrote = squash(el.textContent); // what the element says after this adapter's change
       return e;
     },
     // The toolkit's fixes: compare an element before and after its fix, however long the AI took.
@@ -373,6 +374,29 @@
 
   // ── AI ────────────────────────────────────────────────────────────────────
   var aiUrl = new URL('../api/ai', base).href;
+  // How many requests to the store's AI are on their way, from any adapter, including ones that call
+  // /api/ai themselves. The checks on each version, and the tests, wait for these to come back, since
+  // an adapter that rewrites text with AI keeps changing the page after enable() returns.
+  var aiBusy = 0, aiQuietSince = Date.now();
+  if (window.fetch) {
+    var fetch0 = window.fetch;
+    window.fetch = function (input) {
+      var url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (!/\/api\/ai(\?|$)/.test(url)) return fetch0.apply(this, arguments);
+      aiBusy++;
+      return fetch0.apply(this, arguments).finally(function () { aiBusy--; aiQuietSince = Date.now(); });
+    };
+  }
+  // Resolves once no AI request has been on its way for half a second, or after `max` ms.
+  function aiSettled(max) {
+    var until = Date.now() + (max || 20000);
+    return new Promise(function (done) {
+      (function check() {
+        if ((!aiBusy && Date.now() - aiQuietSince > 500) || Date.now() > until) return done();
+        setTimeout(check, 200);
+      })();
+    });
+  }
   // Leaving the page cancels any AI request still on its way. Those just stop, instead of each
   // failing and filling the console with "AI is not available" from the adapter that asked.
   var leaving = false;
@@ -466,13 +490,15 @@
     if (!text || (live.waiting || []).slice(-1)[0] === text) return;
     // Whether everything waiting came from the panel itself, so the Audit tab's log says so.
     live.panel = (!live.waiting || !live.waiting.length ? true : live.panel) && !!mine;
+    if (!mine && Track.who) live.__wsSpeaker = Track.who;
     live.waiting = (live.waiting || []).concat(text);
     clearTimeout(live.timer);
     live.timer = setTimeout(function () {
       var words = live.waiting.join('. ');
       live.waiting = [];
       if (live.panel) live.__wsWho = 'panel';
-      else if (live.__wsWho === 'panel') live.__wsWho = null;
+      else live.__wsWho = live.__wsSpeaker || (live.__wsWho === 'panel' ? null : live.__wsWho);
+      live.__wsSpeaker = null;
       live.textContent = '';
       setTimeout(function () { live.textContent = words; live.until = Date.now() + 1200; }, 60);
     }, Math.max(50, (live.until || 0) - Date.now()));
@@ -1897,6 +1923,7 @@
     var ids = idsOf(result);
     Promise.all(ids.map(function (n) { return Promise.resolve(loading[n]).then(function () { return enabling[n]; }).catch(function () {}); }))
       .then(function () { return new Promise(function (ok) { setTimeout(ok, 1500); }); })
+      .then(function () { return aiSettled(20000); })
       .then(function () {
         if (versions().slice(-1)[0] !== v) return;
         var c = { page: pageKey(), error: ids.map(function (n) { return errors[n]; }).filter(Boolean)[0] || (ids.indexOf('mine') !== -1 && mineWarn) || '',
@@ -1909,7 +1936,8 @@
           Object.keys(was).concat(Object.keys(now)).filter(function (n, i, all) { return all.indexOf(n) === i; }).forEach(function (n) {
             var a = was[n], b = now[n];
             if (issueWords(a) === issueWords(b)) return;
-            c.issues.push({ issue: +n, title: (a || b).title, was: issueWords(a), now: issueWords(b), status: b ? b.status : 'gone',
+            // Gone from a page it was on means the adapter fixed every place it showed up.
+            c.issues.push({ issue: +n, title: (a || b).title, was: issueWords(a), now: b ? issueWords(b) : 'fixed', status: b ? b.status : a ? 'fixed' : 'gone',
               worse: (RANK[(b || {}).status] || 1) < (RANK[(a || {}).status] || 1) && !!b });
           });
           c.issues.sort(function (x, y) { return x.issue - y.issue; });
@@ -2446,9 +2474,16 @@
   // adapter ran, since putting the old words back counts as a new change to the same element.
   function testStill(e) {
     if (e.type === 'removed') return !e.el.isConnected;
+    // An empty class or style left where there was none does nothing, so it counts as put back.
+    if (e.type === 'attr' && /^(class|style)$/.test(e.attr) && e.before == null && !(e.el.getAttribute(e.attr) || '').trim()) return false;
     if (e.type !== 'text') return live(e);
-    if (beforeAll && beforeAll.has(e.el)) return e.el.isConnected && squash(e.el.textContent) !== beforeAll.get(e.el)['#text'];
-    // Drawn after the page loaded: a node edited in place is back when it has its old words again.
+    if (!e.el.isConnected) return false;
+    var now = squash(e.el.textContent), orig = beforeAll && beforeAll.has(e.el) ? beforeAll.get(e.el)['#text'] : null;
+    // Left behind when the words the adapter wrote are still there. This holds however the adapter
+    // puts the old words back, and whatever the store does to the element by itself in between.
+    if (e.wrote != null && e.wrote !== orig) return now === e.wrote;
+    // The adapter's change didn't alter the words (e.g., it wrapped a word in a tag): look at the nodes.
+    if (orig != null) return now !== orig;
     return e.parts.some(function (p) {
       return p.inPlace ? p.nodes[0].isConnected && p.nodes[0].data !== p.before : p.nodes.some(function (n) { return n.isConnected; });
     });
@@ -2476,6 +2511,8 @@
         if (!loading[name]) throw new Error(name + ' is not turned on');
         return loading[name];
       }).then(function () { return enabling[name]; })
+        .then(function () { return new Promise(function (ok) { setTimeout(ok, 800); }); })
+        .then(function () { return aiSettled(20000); })
         .then(function () { return { error: errors[name] || null }; }, function (e) { return { error: errors[name] || String((e && e.message) || e) }; });
     },
     changes: function (name) {
@@ -2488,9 +2525,11 @@
       var a = adapters[name];
       if (!a) return Promise.resolve({ error: name + ' never loaded', left: [] });
       var err = null;
+      Track.undoing = true;
       try { a.disable(); } catch (e) { err = String((e && e.message) || e); }
       return new Promise(function (done) { setTimeout(done, 500); }).then(function () {
         Track.flush(Track.who);
+        Track.undoing = false;
         var left = Track.list.filter(function (e) { return e.who === name && testStill(e); });
         return { error: err, left: left.map(testRow) };
       });
