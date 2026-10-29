@@ -109,6 +109,12 @@ const PER_MINUTE = 600;
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  // The extension in extension/ puts the panel on other sites, which then call this from their own
+  // pages, so the browser has to be told any page may. Anyone could already call it from a server.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: 'The shared AI key is not set up.' });

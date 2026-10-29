@@ -28,6 +28,9 @@
   // Libraries some toolkit adapters expect on the page, as the extension provides them.
   var NEEDS = { 'reader-mode': ['Readability', 'https://cdn.jsdelivr.net/npm/@mozilla/readability@0.5.0/Readability.js'] };
   var isTop = window.top === window;
+  // The extension in extension/ also puts this panel on other sites, which have none of the store's
+  // planted problems.
+  var onStore = location.origin === new URL(base).origin;
   var qs = new URLSearchParams(location.search);
   function remember(key, param) {
     var v = qs.get(param);
@@ -894,13 +897,13 @@
     root = host.attachShadow({ mode: 'open' });
     root.innerHTML = '<style>' + CSS + '</style>' +
       '<aside class="ws-panel" aria-label="AI4A11y Toolkit" data-side="' + ui.side + '">' +
-        '<a class="ws-skip" href="#" id="ws-skip">Skip to the store</a>' +
+        '<a class="ws-skip" href="#" id="ws-skip">Skip to the ' + (onStore ? 'store' : 'page') + '</a>' +
         '<div class="ws-top">' +
           '<h2 class="ws-head"><span class="ws-title">AI4A11y Toolkit <span class="ws-sub">(Workshop Demo)</span></span></h2>' +
         '<button type="button" class="ws-icon" id="ws-reset" aria-label="Reset the panel’s width and side" title="Reset width and side">↺</button>' +
         '<button type="button" class="ws-icon" id="ws-side"></button></div>' +
-        '<div class="ws-bar"><label class="ws-toggle" title="Marks each problem on the page with a red number, which turns green when an adapter fixes it.">' +
-          '<input type="checkbox" role="switch" class="ws-spot"' + (spotOn() ? ' checked' : '') + '> <span>Show accessibility problems on the page</span></label></div>' +
+        (onStore ? '<div class="ws-bar"><label class="ws-toggle" title="Marks each problem on the page with a red number, which turns green when an adapter fixes it.">' +
+          '<input type="checkbox" role="switch" class="ws-spot"' + (spotOn() ? ' checked' : '') + '> <span>Show accessibility problems on the page</span></label></div>' : '') +
         '<div class="ws-main">' +
           '<div class="ws-tabs" role="tablist" aria-label="AI4A11y Toolkit">' +
             tab('profiles', 'Profiles') + tab('adapters', 'Adapter Library') + tab('build', 'Build your adapter') + tab('audit', 'Audit') +
