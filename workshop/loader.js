@@ -177,34 +177,17 @@
     mark: ['Mark Sugarberg, ADHD and anxiety', ['calm-urgency', 'pause-moving-things', 'real-arrival-dates']],
     bill: ['Bill Grapes, older adult', ['visual-assist', 'big-targets', 'confirm-actions', 'real-arrival-dates']],
   };
-  // The toolkit's own 12 profiles (its tools/profiles/settings.json), each with the few adapters that
-  // work well together on this store. The full profiles turn on 8 or more at once, which fight.
-  // [name, the toolkit's description, adapters]
-  var TOOLKIT_PROFILES = {
-    blind: ['Blind', 'Optimized for screen reader users: structure, labels, descriptions', ['toolkit-fixes', 'live-region-announcer', 'skip-links', 'swatch-names', 'describe-on-demand']],
-    lowVision: ['Low vision', 'Larger text, spacing, enhanced focus, contrast fixes', ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates']],
-    colorBlind: ['Color blindness', 'Contrast fixes, photo descriptions, and a clear focus ring', ['toolkit-fixes', 'focus-locator']],
-    deaf: ['Deaf and hard of hearing', 'Captions on videos, and a sign on screen when the page plays a sound', ['auto-transcriber', 'sound-visualizer']],
-    motor: ['Motor disability', 'Bigger buttons and links, a clear focus ring, and a check before you pay', ['big-targets', 'focus-locator', 'skip-links', 'stop-auto-advance', 'confirm-actions']],
-    dyslexia: ['Dyslexia', 'More space between lines, and focus mode', ['visual-assist', 'focus-mode']],
-    adhd: ['ADHD', 'Reduced distractions, progress indicators, summaries for long content', ['focus-mode', 'stop-auto-advance', 'calm-urgency', 'reading-level']],
-    cognitive: ['Cognitive disability', 'Plain-language text, spelled-out abbreviations, and real dates', ['reading-level', 'abbreviation-expand', 'real-arrival-dates', 'calm-urgency', 'focus-mode', 'stop-auto-advance']],
-    olderAdult: ['Older adult', 'Bigger text and buttons, plain language, and a check before you pay', ['visual-assist', 'big-targets', 'reading-level', 'stop-auto-advance', 'confirm-actions']],
-    anxiety: ['Anxiety', 'Calm interface, reduced motion, progress indicators reduce uncertainty', ['calm-urgency', 'stop-auto-advance', 'real-arrival-dates', 'confirm-actions']],
-    sensory: ['Sensory processing', 'Overload prevention: no motion, fewer distractions', ['stop-auto-advance', 'reduce-brightness', 'calm-urgency', 'mute-sounds']],
-    photosensitive: ['Light sensitivity', 'Dark mode and reduced motion', ['dark-mode', 'reduce-brightness', 'stop-auto-advance']],
-  };
-  // My profile: the one people make for themselves in the Profiles tab. The shoppers and the
-  // toolkit's profiles are made-up people, and this one is what the toolkit is for: a profile the
+  // My profile: the one people make for themselves in the Profiles tab. The shoppers are
+  // made-up people, and this one is what the toolkit is for: a profile the
   // person keeps using. It stays in this browser, and saves as a file the toolkit's browser
   // extension can import (the toolkit's "aa-profile-blob" format).
   var ME_KEY = 'redbird:me';
   function myProfile() { try { var m = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return m && m.freeText ? m : null; } catch (e) { return null; } }
-  function isPerson(id) { return id === 'me' || (id === 'toolkit' && !!toolkitConfig) || !!(PEOPLE[id] || TOOLKIT_PROFILES[id]); }
+  function isPerson(id) { return id === 'me' || (id === 'toolkit' && !!toolkitConfig) || !!PEOPLE[id]; }
   function setOf(id) {
     if (id === 'toolkit') return []; // the developer turns adapters on, here or from the console
     if (id === 'me') { var m = myProfile(); return m && m.adapters ? m.adapters.filter(function (n) { return ADAPTERS[n]; }) : []; }
-    return PEOPLE[id] ? PEOPLE[id][1] : TOOLKIT_PROFILES[id][2];
+    return PEOPLE[id] ? PEOPLE[id][1] : [];
   }
   // Fixes the person added to their own profile come on with it: a skill's adapters, and the code of
   // one adapter they built (only one runs as "your adapter" at a time).
@@ -220,8 +203,8 @@
   // The presets in the person's toolkit (the developer console's profile library), for the dropdown.
   var toolkitPresets = [];
   function toolkitName() { return 'Your toolkit profile' + (toolkitSelected ? ': ' + toolkitSelected.name + (toolkitSelected.edited ? ' (edited)' : '') : ''); }
-  function nameOf(id) { return id === 'me' ? 'My profile' : id === 'toolkit' ? toolkitName() : PEOPLE[id] ? PEOPLE[id][0] : TOOLKIT_PROFILES[id][0] + ' (toolkit profile)'; }
-  // A workshop shopper's profile is a file next to this one; a toolkit profile is its name and description.
+  function nameOf(id) { return id === 'me' ? 'My profile' : id === 'toolkit' ? toolkitName() : PEOPLE[id] ? PEOPLE[id][0] : id; }
+  // A workshop shopper's profile is a file next to this one.
   function loadProfile(id) {
     if (id === 'me') return Promise.resolve(myProfile());
     // The profile in the person's toolkit, the one the developer console edits.
@@ -230,7 +213,6 @@
         return Object.assign({}, p, { name: toolkitName(), freeText: p.freeText || 'The profile loaded in your developer console. It has no description yet.' });
       }).catch(function (e) { console.warn('[workshop] toolkit profile:', e); return null; });
     }
-    if (TOOLKIT_PROFILES[id]) return Promise.resolve({ name: TOOLKIT_PROFILES[id][0], freeText: TOOLKIT_PROFILES[id][1], toolkit: true });
     return fetch(base + 'profiles/' + id + '.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
   // My profile is the default: the person's own profile comes first, the made-up shoppers after.
@@ -948,8 +930,7 @@
   // tap. Like the toolkit's profiles, it learns: turn one of their adapters off, or another one on,
   // and it's remembered for that person next time (see LEARN_KEY).
   function profilesHTML() {
-    var people = '<optgroup label="Workshop shoppers">' + Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('') + '</optgroup>' +
-      '<optgroup label="The toolkit’s profiles">' + Object.keys(TOOLKIT_PROFILES).map(function (id) { return '<option value="' + id + '">' + TOOLKIT_PROFILES[id][0] + '</option>'; }).join('') + '</optgroup>';
+    var people = '<optgroup label="Workshop shoppers">' + Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('') + '</optgroup>';
     return '<label class="ws-lab" for="ws-prof">Shop as</label>' +
       '<select id="ws-prof" class="ws-select"><option value="me">My profile</option>' + (toolkitConfig ? '<option value="toolkit">' + esc(toolkitName()) + '</option>' : '') + people + '</select>' +
       '<div id="ws-persona"></div>' +
@@ -973,7 +954,7 @@
     var lon = l ? l.on.filter(function (n) { return names.indexOf(n) !== -1; }) : [], loff = l ? l.off.filter(function (n) { return names.indexOf(n) === -1; }) : [];
     if (lon.length) bits.push('keeps ' + lon.map(label).join(', ') + ' on');
     if (loff.length) bits.push('keeps ' + loff.map(label).join(', ') + ' off');
-    var whose = !bits.length ? '' : profileName === 'me' ? 'your profile' : nameOf(profileName).split(',')[0].replace(' (toolkit profile)', '');
+    var whose = !bits.length ? '' : profileName === 'me' ? 'your profile' : nameOf(profileName).split(',')[0];
     $('#ws-learned').innerHTML = bits.length ? 'Learned from you: ' + esc(whose) + ' ' + esc(bits.join(' and ')) + '. <button type="button" class="ws-link" id="ws-forget">Forget this</button>' : '';
     // The person's adapters stay listed when they're off, so they can be ticked back on. The
     // boxes are the same switches as in the Adapter Library tab, kept in step both ways.
@@ -1225,7 +1206,7 @@
       .then(function (prof) {
         profileName = id === 'none' ? '' : id;
         currentProfile = prof;
-        baseOptions.profile = prof && !prof.toolkit ? prof : null;
+        baseOptions.profile = prof || null;
         try { localStorage.setItem('redbird:profile', id); } catch (e) {}
         qs.set('profile', id);
         var again = names.filter(function (n) { return ids.indexOf(n) !== -1 && n !== 'toolkit-fixes' && n !== 'mine'; });
@@ -1238,7 +1219,7 @@
         renderFor();
         var on = names.length + ' adapter' + (names.length === 1 ? '' : 's') + ' on.';
         status(id === 'me' ? (prof ? 'Using your profile. ' + on : 'Answer the questions below to make your profile.')
-          : !prof ? 'Shopping as nobody in particular. ' + on : prof.toolkit ? 'Using the toolkit’s ' + TOOLKIT_PROFILES[id][0] + ' profile. ' + on : 'Shopping as ' + nameOf(id) + '. ' + on);
+          : !prof ? 'Shopping as nobody in particular. ' + on : 'Shopping as ' + nameOf(id) + '. ' + on);
       }, function () { go({ profile: id, try: ids.join(',') || 'none', issues: 'on' }); });
   }
   function fillProfiles() {
@@ -2771,7 +2752,7 @@
   var started = Promise.all([profile, incomingReady]).then(function (r) {
     var prof = r[0];
     currentProfile = prof;
-    baseOptions = { profile: prof && !prof.toolkit ? prof : null, today: window.RB ? RB.today() : new Date(), rewrite: rewrite, fallback: storeFallback };
+    baseOptions = { profile: prof || null, today: window.RB ? RB.today() : new Date(), rewrite: rewrite, fallback: storeFallback };
     if (panelOn) panel();
     if (testing) {
       beforeAll = new WeakMap();
@@ -2783,7 +2764,7 @@
     // Load the shoppers' adapters in the background, so switching between them doesn't wait on the network.
     if (panelOn) setTimeout(function () {
       var all = [];
-      Object.keys(PEOPLE).concat(Object.keys(TOOLKIT_PROFILES)).forEach(function (id) {
+      Object.keys(PEOPLE).forEach(function (id) {
         setOf(id).forEach(function (n) { if (all.indexOf(n) === -1 && n !== 'toolkit-fixes' && n !== 'mine') all.push(n); });
       });
       all.forEach(function (n) { ensure(n).catch(function () {}); });
@@ -2866,11 +2847,11 @@
     if (!toolkitPresets.length) return;
     var group = document.createElement('optgroup');
     group.id = 'ws-presets';
-    group.label = 'Pick one for your toolkit';
+    group.label = 'Saved on your toolkit';
     toolkitPresets.forEach(function (p) {
       var o = document.createElement('option');
       o.value = 'preset:' + p.id;
-      o.textContent = p.name + (p.description ? ' (' + p.description + ')' : '') + (toolkitSelected && toolkitSelected.id === p.id ? ' – selected' : '');
+      o.textContent = p.name + (p.description ? ' (' + p.description + ')' : '');
       group.appendChild(o);
     });
     at.after(group);
