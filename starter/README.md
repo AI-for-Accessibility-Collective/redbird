@@ -12,6 +12,16 @@ This folder has one adapter for Redbird, the workshop's practice store. You can 
 
 The agent starts the store and gives you a link, like `http://localhost:5179/product?id=rb-20w-usbc-charger&try=local`. Open it in Chrome. It's the same store and workshop panel, but it runs your `adapter.js` on every page, and the page runs it again each time `adapter.js` is saved.
 
+## Show it in your developer console
+
+If your workshop runs an AI for Accessibility toolkit, start the store with your toolkit's address and the default token from its developer console:
+
+```
+TOOLKIT_URL=http://localhost:8080 TOOLKIT_TOKEN=aat_… npm run dev
+```
+
+Your adapter then shows up in the console under Apps, as part of Redbird demo ("Your folder's adapter.js"), and you can shop as your toolkit profile. The token only goes to the pages this folder serves on your computer.
+
 ## Build it together
 
 One person on your team uses the store the way the person you're building for would, and the coding agent changes the code. Each round goes like this:

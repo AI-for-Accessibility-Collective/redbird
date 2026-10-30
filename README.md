@@ -31,6 +31,15 @@ To keep building a fix with a coding agent like Claude Code or Codex, download i
 
 The [AI for Accessibility extension](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Extension) also works on Redbird the same way it works on any other site.
 
+## Connect to your toolkit
+
+If your workshop runs an [AI for Accessibility toolkit](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit), sign in to its developer console, go to Apps, and press Open Redbird. The store opens connected to your account:
+
+- Each Redbird tab shows up in the console under Apps, as Redbird demo. From there you can turn the workshop adapters on and off, and so can a coding agent that has your token.
+- You can shop as your own toolkit profile ("Your toolkit profile" in the panel's Profiles tab).
+
+The toolkit has to allow the store's address, so start it with `npm run dev:workshop`. To connect by hand instead, open the panel's Profiles tab, then Connect to your toolkit, and paste the toolkit's address and your default token. The toolkit is pre-alpha research software, so expect rough edges.
+
 ## Agent task
 
 [AGENT-TASK.md](AGENT-TASK.md) is a shopping task for the verification layer: buy a USB-C charger under $25 that arrives by a set date. The store has six decision points where the agent should stop and ask the user. For example, a protection plan is already ticked, and a charger sells out at checkout.
