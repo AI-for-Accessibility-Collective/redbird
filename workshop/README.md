@@ -86,6 +86,6 @@ A profile describes one person's needs. The adapters get it as `options.profile`
 - `mark.json`: Mark Sugarberg, ADHD and anxiety, wants pressure messages hidden
 - `dario.json`: Dario Almondei, dyslexia, prefers short, plain text at about a sixth grade level
 
-When the store is connected to your toolkit, "Your toolkit profile" is also on the list: the profile you edit on the Profiles page of the developer console.
+When the store is connected to your toolkit, "Your toolkit profile" is also on the list: the profile you edit on the Profiles page of the developer console. With one of the console's built-in presets selected (Profile 1–9), the store turns on a few adapters for it, such as captions and a sign for sounds for Profile 6 (deafness). Pick a preset under "Saved on your toolkit" to change your toolkit's profile from the store.
 
 They use the toolkit's profile shape. For example, a need looks like `{ "dimension": "urgency", "value": "hide" }`, and the reading level is `fields.readingLevel`. To make a new one, copy a file and change the needs.

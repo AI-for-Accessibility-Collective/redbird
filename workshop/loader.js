@@ -177,6 +177,20 @@
     mark: ['Mark Sugarberg, ADHD and anxiety', ['calm-urgency', 'pause-moving-things', 'real-arrival-dates']],
     bill: ['Bill Grapes, older adult', ['visual-assist', 'big-targets', 'confirm-actions', 'real-arrival-dates']],
   };
+  // The adapters each of the developer console's built-in presets (Profile 1–9, ids wai-1…wai-9,
+  // adapted from W3C WAI's Stories of Web Users) turns on here: a few that work well together on
+  // this store. Shopping as your toolkit profile uses the selected preset's set.
+  var PRESET_ADAPTERS = {
+    'wai-1': ['big-targets', 'focus-locator', 'skip-links', 'stop-auto-advance', 'confirm-actions'], // limited arm mobility
+    'wai-2': ['stop-auto-advance', 'reduce-brightness', 'calm-urgency', 'mute-sounds'], // autism
+    'wai-3': ['toolkit-fixes', 'live-region-announcer', 'skip-links', 'swatch-names', 'describe-on-demand'], // blindness
+    'wai-4': ['toolkit-fixes', 'focus-locator'], // color blindness
+    'wai-5': ['reading-level', 'abbreviation-expand', 'real-arrival-dates', 'calm-urgency', 'focus-mode', 'stop-auto-advance'], // Down syndrome
+    'wai-6': ['auto-transcriber', 'sound-visualizer'], // deafness
+    'wai-7': ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates', 'auto-transcriber', 'sound-visualizer'], // deafblindness (magnified text)
+    'wai-8': ['focus-mode', 'stop-auto-advance', 'calm-urgency', 'reading-level', 'visual-assist'], // ADHD and dyslexia
+    'wai-9': ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates', 'big-targets', 'confirm-actions'], // low vision, tremor, memory support
+  };
   // My profile: the one people make for themselves in the Profiles tab. The shoppers are
   // made-up people, and this one is what the toolkit is for: a profile the
   // person keeps using. It stays in this browser, and saves as a file the toolkit's browser
@@ -185,7 +199,8 @@
   function myProfile() { try { var m = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return m && m.freeText ? m : null; } catch (e) { return null; } }
   function isPerson(id) { return id === 'me' || (id === 'toolkit' && !!toolkitConfig) || !!PEOPLE[id]; }
   function setOf(id) {
-    if (id === 'toolkit') return []; // the developer turns adapters on, here or from the console
+    // The selected preset's adapters; a profile saved by hand has none, and the developer turns them on.
+    if (id === 'toolkit') return (toolkitSelected && PRESET_ADAPTERS[toolkitSelected.id] || []).slice();
     if (id === 'me') { var m = myProfile(); return m && m.adapters ? m.adapters.filter(function (n) { return ADAPTERS[n]; }) : []; }
     return PEOPLE[id] ? PEOPLE[id][1] : [];
   }
@@ -949,7 +964,7 @@
     pills.innerHTML = names.length ? names.map(function (n) {
       return '<li class="ws-pill" title="' + esc((ADAPTERS[n] || {}).help || '') + '">' + esc(label(n)) + '</li>';
     }).join('') : '<li class="ws-help">No adapters on yet.</li>';
-    var l = profileName ? learned()[profileName] : null, bits = [];
+    var l = profileName ? learned()[learnKey(profileName)] : null, bits = [];
     // Only what matches the page now: a guide link can turn on an adapter the person turned off.
     var lon = l ? l.on.filter(function (n) { return names.indexOf(n) !== -1; }) : [], loff = l ? l.off.filter(function (n) { return names.indexOf(n) === -1; }) : [];
     if (lon.length) bits.push('keeps ' + lon.map(label).join(', ') + ' on');
@@ -973,20 +988,22 @@
   }
   // What the panel learned for each person: { sam: { on: [...], off: [...] } }.
   var LEARN_KEY = 'redbird:learned';
+  // Your toolkit profile learns per preset: what you changed under Profile 3 stays with Profile 3.
+  function learnKey(id) { return id === 'toolkit' && toolkitSelected ? 'toolkit:' + toolkitSelected.id : id; }
   function learned() { try { return JSON.parse(localStorage.getItem(LEARN_KEY) || '{}') || {}; } catch (e) { return {}; } }
   function learnedSet(id) {
-    var l = learned()[id] || { on: [], off: [] };
+    var l = learned()[learnKey(id)] || { on: [], off: [] };
     return setOf(id).filter(function (n) { return l.off.indexOf(n) === -1; }).concat(l.on.filter(function (n) { return setOf(id).indexOf(n) === -1; }));
   }
   var learning = true; // off while a fix from the Build tab switches adapters: that isn't about the person
   function learn(name, on) {
     if (!learning || !profileName || name === 'mine' || (profileName === 'me' && !myProfile())) return;
-    var all = learned(), l = all[profileName] || { on: [], off: [] }, base = setOf(profileName).indexOf(name) !== -1;
+    var all = learned(), key = learnKey(profileName), l = all[key] || { on: [], off: [] }, base = setOf(profileName).indexOf(name) !== -1;
     l.on = l.on.filter(function (n) { return n !== name; });
     l.off = l.off.filter(function (n) { return n !== name; });
     if (on && !base) l.on.push(name);
     if (!on && base) l.off.push(name);
-    all[profileName] = l;
+    all[key] = l;
     try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (e) {}
   }
   // Adapters: every adapter, grouped by who it helps, each with a switch.
@@ -1081,7 +1098,7 @@
     $('#ws-learned').addEventListener('click', function (e) {
       if (!e.target.closest('#ws-forget')) return;
       var all = learned();
-      delete all[profileName];
+      delete all[learnKey(profileName)];
       try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (x) {}
       go({ profile: profileName, try: setOf(profileName).join(',') });
     });
@@ -1208,6 +1225,7 @@
         currentProfile = prof;
         baseOptions.profile = prof || null;
         try { localStorage.setItem('redbird:profile', id); } catch (e) {}
+        if (id === 'toolkit') writeKey(PRESET_KEY, toolkitSelected ? toolkitSelected.id : '');
         qs.set('profile', id);
         var again = names.filter(function (n) { return ids.indexOf(n) !== -1 && n !== 'toolkit-fixes' && n !== 'mine'; });
         if (applySet(ids, {})) return;
@@ -2764,8 +2782,8 @@
     // Load the shoppers' adapters in the background, so switching between them doesn't wait on the network.
     if (panelOn) setTimeout(function () {
       var all = [];
-      Object.keys(PEOPLE).forEach(function (id) {
-        setOf(id).forEach(function (n) { if (all.indexOf(n) === -1 && n !== 'toolkit-fixes' && n !== 'mine') all.push(n); });
+      Object.keys(PEOPLE).map(setOf).concat(Object.keys(PRESET_ADAPTERS).map(function (k) { return PRESET_ADAPTERS[k]; })).forEach(function (set) {
+        set.forEach(function (n) { if (all.indexOf(n) === -1 && n !== 'toolkit-fixes' && n !== 'mine') all.push(n); });
       });
       all.forEach(function (n) { ensure(n).catch(function () {}); });
     }, 2500);
@@ -2838,6 +2856,10 @@
   // preset is selected; the profile is read again and the adapters that are on start again with it.
   // The adapters stay as they are (the developer turned them on), and the page doesn't reload.
   var profileWatch = null, seenRevision = null, followTimer = 0;
+  // The preset whose adapters this page last turned on, so a reload keeps what the developer
+  // turned on since, and another preset being selected turns on its own set.
+  var PRESET_KEY = 'redbird:toolkit-preset';
+  function presetChanged() { return profileName === 'toolkit' && !!toolkitSelected && readKey(PRESET_KEY) !== toolkitSelected.id; }
   function presetOptions() {
     if (!rendered) return;
     var sel = $('#ws-prof'), at = sel && sel.querySelector('option[value="toolkit"]');
@@ -2889,6 +2911,7 @@
     clearTimeout(followTimer);
     followTimer = setTimeout(function () {
       if (profileName !== 'toolkit') return relabelToolkit();
+      if (presetChanged()) { relabelToolkit(); return switchProfile('toolkit'); }
       loadProfile('toolkit').then(function (prof) {
         if (!prof || profileName !== 'toolkit') return;
         currentProfile = prof;
@@ -2915,7 +2938,7 @@
         seenRevision = state.revision;
         // The first event is the state this page already read; after a gap (a hidden tab, a lost
         // connection) a different revision means something changed meanwhile.
-        if (first) relabelToolkit(); else if (changed) followToolkitProfile();
+        if (presetChanged() || (changed && !first)) followToolkitProfile(); else relabelToolkit();
       });
     }, function () { /* connectToolkit says what's wrong */ });
   }
