@@ -11,6 +11,7 @@ The person you're working with may not code, and may use a screen reader, only a
 3. Read `adapter.js`, and the example in `examples/` that is closest to what they want.
 4. Start the store with `npm run dev` in the background and keep it running, then give the person the link it prints. It serves the store at http://localhost:5179 with `adapter.js` on every page, and reloads the page each time `adapter.js` is saved.
 5. Run `npm install` once, so `npm test` and `npm run page` work.
+6. If the person gives you a toolkit address and token, start the store with `TOOLKIT_URL=<address> TOOLKIT_TOKEN=<token> npm run dev` instead. Their adapter then shows up in their toolkit's developer console under Apps, as part of Redbird demo. Never write the token into a file.
 
 ## Each change
 

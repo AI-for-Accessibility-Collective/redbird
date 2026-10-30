@@ -42,6 +42,24 @@
   // "local" is then the adapter.js in that folder, and the page reloads when the file is saved.
   var LOCAL = window.RB_LOCAL || null;
   if (!LOCAL) names = names.filter(function (n) { return n !== 'local'; }); // there is no folder to run
+  // A toolkit to connect to: an AI for Accessibility toolkit's address and the person's token.
+  // It comes from the developer console's Open Redbird link (after the #, which never reaches a
+  // server), from a starter folder started with TOOLKIT_URL and TOOLKIT_TOKEN, or from the form in
+  // the Profiles tab. Connected, this tab shows up in the console as Redbird demo, and the person's
+  // toolkit profile is one of the profiles to shop as. workshop/toolkit.js does the connecting.
+  var TK_KEY = 'redbird:toolkit';
+  var toolkitConfig = (function () {
+    var m = location.hash.match(/^#ai4a11y=([\w-]+)$/);
+    if (m) {
+      try {
+        var c = JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (c && /^https?:\/\//.test(c.url) && /^aat_[\w-]+$/.test(c.token) && isTop) localStorage.setItem(TK_KEY, JSON.stringify({ url: c.url, token: c.token }));
+      } catch (e) { /* a broken link connects nothing */ }
+      history.replaceState(history.state, '', location.pathname + location.search);
+    }
+    if (LOCAL && LOCAL.toolkit && LOCAL.toolkit.url && LOCAL.toolkit.token) return LOCAL.toolkit;
+    try { var saved = JSON.parse(localStorage.getItem(TK_KEY) || 'null'); return saved && saved.url && saved.token ? saved : null; } catch (e) { return null; }
+  })();
   // ?rbtest=1: the folder's tests (tools/test.mjs) are driving this page, through RB_TEST below.
   var testing = qs.has('rbtest');
   // Old names from before the profiles were renamed still work, from saved settings or old links.
@@ -159,33 +177,32 @@
     mark: ['Mark Sugarberg, ADHD and anxiety', ['calm-urgency', 'pause-moving-things', 'real-arrival-dates']],
     bill: ['Bill Grapes, older adult', ['visual-assist', 'big-targets', 'confirm-actions', 'real-arrival-dates']],
   };
-  // The toolkit's own 12 profiles (its tools/profiles/settings.json), each with the few adapters that
-  // work well together on this store. The full profiles turn on 8 or more at once, which fight.
-  // [name, the toolkit's description, adapters]
-  var TOOLKIT_PROFILES = {
-    blind: ['Blind', 'Optimized for screen reader users: structure, labels, descriptions', ['toolkit-fixes', 'live-region-announcer', 'skip-links', 'swatch-names', 'describe-on-demand']],
-    lowVision: ['Low vision', 'Larger text, spacing, enhanced focus, contrast fixes', ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates']],
-    colorBlind: ['Color blindness', 'Contrast fixes, photo descriptions, and a clear focus ring', ['toolkit-fixes', 'focus-locator']],
-    deaf: ['Deaf and hard of hearing', 'Captions on videos, and a sign on screen when the page plays a sound', ['auto-transcriber', 'sound-visualizer']],
-    motor: ['Motor disability', 'Bigger buttons and links, a clear focus ring, and a check before you pay', ['big-targets', 'focus-locator', 'skip-links', 'stop-auto-advance', 'confirm-actions']],
-    dyslexia: ['Dyslexia', 'More space between lines, and focus mode', ['visual-assist', 'focus-mode']],
-    adhd: ['ADHD', 'Reduced distractions, progress indicators, summaries for long content', ['focus-mode', 'stop-auto-advance', 'calm-urgency', 'reading-level']],
-    cognitive: ['Cognitive disability', 'Plain-language text, spelled-out abbreviations, and real dates', ['reading-level', 'abbreviation-expand', 'real-arrival-dates', 'calm-urgency', 'focus-mode', 'stop-auto-advance']],
-    olderAdult: ['Older adult', 'Bigger text and buttons, plain language, and a check before you pay', ['visual-assist', 'big-targets', 'reading-level', 'stop-auto-advance', 'confirm-actions']],
-    anxiety: ['Anxiety', 'Calm interface, reduced motion, progress indicators reduce uncertainty', ['calm-urgency', 'stop-auto-advance', 'real-arrival-dates', 'confirm-actions']],
-    sensory: ['Sensory processing', 'Overload prevention: no motion, fewer distractions', ['stop-auto-advance', 'reduce-brightness', 'calm-urgency', 'mute-sounds']],
-    photosensitive: ['Light sensitivity', 'Dark mode and reduced motion', ['dark-mode', 'reduce-brightness', 'stop-auto-advance']],
+  // The adapters each of the developer console's built-in presets (Profile 1–9, ids wai-1…wai-9,
+  // adapted from W3C WAI's Stories of Web Users) turns on here: a few that work well together on
+  // this store. Shopping as your toolkit profile uses the selected preset's set.
+  var PRESET_ADAPTERS = {
+    'wai-1': ['big-targets', 'focus-locator', 'skip-links', 'stop-auto-advance', 'confirm-actions'], // limited arm mobility
+    'wai-2': ['stop-auto-advance', 'reduce-brightness', 'calm-urgency', 'mute-sounds'], // autism
+    'wai-3': ['toolkit-fixes', 'live-region-announcer', 'skip-links', 'swatch-names', 'describe-on-demand'], // blindness
+    'wai-4': ['toolkit-fixes', 'focus-locator'], // color blindness
+    'wai-5': ['reading-level', 'abbreviation-expand', 'real-arrival-dates', 'calm-urgency', 'focus-mode', 'stop-auto-advance'], // Down syndrome
+    'wai-6': ['auto-transcriber', 'sound-visualizer'], // deafness
+    'wai-7': ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates', 'auto-transcriber', 'sound-visualizer'], // deafblindness (magnified text)
+    'wai-8': ['focus-mode', 'stop-auto-advance', 'calm-urgency', 'reading-level', 'visual-assist'], // ADHD and dyslexia
+    'wai-9': ['visual-assist', 'toolkit-fixes', 'unpin-sticky', 'real-arrival-dates', 'big-targets', 'confirm-actions'], // low vision, tremor, memory support
   };
-  // My profile: the one people make for themselves in the Profiles tab. The shoppers and the
-  // toolkit's profiles are made-up people, and this one is what the toolkit is for: a profile the
+  // My profile: the one people make for themselves in the Profiles tab. The shoppers are
+  // made-up people, and this one is what the toolkit is for: a profile the
   // person keeps using. It stays in this browser, and saves as a file the toolkit's browser
   // extension can import (the toolkit's "aa-profile-blob" format).
   var ME_KEY = 'redbird:me';
   function myProfile() { try { var m = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return m && m.freeText ? m : null; } catch (e) { return null; } }
-  function isPerson(id) { return id === 'me' || !!(PEOPLE[id] || TOOLKIT_PROFILES[id]); }
+  function isPerson(id) { return id === 'me' || (id === 'toolkit' && !!toolkitConfig) || !!PEOPLE[id]; }
   function setOf(id) {
+    // The selected preset's adapters; a profile saved by hand has none, and the developer turns them on.
+    if (id === 'toolkit') return (toolkitSelected && PRESET_ADAPTERS[toolkitSelected.id] || []).slice();
     if (id === 'me') { var m = myProfile(); return m && m.adapters ? m.adapters.filter(function (n) { return ADAPTERS[n]; }) : []; }
-    return PEOPLE[id] ? PEOPLE[id][1] : TOOLKIT_PROFILES[id][2];
+    return PEOPLE[id] ? PEOPLE[id][1] : [];
   }
   // Fixes the person added to their own profile come on with it: a skill's adapters, and the code of
   // one adapter they built (only one runs as "your adapter" at a time).
@@ -196,11 +213,21 @@
     if (coded && ids.indexOf('mine') === -1) ids.push('mine');
     return { ids: ids, code: coded ? coded.code : null };
   }
-  function nameOf(id) { return id === 'me' ? 'My profile' : PEOPLE[id] ? PEOPLE[id][0] : TOOLKIT_PROFILES[id][0] + ' (toolkit profile)'; }
-  // A workshop shopper's profile is a file next to this one; a toolkit profile is its name and description.
+  // The preset the toolkit says is selected (its developer console loaded it), once the toolkit has said.
+  var toolkitSelected = null;
+  // The presets in the person's toolkit (the developer console's profile library), for the dropdown.
+  var toolkitPresets = [];
+  function toolkitName() { return 'Your toolkit profile' + (toolkitSelected ? ': ' + toolkitSelected.name + (toolkitSelected.edited ? ' (edited)' : '') : ''); }
+  function nameOf(id) { return id === 'me' ? 'My profile' : id === 'toolkit' ? toolkitName() : PEOPLE[id] ? PEOPLE[id][0] : id; }
+  // A workshop shopper's profile is a file next to this one.
   function loadProfile(id) {
     if (id === 'me') return Promise.resolve(myProfile());
-    if (TOOLKIT_PROFILES[id]) return Promise.resolve({ name: TOOLKIT_PROFILES[id][0], freeText: TOOLKIT_PROFILES[id][1], toolkit: true });
+    // The profile in the person's toolkit, the one the developer console edits.
+    if (id === 'toolkit') {
+      return import(base + 'toolkit.js').then(function (m) { return m.readProfile(toolkitConfig); }).then(function (p) {
+        return Object.assign({}, p, { name: toolkitName(), freeText: p.freeText || 'The profile loaded in your developer console. It has no description yet.' });
+      }).catch(function (e) { console.warn('[workshop] toolkit profile:', e); return null; });
+    }
     return fetch(base + 'profiles/' + id + '.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
   // My profile is the default: the person's own profile comes first, the made-up shoppers after.
@@ -727,12 +754,13 @@
     saveNames();
     learn(name, on);
     if (rendered) root.querySelectorAll('input[data-ad="' + name + '"]').forEach(function (x) { x.checked = on; });
-    if (on) turnOn(name); else turnOff(name);
+    var done = on ? turnOn(name) : turnOff(name);
     if (name === 'local') listen();
     renderSaved();
     renderResult();
     renderOnList();
     fixAllButton();
+    return done;
   }
   function go(changes) {
     Object.keys(changes).forEach(function (k) { qs.set(k, changes[k]); });
@@ -892,10 +920,12 @@
     box = root.querySelector('.ws-panel');
     rendered = true;
     wire();
+    root.addEventListener('click', toolkitClick);
     showTab(ui.tab, false);
     sideButton();
     dock();
     fillProfiles();
+    toolkitCard();
     renderOnList();
     names.forEach(function (n) { refresh(n); });
     summary();
@@ -915,16 +945,16 @@
   // tap. Like the toolkit's profiles, it learns: turn one of their adapters off, or another one on,
   // and it's remembered for that person next time (see LEARN_KEY).
   function profilesHTML() {
-    var people = '<optgroup label="Workshop shoppers">' + Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('') + '</optgroup>' +
-      '<optgroup label="The toolkit’s profiles">' + Object.keys(TOOLKIT_PROFILES).map(function (id) { return '<option value="' + id + '">' + TOOLKIT_PROFILES[id][0] + '</option>'; }).join('') + '</optgroup>';
+    var people = '<optgroup label="Workshop shoppers">' + Object.keys(PEOPLE).map(function (id) { return '<option value="' + id + '">' + PEOPLE[id][0] + '</option>'; }).join('') + '</optgroup>';
     return '<label class="ws-lab" for="ws-prof">Shop as</label>' +
-      '<select id="ws-prof" class="ws-select"><option value="me">My profile</option>' + people + '</select>' +
+      '<select id="ws-prof" class="ws-select"><option value="me">My profile</option>' + (toolkitConfig ? '<option value="toolkit">' + esc(toolkitName()) + '</option>' : '') + people + '</select>' +
       '<div id="ws-persona"></div>' +
       '<div class="ws-line"><h3 class="ws-h">Adapters on</h3><button type="button" class="ws-link" id="ws-alloff">Turn all off</button></div>' +
       '<ul class="ws-pills" id="ws-pills" aria-label="Adapters on"></ul>' +
       '<p class="ws-help" id="ws-learned"></p>' +
       '<h3 class="ws-h">What they do on this page</h3>' +
-      '<ul class="ws-plain ws-onlist" id="ws-on-list"></ul>';
+      '<ul class="ws-plain ws-onlist" id="ws-on-list"></ul>' +
+      '<div class="ws-card" id="ws-toolkit"></div>';
   }
   function renderOnList() {
     var el = rendered && $('#ws-on-list');
@@ -934,12 +964,12 @@
     pills.innerHTML = names.length ? names.map(function (n) {
       return '<li class="ws-pill" title="' + esc((ADAPTERS[n] || {}).help || '') + '">' + esc(label(n)) + '</li>';
     }).join('') : '<li class="ws-help">No adapters on yet.</li>';
-    var l = profileName ? learned()[profileName] : null, bits = [];
+    var l = profileName ? learned()[learnKey(profileName)] : null, bits = [];
     // Only what matches the page now: a guide link can turn on an adapter the person turned off.
     var lon = l ? l.on.filter(function (n) { return names.indexOf(n) !== -1; }) : [], loff = l ? l.off.filter(function (n) { return names.indexOf(n) === -1; }) : [];
     if (lon.length) bits.push('keeps ' + lon.map(label).join(', ') + ' on');
     if (loff.length) bits.push('keeps ' + loff.map(label).join(', ') + ' off');
-    var whose = !bits.length ? '' : profileName === 'me' ? 'your profile' : nameOf(profileName).split(',')[0].replace(' (toolkit profile)', '');
+    var whose = !bits.length ? '' : profileName === 'me' ? 'your profile' : nameOf(profileName).split(',')[0];
     $('#ws-learned').innerHTML = bits.length ? 'Learned from you: ' + esc(whose) + ' ' + esc(bits.join(' and ')) + '. <button type="button" class="ws-link" id="ws-forget">Forget this</button>' : '';
     // The person's adapters stay listed when they're off, so they can be ticked back on. The
     // boxes are the same switches as in the Adapter Library tab, kept in step both ways.
@@ -958,21 +988,32 @@
   }
   // What the panel learned for each person: { sam: { on: [...], off: [...] } }.
   var LEARN_KEY = 'redbird:learned';
+  // Your toolkit profile learns per preset: what you changed under Profile 3 stays with Profile 3.
+  function learnKey(id) { return id === 'toolkit' && toolkitSelected ? 'toolkit:' + toolkitSelected.id : id; }
   function learned() { try { return JSON.parse(localStorage.getItem(LEARN_KEY) || '{}') || {}; } catch (e) { return {}; } }
   function learnedSet(id) {
-    var l = learned()[id] || { on: [], off: [] };
+    var l = learned()[learnKey(id)] || { on: [], off: [] };
     return setOf(id).filter(function (n) { return l.off.indexOf(n) === -1; }).concat(l.on.filter(function (n) { return setOf(id).indexOf(n) === -1; }));
   }
   var learning = true; // off while a fix from the Build tab switches adapters: that isn't about the person
   function learn(name, on) {
     if (!learning || !profileName || name === 'mine' || (profileName === 'me' && !myProfile())) return;
-    var all = learned(), l = all[profileName] || { on: [], off: [] }, base = setOf(profileName).indexOf(name) !== -1;
+    var all = learned(), key = learnKey(profileName), l = all[key] || { on: [], off: [] }, inSet = setOf(profileName).indexOf(name) !== -1;
     l.on = l.on.filter(function (n) { return n !== name; });
     l.off = l.off.filter(function (n) { return n !== name; });
-    if (on && !base) l.on.push(name);
-    if (!on && base) l.off.push(name);
-    all[profileName] = l;
+    if (on && !inSet) l.on.push(name);
+    if (!on && inSet) l.off.push(name);
+    all[key] = l;
     try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (e) {}
+    // Shopping as yourself, your toolkit learns from it too. Never from a made-up shopper.
+    if (toolkitConfig && (profileName === 'toolkit' || profileName === 'me')) {
+      import(base + 'toolkit.js').then(function (m) {
+        return m.observe(toolkitConfig, {
+          type: 'setting-change', origin: location.origin, data: { adapter: name, on: on },
+          text: (on ? 'Turned on ' : 'Turned off ') + label(name) + ' while shopping on the Redbird store.',
+        });
+      }).catch(function () { /* learning is extra; the store works without it */ });
+    }
   }
   // Adapters: every adapter, grouped by who it helps, each with a switch.
   function adaptersHTML() {
@@ -1058,12 +1099,15 @@
     $('#ws-prof').value = profileName || 'me';
     $('#ws-prof').onchange = function () {
       var id = this.value;
+      if (id.indexOf('preset:') === 0) return choosePreset(id.slice(7));
       switchProfile(id);
     };
+    $('#ws-prof').addEventListener('focus', loadPresets);
+    presetOptions();
     $('#ws-learned').addEventListener('click', function (e) {
       if (!e.target.closest('#ws-forget')) return;
       var all = learned();
-      delete all[profileName];
+      delete all[learnKey(profileName)];
       try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (x) {}
       go({ profile: profileName, try: setOf(profileName).join(',') });
     });
@@ -1188,8 +1232,9 @@
       .then(function (prof) {
         profileName = id === 'none' ? '' : id;
         currentProfile = prof;
-        baseOptions.profile = prof && !prof.toolkit ? prof : null;
+        baseOptions.profile = prof || null;
         try { localStorage.setItem('redbird:profile', id); } catch (e) {}
+        if (id === 'toolkit') writeKey(PRESET_KEY, toolkitSelected ? toolkitSelected.id : '');
         qs.set('profile', id);
         var again = names.filter(function (n) { return ids.indexOf(n) !== -1 && n !== 'toolkit-fixes' && n !== 'mine'; });
         if (applySet(ids, {})) return;
@@ -1201,11 +1246,18 @@
         renderFor();
         var on = names.length + ' adapter' + (names.length === 1 ? '' : 's') + ' on.';
         status(id === 'me' ? (prof ? 'Using your profile. ' + on : 'Answer the questions below to make your profile.')
-          : !prof ? 'Shopping as nobody in particular. ' + on : prof.toolkit ? 'Using the toolkit’s ' + TOOLKIT_PROFILES[id][0] + ' profile. ' + on : 'Shopping as ' + nameOf(id) + '. ' + on);
+          : !prof ? 'Shopping as nobody in particular. ' + on : 'Shopping as ' + nameOf(id) + '. ' + on);
       }, function () { go({ profile: id, try: ids.join(',') || 'none', issues: 'on' }); });
   }
   function fillProfiles() {
     if (profileName === 'me') return fillMine();
+    if (profileName === 'toolkit') {
+      $('#ws-persona').innerHTML = currentProfile
+        ? '<figure class="ws-persona"><figcaption>' + esc(toolkitName()) + '</figcaption><blockquote>“' + esc(currentProfile.freeText || '') + '”</blockquote></figure>' +
+          '<p class="ws-help">Change it on the Profiles page of your developer console. This page follows along; there is nothing to reload. <button type="button" class="ws-link" id="ws-tk-reload">Read it again</button> if it ever looks out of date.</p>'
+        : '<p class="ws-err">Couldn’t read your toolkit profile. Check the connection below.</p>';
+      return;
+    }
     $('#ws-persona').innerHTML = currentProfile
       ? '<figure class="ws-persona"><figcaption>' + esc(nameOf(profileName)) + '</figcaption>' + (currentProfile.toolkit
         ? '<p class="ws-help">' + esc(currentProfile.freeText) + '</p>' : '<blockquote>“' + esc(currentProfile.freeText || '') + '”</blockquote>') + '</figure>'
@@ -2727,7 +2779,7 @@
   var started = Promise.all([profile, incomingReady]).then(function (r) {
     var prof = r[0];
     currentProfile = prof;
-    baseOptions = { profile: prof && !prof.toolkit ? prof : null, today: window.RB ? RB.today() : new Date(), rewrite: rewrite, fallback: storeFallback };
+    baseOptions = { profile: prof || null, today: window.RB ? RB.today() : new Date(), rewrite: rewrite, fallback: storeFallback };
     if (panelOn) panel();
     if (testing) {
       beforeAll = new WeakMap();
@@ -2735,11 +2787,12 @@
     }
     names.forEach(turnOn);
     if (panelOn) checkVersion();
+    connectToolkit();
     // Load the shoppers' adapters in the background, so switching between them doesn't wait on the network.
     if (panelOn) setTimeout(function () {
       var all = [];
-      Object.keys(PEOPLE).concat(Object.keys(TOOLKIT_PROFILES)).forEach(function (id) {
-        setOf(id).forEach(function (n) { if (all.indexOf(n) === -1 && n !== 'toolkit-fixes' && n !== 'mine') all.push(n); });
+      Object.keys(PEOPLE).map(setOf).concat(Object.keys(PRESET_ADAPTERS).map(function (k) { return PRESET_ADAPTERS[k]; })).forEach(function (set) {
+        set.forEach(function (n) { if (all.indexOf(n) === -1 && n !== 'toolkit-fixes' && n !== 'mine') all.push(n); });
       });
       all.forEach(function (n) { ensure(n).catch(function () {}); });
     }, 2500);
@@ -2764,6 +2817,207 @@
     listen();
   });
   listen();
+
+  // ── The toolkit connection ────────────────────────────────────────────────
+  // workshop/toolkit.js connects this tab to the person's toolkit as Redbird demo. It gets this
+  // bridge to the panel's own switches, so turning an adapter on from the developer console (or a
+  // coding agent) is the same as ticking it here, and the panel always shows the truth.
+  var RB_VERSION = '1.0.0';
+  var toolkitLink = null, toolkitStatus = { state: toolkitConfig ? 'connecting' : 'off' };
+  var RELOADING = ['toolkit-fixes', 'mine', 'local'];
+  // Reload once the answer has gone back to the caller; a reload any sooner cuts it off.
+  var answered = null;
+  function reloadAfterAnswer() {
+    var gone = false, go = function () { if (!gone) { gone = true; location.reload(); } };
+    if (answered) { answered(go); setTimeout(go, 5000); } else setTimeout(go, 400);
+  }
+  function toolkitBridge() {
+    return {
+      version: RB_VERSION,
+      local: !!LOCAL,
+      has: function (n) { return n === 'local' ? !!LOCAL : !!ADAPTERS[n]; },
+      info: function (n) { var a = ADAPTERS[n] || {}; return { help: a.help || '', who: a.who || '', ai: !!a.ai }; },
+      isOn: function (n) { return names.indexOf(n) !== -1 && !errors[n]; },
+      error: function (n) { return errors[n] || null; },
+      changes: function (n) { return count(n); },
+      code: function (n) {
+        if (n === 'mine') return copied.then(myCode);
+        if (n === 'local' && LOCAL) return fetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
+        return Promise.resolve(null);
+      },
+      // toolkit.js hands over a way to wait until the next answer has reached the toolkit.
+      afterAnswer: function (wait) { answered = wait; },
+      // Not something to learn about the person: the developer is driving.
+      turn: function (n, on, parameters) {
+        if (on) {
+          if (parameters && Object.keys(parameters).length) skillSettings[n] = parameters;
+          else delete skillSettings[n];
+        }
+        if (!on && RELOADING.indexOf(n) !== -1) {
+          // These come off with a reload. Answer the caller first, then reload.
+          var i = names.indexOf(n);
+          if (i !== -1) { names.splice(i, 1); saveNames(); }
+          reloadAfterAnswer();
+          return Promise.resolve();
+        }
+        var was = learning, done;
+        learning = false;
+        try { done = toggle(n, on); } finally { learning = was; }
+        return Promise.resolve(done).then(function () { return enabling[n]; }).then(function () {
+          if (on && errors[n]) throw new Error(errors[n]);
+        });
+      },
+    };
+  }
+  // The person's toolkit profile, followed live. The toolkit says when the profile changes or another
+  // preset is selected; the profile is read again and the adapters that are on start again with it.
+  // The adapters stay as they are (the developer turned them on), and the page doesn't reload.
+  var profileWatch = null, seenRevision = null, followTimer = 0;
+  // The preset whose adapters this page last turned on, so a reload keeps what the developer
+  // turned on since, and another preset being selected turns on its own set.
+  var PRESET_KEY = 'redbird:toolkit-preset';
+  function presetChanged() { return profileName === 'toolkit' && !!toolkitSelected && readKey(PRESET_KEY) !== toolkitSelected.id; }
+  function presetOptions() {
+    if (!rendered) return;
+    var sel = $('#ws-prof'), at = sel && sel.querySelector('option[value="toolkit"]');
+    if (!at) return;
+    var old = sel.querySelector('#ws-presets');
+    if (old) old.remove();
+    if (!toolkitPresets.length) return;
+    var group = document.createElement('optgroup');
+    group.id = 'ws-presets';
+    group.label = 'Saved on your toolkit';
+    toolkitPresets.forEach(function (p) {
+      var o = document.createElement('option');
+      o.value = 'preset:' + p.id;
+      o.textContent = p.name + (p.description ? ' (' + p.description + ')' : '');
+      group.appendChild(o);
+    });
+    at.after(group);
+  }
+  function loadPresets() {
+    if (!toolkitConfig) return Promise.resolve();
+    return import(base + 'toolkit.js').then(function (m) { return m.listPresets(toolkitConfig); })
+      .then(function (list) { toolkitPresets = list; presetOptions(); }, function () { /* an older toolkit has none to offer */ });
+  }
+  // Picking a preset changes the toolkit's profile, for every app on the account. Redbird then
+  // follows it the way it follows a change made in the console.
+  function choosePreset(id) {
+    var preset = toolkitPresets.filter(function (p) { return p.id === id; })[0];
+    status('Loading ' + (preset ? preset.name : 'that profile') + ' into your toolkit…');
+    return import(base + 'toolkit.js').then(function (m) { return m.selectPreset(toolkitConfig, id); }).then(function (done) {
+      toolkitSelected = done.selected;
+      seenRevision = done.revision; // the toolkit's announcement of this is the same change
+      presetOptions();
+      if (profileName !== 'toolkit') { $('#ws-prof').value = 'toolkit'; return switchProfile('toolkit'); }
+      $('#ws-prof').value = 'toolkit';
+      followToolkitProfile();
+    }, function (e) {
+      $('#ws-prof').value = profileName || 'me';
+      status('Couldn’t load that profile into your toolkit: ' + ((e && e.message) || e) + '.');
+    });
+  }
+  function relabelToolkit() {
+    if (!rendered) return;
+    var opt = $('#ws-prof option[value="toolkit"]');
+    if (opt) opt.textContent = toolkitName();
+    presetOptions();
+    if (profileName === 'toolkit') fillProfiles();
+  }
+  function followToolkitProfile() {
+    clearTimeout(followTimer);
+    followTimer = setTimeout(function () {
+      if (profileName !== 'toolkit') return relabelToolkit();
+      if (presetChanged()) { relabelToolkit(); return switchProfile('toolkit'); }
+      loadProfile('toolkit').then(function (prof) {
+        if (!prof || profileName !== 'toolkit') return;
+        currentProfile = prof;
+        baseOptions.profile = prof;
+        names.slice().forEach(function (n) { if (RELOADING.indexOf(n) === -1) { turnOff(n); turnOn(n); } });
+        if (!rendered) return;
+        relabelToolkit();
+        renderOnList();
+        var p = $('#ws-person');
+        if (p && !readKey(PERSON_KEY)) p.value = prof.freeText || '';
+        renderFor();
+        status('Your toolkit profile changed' + (toolkitSelected ? ' to ' + toolkitSelected.name : '') + '. This page is using the new one.');
+      });
+    }, 150);
+  }
+  function watchToolkitProfile() {
+    if (!toolkitConfig || !isTop || testing || profileWatch || document.hidden) return;
+    import(base + 'toolkit.js').then(function (m) {
+      if (profileWatch || document.hidden) return;
+      loadPresets();
+      profileWatch = m.watchProfile(toolkitConfig, function (state) {
+        toolkitSelected = state.selected || null;
+        var first = seenRevision === null, changed = state.revision !== seenRevision;
+        seenRevision = state.revision;
+        // The first event is the state this page already read; after a gap (a hidden tab, a lost
+        // connection) a different revision means something changed meanwhile.
+        if (presetChanged() || (changed && !first)) followToolkitProfile(); else relabelToolkit();
+      });
+    }, function () { /* connectToolkit says what's wrong */ });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { if (profileWatch) { profileWatch.close(); profileWatch = null; } } else watchToolkitProfile();
+  });
+  function connectToolkit() {
+    watchToolkitProfile();
+    if (!toolkitConfig || !isTop || testing) return;
+    import(base + 'toolkit.js').then(function (m) {
+      return m.connect(toolkitConfig, toolkitBridge(), function (st) {
+        var was = toolkitStatus.state;
+        toolkitStatus = st;
+        toolkitCard();
+        if (rendered && st.state !== was && (st.state === 'connected' || st.state === 'failed')) {
+          status(st.state === 'connected' ? 'Connected to your toolkit. This store is under Apps in your developer console, as Redbird demo.' : 'Couldn’t connect to your toolkit: ' + (st.message || 'unknown problem') + '.');
+        }
+      });
+    }).then(function (link) { toolkitLink = link; }, function (e) {
+      toolkitStatus = { state: 'failed', message: 'couldn’t load the toolkit’s SDK from ' + toolkitConfig.url + ' (' + ((e && e.message) || e) + '). Is the toolkit running, and does it allow this page’s address (start it with npm run dev:workshop)?' };
+      toolkitCard();
+    });
+  }
+  function toolkitCard() {
+    var el = rendered && $('#ws-toolkit');
+    if (!el) return;
+    if (!toolkitConfig) {
+      el.innerHTML = '<details><summary class="ws-h">Connect to your toolkit</summary>' +
+        '<p class="ws-help">Shows this store in your developer console as Redbird demo, and lets you shop as your toolkit profile. The easy way: sign in to the developer console and press Open Redbird on its Apps page.</p>' +
+        '<label class="ws-lab" for="ws-tk-url">Toolkit address</label><input id="ws-tk-url" class="ws-input" value="http://localhost:8080" spellcheck="false">' +
+        '<label class="ws-lab" for="ws-tk-token">Your default token</label><input id="ws-tk-token" class="ws-input" type="password" autocomplete="off" placeholder="aat_…">' +
+        '<div class="ws-row"><button type="button" class="ws-btn" id="ws-tk-connect">Connect</button></div><p class="ws-msg" id="ws-tk-msg" role="status"></p></details>';
+      return;
+    }
+    var st = toolkitStatus.state;
+    var text = st === 'connected' ? 'Connected. This tab is under Apps in your developer console, as Redbird demo.'
+      : st === 'connecting' ? 'Connecting to your toolkit…'
+      : st === 'reconnecting' ? 'Lost the connection to your toolkit. Trying again…'
+      : st === 'failed' ? 'Couldn’t connect: ' + (toolkitStatus.message || 'unknown problem') + '. If your token changed, disconnect and connect again with the new one.'
+      : 'Not connected.';
+    var fromFolder = !!(LOCAL && LOCAL.toolkit);
+    el.innerHTML = '<h3 class="ws-h">Your toolkit</h3><p class="' + (st === 'failed' ? 'ws-err' : 'ws-help') + '">' + esc(text) + '</p>' +
+      '<p class="ws-help">' + esc(toolkitConfig.url) + (fromFolder ? ' (set by your folder’s TOOLKIT_URL and TOOLKIT_TOKEN)' : '') + '</p>' +
+      (fromFolder ? '' : '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-tk-disconnect">Disconnect</button></div>');
+  }
+  function toolkitClick(e) {
+    if (e.target.closest('#ws-tk-reload')) return switchProfile('toolkit');
+    if (e.target.closest('#ws-tk-connect')) {
+      var url = ($('#ws-tk-url').value || '').trim().replace(/\/+$/, ''), token = ($('#ws-tk-token').value || '').trim();
+      if (!/^https?:\/\//.test(url) || !/^aat_[\w-]+$/.test(token)) {
+        $('#ws-tk-msg').textContent = 'Enter the toolkit’s address (like http://localhost:8080) and a token that starts with aat_.';
+        return;
+      }
+      try { localStorage.setItem(TK_KEY, JSON.stringify({ url: url, token: token })); } catch (x) {}
+      return go({ profile: 'toolkit' });
+    }
+    if (e.target.closest('#ws-tk-disconnect')) {
+      try { localStorage.removeItem(TK_KEY); } catch (x) {}
+      var leave = toolkitLink ? toolkitLink.close() : Promise.resolve();
+      return leave.then(function () { go({ profile: profileName === 'toolkit' ? 'me' : profileName || 'me' }); });
+    }
+  }
 
   // ── For the starter folder's tests ────────────────────────────────────────
   // tools/test.mjs opens a page with ?rbtest=1 and uses these to see what an adapter did and

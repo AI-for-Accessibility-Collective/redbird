@@ -21,6 +21,10 @@ The adapters and profile you pick are saved in your browser until you change the
 
 The panel's Build tab makes fixes without writing code, using the same two builders as the toolkit's extension. "Make a skill" sends a need to the toolkit's Engineer prompt, which picks existing adapters and writes a SKILL.md. "Describe a fix" sends a description and a shortened copy of the page to the Adapter Builder's prompt, and the adapter it writes runs as `?try=mine`. Both prompts are in `api/_builders.js`. Skills and adapters are saved in the browser, and their share links carry them after the `#`.
 
+## Connect to your toolkit
+
+Press Open Redbird on the Apps page of your toolkit's developer console, or use Connect to your toolkit in the panel's Profiles tab. Each tab then shows up in the console as Redbird demo, where you (or a coding agent with your token) can turn the adapters below on and off and undo a change. [toolkit.js](toolkit.js) does the connecting; it uses the panel's own switches, so the panel always shows what is on.
+
 ## Keep building in code
 
 To keep changing a fix with a coding agent like Claude Code or Codex, open **Keep building in code** under the fix in the Build tab and download it as a folder. The folder is a copy of [`starter/`](../starter/) with the fix's code and conversation in it. `npm run dev` runs the store on your computer with the adapter on and reloads it when the file changes, `npm test` tests it on the store's pages, and `npm run page` prints a page's markup after the store's scripts render it. Its `README.md` is for people and its `AGENTS.md` is for the coding agent.
@@ -81,5 +85,7 @@ A profile describes one person's needs. The adapters get it as `options.profile`
 - `sam.json`: Sam Saltman, blind, uses a screen reader
 - `mark.json`: Mark Sugarberg, ADHD and anxiety, wants pressure messages hidden
 - `dario.json`: Dario Almondei, dyslexia, prefers short, plain text at about a sixth grade level
+
+When the store is connected to your toolkit, "Your toolkit profile" is also on the list: the profile you edit on the Profiles page of the developer console. With one of the console's built-in presets selected (Profile 1–9), the store turns on a few adapters for it, such as captions and a sign for sounds for Profile 6 (deafness). Pick a preset under "Saved on your toolkit" to change your toolkit's profile from the store. While you shop as yourself (your toolkit profile or My profile), switching an adapter on or off tells your toolkit too, and it learns from it: its suggested profile changes show on the developer console's Profiles page, under "What your toolkit learned".
 
 They use the toolkit's profile shape. For example, a need looks like `{ "dimension": "urgency", "value": "hide" }`, and the reading level is `fields.readingLevel`. To make a new one, copy a file and change the needs.

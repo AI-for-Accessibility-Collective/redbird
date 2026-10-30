@@ -15,8 +15,18 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const STORE = (process.env.REDBIRD || 'https://redbird-workshop.vercel.app').replace(/\/$/, '');
 
+// Your toolkit, if you want this folder's adapter to show up in its developer console (as part of
+// Redbird demo) and to shop as your toolkit profile. Copy the default token from the console:
+//
+//   TOOLKIT_URL=http://localhost:8080 TOOLKIT_TOKEN=aat_… npm run dev
+//
+// The token only goes to the store pages this server serves on your own computer.
+const TOOLKIT = process.env.TOOLKIT_URL && process.env.TOOLKIT_TOKEN
+  ? { url: process.env.TOOLKIT_URL.replace(/\/+$/, ''), token: process.env.TOOLKIT_TOKEN }
+  : null;
+
 // What the store's pages are told, so the workshop panel loads adapter.js from here.
-const LOCAL = { adapter: '/__rb/adapter.js', events: '/__rb/events', feedback: '/__rb/feedback', fix: '/__rb/fix.json', store: STORE };
+const LOCAL = { adapter: '/__rb/adapter.js', events: '/__rb/events', feedback: '/__rb/feedback', fix: '/__rb/fix.json', store: STORE, toolkit: TOOLKIT };
 
 export function readFix() {
   let text;
@@ -175,6 +185,7 @@ if (process.argv[1] && same(process.argv[1], fileURLToPath(import.meta.url))) {
   process.on('unhandledRejection', (e) => console.error('Something went wrong:', e && e.message ? e.message : e));
   start(port).then(() => {
     console.log(`Redbird is running with your adapter.js at:\n\n  http://localhost:${port}${startPath()}\n`);
+    if (TOOLKIT) console.log(`It connects to your toolkit at ${TOOLKIT.url}: look for Redbird demo under Apps in the developer console.\n`);
     console.log('Save adapter.js and the page runs it again. Press Ctrl+C to stop.');
   }, (e) => {
     if (e.code === 'EADDRINUSE') console.error(`Port ${port} is already in use. Maybe the store is already running here? Or try npm run dev -- ${port + 1}`);
