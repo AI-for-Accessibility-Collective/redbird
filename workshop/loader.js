@@ -2825,6 +2825,12 @@
   var RB_VERSION = '1.0.0';
   var toolkitLink = null, toolkitStatus = { state: toolkitConfig ? 'connecting' : 'off' };
   var RELOADING = ['toolkit-fixes', 'mine', 'local'];
+  // Reload once the answer has gone back to the caller; a reload any sooner cuts it off.
+  var answered = null;
+  function reloadAfterAnswer() {
+    var gone = false, go = function () { if (!gone) { gone = true; location.reload(); } };
+    if (answered) { answered(go); setTimeout(go, 5000); } else setTimeout(go, 400);
+  }
   function toolkitBridge() {
     return {
       version: RB_VERSION,
@@ -2839,6 +2845,8 @@
         if (n === 'local' && LOCAL) return fetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
         return Promise.resolve(null);
       },
+      // toolkit.js hands over a way to wait until the next answer has reached the toolkit.
+      afterAnswer: function (wait) { answered = wait; },
       // Not something to learn about the person: the developer is driving.
       turn: function (n, on, parameters) {
         if (on) {
@@ -2849,7 +2857,7 @@
           // These come off with a reload. Answer the caller first, then reload.
           var i = names.indexOf(n);
           if (i !== -1) { names.splice(i, 1); saveNames(); }
-          setTimeout(function () { location.reload(); }, 400);
+          reloadAfterAnswer();
           return Promise.resolve();
         }
         var was = learning, done;

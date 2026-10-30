@@ -142,10 +142,19 @@ export async function connect(config, bridge, onStatus) {
     instructions: 'Redbird is a practice store. Each instance is one browser tab showing one page; adapter_targets gives its address. Turn the workshop adapters on and off with adapter_apply, or the apply_<id> shortcuts.',
   });
 
+  // A switch that reloads the page (loader.js) waits until its answer has reached the toolkit.
+  const waiting = [];
+  bridge.afterAnswer?.((then) => waiting.push(then));
+  const answering = (input, init) => {
+    const sent = fetch(input, init);
+    if (init?.method === 'POST' && String(input).endsWith('/channel')) sent.finally(() => waiting.splice(0).forEach(f => f())).catch(() => {});
+    return sent;
+  };
   const link = connectToToolkit({
     url: base,
     token: config.token,
     provider,
+    fetch: answering,
     // A new id per page load: two tabs never share one, and the toolkit's
     // per-app endpoint still finds the tab when it is the only one.
     providerId: randomId(),
