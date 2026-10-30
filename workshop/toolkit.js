@@ -258,6 +258,17 @@ async function toolkitJSON(config, path, body) {
   return result;
 }
 
+/**
+ * Tell the person's toolkit what they did here, so it can learn from it (the toolkit's
+ * profile_observe tool does the same). It suggests profile changes from what it learns, and the
+ * person answers each one in the developer console. One plain sentence, the site, small details.
+ * @param {{url: string, token: string}} config
+ * @param {{text: string, origin?: string, type?: string, data?: object}} observation
+ */
+export async function observe(config, observation) {
+  return (await toolkitJSON(config, '/v1/librarian/logObservation', { args: [observation] })).result;
+}
+
 /** The presets the person can choose from in their toolkit: [{id, name, description, builtIn}]. */
 export async function listPresets(config) {
   return (await toolkitJSON(config, '/v1/profile/presets')).presets;

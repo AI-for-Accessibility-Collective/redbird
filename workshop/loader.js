@@ -998,13 +998,22 @@
   var learning = true; // off while a fix from the Build tab switches adapters: that isn't about the person
   function learn(name, on) {
     if (!learning || !profileName || name === 'mine' || (profileName === 'me' && !myProfile())) return;
-    var all = learned(), key = learnKey(profileName), l = all[key] || { on: [], off: [] }, base = setOf(profileName).indexOf(name) !== -1;
+    var all = learned(), key = learnKey(profileName), l = all[key] || { on: [], off: [] }, inSet = setOf(profileName).indexOf(name) !== -1;
     l.on = l.on.filter(function (n) { return n !== name; });
     l.off = l.off.filter(function (n) { return n !== name; });
-    if (on && !base) l.on.push(name);
-    if (!on && base) l.off.push(name);
+    if (on && !inSet) l.on.push(name);
+    if (!on && inSet) l.off.push(name);
     all[key] = l;
     try { localStorage.setItem(LEARN_KEY, JSON.stringify(all)); } catch (e) {}
+    // Shopping as yourself, your toolkit learns from it too. Never from a made-up shopper.
+    if (toolkitConfig && (profileName === 'toolkit' || profileName === 'me')) {
+      import(base + 'toolkit.js').then(function (m) {
+        return m.observe(toolkitConfig, {
+          type: 'setting-change', origin: location.origin, data: { adapter: name, on: on },
+          text: (on ? 'Turned on ' : 'Turned off ') + label(name) + ' while shopping on the Redbird store.',
+        });
+      }).catch(function () { /* learning is extra; the store works without it */ });
+    }
   }
   // Adapters: every adapter, grouped by who it helps, each with a switch.
   function adaptersHTML() {
