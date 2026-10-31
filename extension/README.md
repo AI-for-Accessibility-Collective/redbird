@@ -30,6 +30,9 @@ There's no key to set up: from the panel, opencode uses the workshop's shared AI
 
 - The problems planted in Redbird, the switch that shows them and their ready-made checks only exist on Redbird, so they aren't on other sites. **Audit** still runs the toolkit's auditors and axe.
 - When you build, AI gets a shortened copy of the page, like on Redbird. On a site you are signed in to, that copy can include your name, orders or messages.
+- While the panel is on, your profile is in that site's browser storage and the site's own scripts can read it, along with anything in the panel. Pressing the button to turn the panel off removes it from that site, and the extension keeps its own copy. Closing the tab with the panel still on leaves it there. So keep private details out of a profile you use on sites you don't trust.
+- A site's scripts can't send messages to opencode or write to your folder unless you pressed a key or clicked in the panel in the last 3 seconds. They can read the folder's `adapter.js` and `fix.json`.
+- An adapter runs with the same powers as the site's own scripts, on every site where it's on. That includes one opencode wrote, and hidden text on a page can try to steer what opencode writes.
 - Most big sites send a Content-Security-Policy header that only lets their own servers run scripts on the page, and it would block the panel. While the panel is on in a tab, the pages in that tab load without that header. Other tabs keep it. Turn the panel off before you sign in to a site like your bank.
 - Please stay signed out at the workshop. We test on a short list of sites without an account.
 

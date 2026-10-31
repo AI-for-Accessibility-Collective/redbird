@@ -93,13 +93,20 @@ async function askFolder({ path, method, body }, tabId) {
 }
 
 // Runs beside the page, where it can reach the extension, and passes the panel's requests along.
+// The site's own scripts can post the same messages. They can't fake a real click or key press, so
+// a request that writes to the folder or reaches opencode has to follow one in the panel.
 function carryFolderRequests() {
   if (window.rbCarrying) return;
   window.rbCarrying = true;
+  let pressed = 0;
+  for (const type of ['click', 'keydown']) {
+    addEventListener(type, (e) => { if (e.isTrusted && e.target && e.target.id === 'ws-root') pressed = Date.now(); }, true);
+  }
   addEventListener('message', (e) => {
     if (e.source !== window || !e.data || !e.data.rbAsk) return;
     const { rbAsk, path, method, body } = e.data;
     const answer = (r) => window.postMessage({ rbAnswer: rbAsk, status: (r && r.status) || 0, body: (r && r.body) || '' }, location.origin);
+    if (method !== 'GET' && Date.now() - pressed > 3000) return answer({ status: 403 });
     chrome.runtime.sendMessage({ folder: { path, method, body } }).then(answer, () => answer(null));
   });
 }

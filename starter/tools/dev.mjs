@@ -202,6 +202,8 @@ export function start(port = Number(process.env.PORT) || 5179, { live = true } =
 // error page above, so the server keeps running.
 async function handle(req, res) {
   const p = req.url.split('?')[0];
+  // A website can point a name of its own at this computer, which gets past the check in trusted().
+  if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host || '')) return send(res, { status: 403, headers: { 'content-type': 'text/plain' }, body: Buffer.from('Not from this computer\n') });
   if (p === LOCAL.adapter) return file(res, 'adapter.js', 'text/javascript; charset=utf-8');
   if (p === LOCAL.fix) return file(res, 'fix.json', 'application/json; charset=utf-8');
   if (p === LOCAL.events) return events(req, res);
