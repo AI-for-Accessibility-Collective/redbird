@@ -55,7 +55,14 @@ async function turnOff(tabId, on) {
   await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [tabId] });
   await chrome.storage.session.set({ on: on.filter((id) => id !== tabId) });
   await chrome.action.setBadgeText({ tabId, text: '' });
+  await chrome.action.setTitle({ tabId, title: 'Open the Redbird panel on this page' });
+  // The extension keeps the person's profile. This site doesn't need its copy any more.
+  try { await chrome.scripting.executeScript({ target: { tabId }, world: 'ISOLATED', func: forgetPerson }); } catch (e) { /* a page it can't reach */ }
   await chrome.tabs.reload(tabId);
+}
+
+function forgetPerson() {
+  ['redbird:me', 'redbird:person', 'redbird:learned', 'redbird:carried-at'].forEach((k) => localStorage.removeItem(k));
 }
 
 // Every page the tab opens while the panel is on gets the panel.
@@ -63,11 +70,12 @@ chrome.webNavigation.onDOMContentLoaded.addListener(async ({ tabId, frameId, url
   if (frameId !== 0 || !/^https?:/.test(url) || url.startsWith(SITE)) return;
   if (!(await tabsOn()).includes(tabId)) return;
   const [{ carried }, local] = await Promise.all([chrome.storage.local.get('carried'), findFolder()]);
-  chrome.action.setBadgeText({ tabId, text: 'on' });
-  chrome.action.setBadgeBackgroundColor({ tabId, color: '#8c1515' });
   try {
     if (local) await chrome.scripting.executeScript({ target: { tabId }, world: 'ISOLATED', func: carryFolderRequests });
     await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: addPanel, args: [LOADER, carried || null, local] });
+    await chrome.scripting.executeScript({ target: { tabId }, world: 'ISOLATED', files: ['carry.js'] });
+    chrome.action.setBadgeText({ tabId, text: 'on' });
+    chrome.action.setBadgeBackgroundColor({ tabId, color: '#8c1515' });
   } catch (e) { console.warn('[redbird] could not add the panel:', e.message); }
 });
 
@@ -118,8 +126,8 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   await chrome.storage.session.set({ on: on.filter((id) => id !== tabId) });
 });
 
-// Runs in the page. Brings over the profile and fixes last used on Redbird (see carry.js), then
-// adds the panel. A site keeps what was built on it until something changes on Redbird again.
+// Runs in the page. Brings over what changed since the last visit, on Redbird or on another site
+// (see carry.js), then adds the panel.
 function addPanel(src, carried, local) {
   if (document.querySelector('script[data-redbird-panel]')) return;
   if (local) {
@@ -130,17 +138,17 @@ function addPanel(src, carried, local) {
     const at = Number(localStorage.getItem('redbird:carried-at')) || 0;
     if (carried && carried.at > at) {
       Object.keys(carried.keys).forEach((k) => {
+        if (!((carried.times || {})[k] > at)) return;
         if (carried.keys[k] == null) localStorage.removeItem(k);
         else localStorage.setItem(k, carried.keys[k]);
       });
       localStorage.setItem('redbird:carried-at', String(carried.at));
     }
     localStorage.setItem('redbird:workshop', 'on');
-    // The folder's adapter starts on, once. If it's turned off in the panel, it stays off.
-    if (local && !localStorage.getItem('redbird:folder-seen')) {
+    // The folder's adapter is on unless it was turned off in the panel, which the panel notes.
+    if (local && !localStorage.getItem('redbird:folder-off')) {
       const on = (localStorage.getItem('redbird:try') || '').split(',').filter((n) => n && n !== 'none');
       if (!on.includes('local')) localStorage.setItem('redbird:try', on.concat('local').join(','));
-      localStorage.setItem('redbird:folder-seen', '1');
     }
   } catch (e) { /* storage blocked on this site: the panel starts empty */ }
   const s = document.createElement('script');

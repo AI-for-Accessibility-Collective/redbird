@@ -746,7 +746,12 @@
   }
   function saveNames() {
     var v = names.length ? names.join(',') : 'none';
-    try { localStorage.setItem('redbird:try', v); } catch (e) {}
+    try {
+      localStorage.setItem('redbird:try', v);
+      // The extension turns the folder's adapter on at each page, unless it was turned off here.
+      if (LOCAL && LOCAL.bridge && names.indexOf('local') === -1) localStorage.setItem('redbird:folder-off', '1');
+      else if (LOCAL && LOCAL.bridge) localStorage.removeItem('redbird:folder-off');
+    } catch (e) {}
     qs.set('try', v);
     history.replaceState(history.state, '', location.pathname + '?' + qs + location.hash);
   }

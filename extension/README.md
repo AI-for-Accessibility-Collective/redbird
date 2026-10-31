@@ -14,8 +14,8 @@ This only works in Chrome on a computer, not on phones. If you use a keyboard or
 ## Use it
 
 - Open any site and click the Redbird button. The page loads again with the panel on the left, and the button says "on".
-- Your profile, saved fixes, your own adapter and the adapters you had on in Redbird come with you. For example, you can build a fix on Redbird, then open NYTimes and click the button to see what it does there.
-- **Build your adapter** works the same way as on Redbird. What you build on a site stays on that site until you change something on Redbird again.
+- Your profile, saved fixes, your own adapter and the adapters you have on come with you, between Redbird and every site where the panel is on. For example, you can build a fix on Redbird, then open NYTimes and click the button to see what it does there.
+- **Build your adapter** works the same way as on Redbird. An adapter built for one site can do nothing, or the wrong thing, on another. If it does, turn it off in **Adapter Library**.
 - The panel stays on as you go to other pages in that tab. Click the button again to turn it off, and the page loads again without it.
 
 ## Use it with a coding agent
@@ -63,4 +63,4 @@ The extension adds the panel to the site's own page instead, so no iframe is nee
 
 ## Change it
 
-`background.js` turns the panel on and off, adds it to each page, and carries the panel's requests to a folder on your computer. Chrome asks before a public website can reach that folder. `carry.js` copies your profile and fixes from Redbird. After changing anything in this folder, run `python3 tools/zip-extension.py` from the top of the repository and commit the new zip, so the download link above has it.
+`background.js` turns the panel on and off, adds it to each page, and carries the panel's requests to a folder on your computer. Chrome asks before a public website can reach that folder. `carry.js` keeps your profile and fixes the same on Redbird and every site where the panel is on. After changing anything in this folder, run `python3 tools/zip-extension.py` from the top of the repository and commit the new zip, so the download link above has it.
