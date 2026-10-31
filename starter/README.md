@@ -22,7 +22,7 @@ Each time `adapter.js` is saved, the page runs it again. `npm test` only works o
 
 ## Chat with opencode in the panel
 
-If [opencode](https://opencode.ai) is installed, `npm run dev` starts it for you. Open the panel's **Build your adapter** tab on the store or on a real site, and say what should change. Opencode reads the page, changes `adapter.js`, and the page runs the new version when it's done, which usually takes a minute or two.
+If [opencode](https://opencode.ai) is installed (`npm install -g opencode-ai`), `npm run dev` starts it for you. Open the panel's **Build your adapter** tab on the store or on a real site, and say what should change. Opencode reads the page, changes `adapter.js`, and the page runs the new version when it's done, which usually takes a minute or two.
 
 From the panel, opencode can only read this folder and change the adapter. To let it do more, run `opencode` yourself in this folder.
 

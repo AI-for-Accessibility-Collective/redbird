@@ -22,7 +22,7 @@ This only works in Chrome on a computer, not on phones. If you use a keyboard or
 
 If a starter folder is running on your computer (`npm run dev`, see [starter/](../starter/README.md)), the panel finds it by itself. The site then runs the folder's `adapter.js`, and the page runs it again each time the file is saved. This works with any coding agent.
 
-If [opencode](https://opencode.ai) is installed, you can also chat with it in the **Build your adapter** tab. You don't need to start opencode, since `npm run dev` does that. From this chat, opencode can read the folder and change the adapter. A site could hide instructions in the text that goes to opencode, so it can't run commands or open websites from here. To let it do more, run opencode yourself in the folder.
+If [opencode](https://opencode.ai) is installed (`npm install -g opencode-ai`), you can also chat with it in the **Build your adapter** tab. You don't need to start opencode, since `npm run dev` does that. From this chat, opencode can read the folder and change the adapter. A site could hide instructions in the text that goes to opencode, so it can't run commands or open websites from here. To let it do more, run opencode yourself in the folder.
 
 There's no key to set up: from the panel, opencode uses the workshop's shared AI model.
 
@@ -38,19 +38,29 @@ There's no key to set up: from the panel, opencode uses the workshop's shared AI
 
 ## What we tested
 
-On each site we opened the panel, and closed it again. This was in Chrome for testing, signed out, so try your own site before you rely on it.
+All of this was in Chromium for testing, signed out, so try your own site before you rely on it.
 
-| site | panel | chat with opencode |
-|---|---|---|
-| Wikipedia | works | works |
-| NYTimes | works | works, but it blocked our test browser as a robot after many runs |
-| Amazon | works | works |
-| The Guardian, GitHub, weather.gov, Medicare.gov, IRS.gov | works | not tried |
-| Target | opens, but the site asked our test browser to prove it's human, so we couldn't try it | not tried |
+| test | what we ran |
+|---|---|
+| Each adapter alone, switched on and off | 1,040 runs on 25 sites |
+| Sets of adapters together, with a reload and a click to another page | 15 sets on 12 sites |
+| Audit, Fix this page and undo | 14 sites |
+| Building and changing an adapter in the Build tab | 13 requests on 11 sites |
+| Chat with opencode | 14 rounds on 7 sites |
+| My profile, made on one site and used on others | 6 people on 5 sites |
+
+| sites | result |
+|---|---|
+| Wikipedia, the Guardian, BBC, NPR, CNN, MDN, Khan Academy, Our World in Data, Amazon, Best Buy, Booking, Craigslist, GitHub, Hacker News, YouTube, weather.gov, Medicare.gov, IRS.gov, USA.gov, CDC, SSA, NIH | the panel and adapters work |
+| Reddit | works, but it started blocking our test browser after many visits |
+| NYTimes, Target, Walmart, Etsy, Yelp, IMDb, eBay, Stack Overflow | these showed our test browser a robot check or an error, so we couldn't test them |
 
 - If a site shows a robot check, the extension can't get around it. Go back to Redbird and keep working there.
-- Some sites, like Amazon and the Guardian, are wider than the room left beside the panel. You can scroll sideways, move the panel to the other side, or make it narrower.
-- An adapter written by AI can be wrong in ways a test doesn't catch. For example, one made Amazon's prices bigger and "$29.99" turned into "$2999". Have someone check each change with their own tools.
+- Many sites, like Amazon, Reddit and the Guardian, are wider than the room left beside the panel. You can scroll sideways, move the panel to the other side, or make it narrower. **Single column** can make this worse on some of them.
+- **Fix this page** does much more on some sites than others. Hacker News went from 248 problems to 1, but Amazon stayed at the same number.
+- The first chat message usually takes one to two minutes, and later ones under a minute.
+- An adapter written by AI can be wrong in ways a test doesn't catch, and the panel can say it's done when it isn't. For example, one made Amazon's prices bigger and "$29.99" turned into "$2999". Have someone check each change with their own tools.
+- Nobody has tried this yet with a real screen reader, on Windows, or with the Alt+Shift+R shortcut.
 
 ## Why not show the site inside the builder
 
