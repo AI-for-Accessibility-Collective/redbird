@@ -1530,10 +1530,12 @@
   // "12 changes on this page", a disclosure that lists them when opened. A list that has focus
   // inside it isn't redrawn, so a screen reader or keyboard user doesn't lose their place.
   var openChanges = {};
+  // These do their work without changing the page, so an empty list doesn't mean they did nothing.
+  var QUIET = ['read-aloud', 'reading-spot', 'mute-sounds', 'confirm-actions', 'show-captions', 'live-region-announcer', 'persistent-hover'];
   function updateChanges(slot, who) {
     var n = count(who), det = slot.querySelector('details.ws-chgs');
     if (!n) {
-      var none = Track.obs ? '<p class="ws-help">Nothing to change on this page.</p>' : '';
+      var none = !Track.obs ? '' : '<p class="ws-help">' + (QUIET.indexOf(who) !== -1 ? 'It’s on. It works in the background, so the page looks the same.' : 'Nothing to change on this page.') + '</p>';
       if (slot.__html !== none) { slot.innerHTML = none; slot.__html = none; }
       return;
     }
