@@ -84,7 +84,7 @@ export const CalmUrgency = {
     let n = 0;
     // Stop anything that blinks or flashes, whatever it says.
     for (const el of document.body.querySelectorAll('*')) {
-      if (el.closest('.ws-panel') || el.classList.contains('ws-calm-still')) continue;
+      if (el.closest('.ws-panel') || !el.classList || el.classList.contains('ws-calm-still')) continue;
       const anim = getComputedStyle(el).animationName, text = el.textContent.trim();
       // Short text only (a badge, not a whole panel sliding in), and not an empty spinner.
       if (anim && anim !== 'none' && text && text.length < 30) el.classList.add('ws-calm-still');

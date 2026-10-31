@@ -724,7 +724,16 @@
       .then(function () { return import(url).catch(function () { return import(url + '?retry=1'); }); });
   }
   var loading = {}, adapters = {}, errors = {}, enabling = {}, localCode = null;
+  // Bionic reading resets its text with all: unset, and Chrome writes that out with a background in
+  // it. Dark mode takes that for a colored box to flip back, which leaves the bold letters dark on dark.
+  function keepBionicVisible() {
+    if (document.getElementById('ws-bionic')) return;
+    var s = document.head.appendChild(document.createElement('style'));
+    s.id = 'ws-bionic';
+    s.textContent = '.ai4a11y-bionic,.ai4a11y-bionic *{--ai4a11y-media-dark:initial!important;--ai4a11y-media-dim:initial!important}';
+  }
   function ensure(name) {
+    if (name === 'bionic-reading') keepBionicVisible();
     loading[name] = loading[name] || loadModule(name).then(function (mod) {
       var a = WRAP[name] ? WRAP[name](mod) : Object.keys(mod).map(function (k) { return mod[k]; }).find(function (v) { return v && typeof v.enable === 'function'; });
       if (!a) throw new Error('no export with an enable() function');

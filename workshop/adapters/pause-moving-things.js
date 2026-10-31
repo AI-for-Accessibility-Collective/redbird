@@ -73,7 +73,7 @@ export const PauseMovingThings = {
     // back button, put the class back by hand.
     this.slides = [];
     for (const cur of document.body.querySelectorAll('[class]')) {
-      const word = (cur.className.baseVal ?? cur.className).match(CURRENT);
+      const word = String(cur.className?.baseVal ?? cur.className ?? '').match(CURRENT);
       const group = cur.parentElement;
       if (!word || !group || ours(cur) || group.children.length < 2 || this.slides.some((s) => s.group === group)) continue;
       const box = group.closest('section, [class*="carousel"], [class*="slider"], [class*="hero"]') || group.parentElement;
