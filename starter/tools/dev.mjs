@@ -240,7 +240,7 @@ if (process.argv[1] && same(process.argv[1], fileURLToPath(import.meta.url))) {
     console.log('Save adapter.js and the page runs it again. Press Ctrl+C to stop.');
     for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => (agent ? agent.close() : Promise.resolve()).finally(() => process.exit(0)));
   }, (e) => {
-    if (e.code === 'EADDRINUSE') console.error(`That port is already in use. Maybe the store is already running here? Or try npm run dev -- 5190`);
+    if (e.code === 'EADDRINUSE') console.error(`That port is already in use. Maybe the store is already running here? Or try another port from 5179 to 5183, like npm run dev -- 5181`);
     else console.error(e);
     process.exit(1);
   });

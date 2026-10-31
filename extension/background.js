@@ -27,11 +27,11 @@ async function tabsOn() {
 }
 
 async function toggle(tabId, url) {
+  const on = await tabsOn();
+  if (on.includes(tabId)) return turnOff(tabId, on);
   // Redbird has the panel already, and Chrome's own pages (chrome://, the Web Store) don't let
   // extensions run anything on them.
   if (url && (url.startsWith(SITE) || !/^(https?:|about:blank)/.test(url))) return;
-  const on = await tabsOn();
-  if (on.includes(tabId)) return turnOff(tabId, on);
   return turnOn(tabId, on);
 }
 
@@ -46,6 +46,7 @@ async function turnOn(tabId, on) {
     }],
   });
   await chrome.storage.session.set({ on: on.concat(tabId) });
+  await chrome.action.setTitle({ tabId, title: 'Close the Redbird panel on this page' });
   // The page came with its policy already, so it loads again without it, and the panel goes in
   // once it has (below).
   await chrome.tabs.reload(tabId);
@@ -79,11 +80,12 @@ chrome.webNavigation.onDOMContentLoaded.addListener(async ({ tabId, frameId, url
   } catch (e) { console.warn('[redbird] could not add the panel:', e.message); }
 });
 
-// A starter folder running on this computer, if there is one.
+// A starter folder running on this computer, if there is one. With two running, it's always the one
+// on the lowest port, so the page doesn't go back and forth between them.
 async function findFolder() {
   const ask = (port) => fetch(`http://127.0.0.1:${port}/__rb/hello`, { signal: AbortSignal.timeout(400) })
-    .then((r) => (r.ok ? r.json() : Promise.reject())).then((d) => ({ port, agent: d.agent || null }));
-  try { return await Promise.any(PORTS.map(ask)); } catch (e) { return null; }
+    .then((r) => (r.ok ? r.json() : null)).then((d) => (d ? { port, agent: d.agent || null } : null)).catch(() => null);
+  return (await Promise.all(PORTS.map(ask))).find(Boolean) || null;
 }
 
 chrome.runtime.onMessage.addListener(({ folder } = {}, sender, answer) => {
@@ -129,7 +131,8 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 // Runs in the page. Brings over what changed since the last visit, on Redbird or on another site
 // (see carry.js), then adds the panel.
 function addPanel(src, carried, local) {
-  if (document.querySelector('script[data-redbird-panel]')) return;
+  // The store in a starter folder has its own panel.
+  if (document.querySelector('script[data-redbird-panel]') || window.RB_LOCAL || window.RB_SAY) return;
   if (local) {
     window.RB_LOCAL = { bridge: true, adapter: '/__rb/adapter.js', feedback: '/__rb/feedback', fix: '/__rb/fix.json',
       chat: local.agent ? '/__rb/chat' : null, agent: local.agent, store: new URL(src).origin };
