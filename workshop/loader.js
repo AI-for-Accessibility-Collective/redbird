@@ -840,10 +840,28 @@
     box.setAttribute('data-dock', side ? 'side' : 'bottom');
     var css = side ? 'html{padding-' + ui.side + ':' + w + 'px!important}' : 'html{padding-bottom:' + Math.round(innerHeight * 0.45) + 'px!important}';
     if (dockStyle.textContent !== css) dockStyle.textContent = css;
+    if (!onStore) fitFixed();
     var edge = $('.ws-edge');
     if (edge) { edge.setAttribute('aria-valuenow', String(w)); edge.setAttribute('aria-valuemin', '280'); edge.setAttribute('aria-valuemax', '720'); }
     place();
     if (marks.outline || marks.flash) queueMarks();
+  }
+  // Banners fixed to the window don't move over with the page. Keeps them, and buttons like Accept
+  // on a cookie notice, in the room beside the panel.
+  function fitFixed() {
+    if (innerWidth < 700) return;
+    var w = dockWidth(), left = ui.side === 'left' ? w : 0, room = innerWidth - w;
+    document.querySelectorAll('body > *, body > * > *, body > * > * > *').forEach(function (el) {
+      if (el === host || getComputedStyle(el).position !== 'fixed') return;
+      var r = el.getBoundingClientRect();
+      // Off the screen on purpose, like a skip link waiting for keyboard focus.
+      if (r.width < 200 || r.right <= 0 || r.left >= innerWidth) return;
+      if (r.left >= left - 1 && r.right <= left + room + 1) return;
+      el.style.setProperty('left', left + 'px', 'important');
+      el.style.setProperty('right', 'auto', 'important');
+      el.style.setProperty('max-width', room + 'px', 'important');
+      el.style.setProperty('transform', 'none', 'important');
+    });
   }
   function place() {
     if (!box) return;
@@ -922,6 +940,15 @@
     putHost();
     box = root.querySelector('.ws-panel');
     rendered = true;
+    if (!onStore) {
+      // Some sites are wider than the room beside the panel, and Chrome opens them scrolled all the
+      // way right, with their left side under the panel. They start at the left, and stay scrollable.
+      var moved = false;
+      ['wheel', 'keydown', 'pointerdown', 'touchstart'].forEach(function (t) { addEventListener(t, function () { moved = true; }, { passive: true, once: true }); });
+      [0, 1000, 3000, 6000, 12000].forEach(function (ms) {
+        setTimeout(function () { dock(); if (!moved && scrollX) scrollTo(0, scrollY); }, ms); // banners come in late
+      });
+    }
     wire();
     root.addEventListener('click', toolkitClick);
     showTab(ui.tab, false);
