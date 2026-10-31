@@ -45,9 +45,9 @@ All of this was in Chromium for testing, signed out, so try your own site before
 | Each adapter alone, switched on and off | 1,040 runs on 25 sites |
 | Sets of adapters together, with a reload and a click to another page | 15 sets on 12 sites |
 | Audit, Fix this page and undo | 14 sites |
-| Building and changing an adapter in the Build tab | 13 requests on 11 sites |
+| Building and changing an adapter in the Build tab | 13 requests on 12 sites |
 | Chat with opencode | 14 rounds on 7 sites |
-| My profile, made on one site and used on others | 6 people on 5 sites |
+| My profile, made on one site and used on others | 6 people on 6 sites |
 
 | sites | result |
 |---|---|
