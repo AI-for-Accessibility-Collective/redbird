@@ -46,7 +46,18 @@
 
 <h2 id="real-websites">Try it on a real website</h2>
 <p>With the folder running, install the <a href="./#real-websites">Redbird panel extension</a>, open a site in Chrome and click the extension's button (or press Alt+Shift+R). The page loads again with the panel and runs your adapter. Each time the file is saved, the page runs it again. Please stay signed out of the sites you try.</p>
-<p>If <a href="https://opencode.ai">opencode</a> is installed (<code>npm install -g opencode-ai</code>), you can also skip the other window. Open <b>Build your adapter</b> in the panel and say what should change. Opencode reads the page and changes the adapter, which usually takes a minute or two, and the page runs the new version when it's done. An adapter can look right to a test and still be wrong, so have someone check each change with their own tools.</p>
+
+<h2 id="opencode">Chat with opencode in the panel</h2>
+<p>With <a href="https://opencode.ai">opencode</a>, you can chat with a coding agent right in the panel, on a real website or on the store on your computer. It runs inside the panel, so there's no other window to open and no key to add.</p>
+<ol>
+  <li>Install <a href="https://nodejs.org">Node.js</a> 18 or newer, if you don't have it.</li>
+  <li>In a terminal, run <code>npm install -g opencode-ai</code>. You only do this once.</li>
+  <li>Get a folder, the way <a href="#get-the-folder">Get the folder</a> says. You don't need Claude Code or Codex for this.</li>
+  <li>In a terminal, go to that folder and run <code>npm run dev</code>. Leave it running. It starts opencode for you.</li>
+  <li>Open a site with the panel on. If the site is already open, reload it, since the panel looks for your folder when a page loads.</li>
+  <li>Open <b>Build your adapter</b> and say what should change. If you see <b>Your folder</b> with a chat box, you're using opencode.</li>
+</ol>
+<p>Opencode reads the page and changes the adapter, then the page runs the new version. The first message usually takes a minute or two, and later ones under a minute. An adapter can look right to a test and still be wrong, so have someone check each change with their own tools.</p>
 
 <h2 id="who-does-what">Who does what</h2>
 <p>If someone on your team has the access need you're designing for, they should be the one testing each version. If not, one person on the team uses the store with the same tools the person would use (e.g., VoiceOver or only the keyboard).</p>
@@ -77,7 +88,7 @@
 <h2 id="share-it">Share it</h2>
 <p>In the panel, under <b>Your folder</b>, press <b>Share it</b>. The link opens your adapter on the live store, and you can paste it in the workshop chat the way <a href="test-and-share">Test it and share it</a> says.</p>
 </main>
-<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#get-the-folder">Get the folder</a></li><li><a href="#who-does-what">Who does what</a></li><li><a href="#each-round">Each round</a></li><li><a href="#test-it">Test it</a></li><li><a href="#share-it">Share it</a></li></ul></nav>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#get-the-folder">Get the folder</a></li><li><a href="#real-websites">Try it on a real website</a></li><li><a href="#opencode">Chat with opencode in the panel</a></li><li><a href="#who-does-what">Who does what</a></li><li><a href="#each-round">Each round</a></li><li><a href="#test-it">Test it</a></li><li><a href="#share-it">Share it</a></li></ul></nav>
 </div>
 </div>
 <script src="guide.js"></script>
