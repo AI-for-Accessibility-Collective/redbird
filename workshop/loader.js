@@ -846,17 +846,25 @@
     place();
     if (marks.outline || marks.flash) queueMarks();
   }
-  // Banners fixed to the window don't move over with the page. Keeps them, and buttons like Accept
-  // on a cookie notice, in the room beside the panel.
+  // Banners fixed to the window don't move over with the page, and neither does a whole page laid
+  // out as one box placed on the window, like YouTube's. Keeps them, and buttons like Accept on a
+  // cookie notice, in the room beside the panel.
   function fitFixed() {
     if (innerWidth < 700) return;
     var w = dockWidth(), left = ui.side === 'left' ? w : 0, room = innerWidth - w;
+    var onWindow = getComputedStyle(document.body).position === 'static';
     document.querySelectorAll('body > *, body > * > *, body > * > * > *').forEach(function (el) {
-      if (el === host || getComputedStyle(el).position !== 'fixed') return;
+      if (el === host) return;
+      var pos = getComputedStyle(el).position;
+      if (pos !== 'fixed' && pos !== 'absolute') return;
       var r = el.getBoundingClientRect();
       // Off the screen on purpose, like a skip link waiting for keyboard focus.
       if (r.width < 200 || r.right <= 0 || r.left >= innerWidth) return;
       if (r.left >= left - 1 && r.right <= left + room + 1) return;
+      if (pos === 'absolute') {
+        if (!onWindow || r.width < innerWidth * 0.6 || (el.offsetParent && el.offsetParent !== document.body)) return;
+        el.style.setProperty('width', room + 'px', 'important');
+      }
       el.style.setProperty('left', left + 'px', 'important');
       el.style.setProperty('right', 'auto', 'important');
       el.style.setProperty('max-width', room + 'px', 'important');
