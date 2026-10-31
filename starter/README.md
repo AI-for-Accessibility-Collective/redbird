@@ -26,7 +26,7 @@ If [opencode](https://opencode.ai) is installed, `npm run dev` starts it for you
 
 From the panel, opencode can only read this folder and change the adapter. To let it do more, run `opencode` yourself in this folder.
 
-Opencode needs an AI model. If you don't have one set up, add a `.env` file to this folder with the line `GEMINI_API_KEY=...`. Git ignores this file.
+There's no key to set up: from the panel, opencode uses the workshop's shared AI model. To use your own Gemini key instead, start the folder with `GEMINI_API_KEY=... npm run dev`.
 
 ## Show it in your developer console
 

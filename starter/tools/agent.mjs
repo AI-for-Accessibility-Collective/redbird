@@ -13,7 +13,7 @@ import path from 'node:path';
 
 const LIMITS = {
   '*': 'deny',
-  read: 'allow',
+  read: { '*': 'allow', '*.env': 'deny', '*.env.*': 'deny' },
   list: 'allow',
   grep: 'allow',
   glob: 'allow',
@@ -28,32 +28,29 @@ const WINDOWS = process.platform === 'win32';
 const ADDED = '\n\n[From the panel]\n';
 const DOING = { read: 'Reading', list: 'Looking through the folder', grep: 'Looking through the folder', glob: 'Looking through the folder', edit: 'Changing', write: 'Changing' };
 
-// The workshop's Gemini key, from the environment or a line in this folder's .env file.
-function setting(root, name) {
-  if (process.env[name]) return process.env[name];
-  try {
-    const line = fs.readFileSync(path.join(root, '.env'), 'utf8').split(/\r?\n/).find((l) => l.startsWith(name + '='));
-    return line ? line.slice(name.length + 1).trim() : '';
-  } catch (e) { return ''; }
-}
-
-function config(root) {
-  const key = setting(root, 'GEMINI_API_KEY');
-  const out = { permission: LIMITS };
+// Everyone uses the workshop's Gemini key, through the store's /api/gemini, so there's nothing to set
+// up and the key isn't on this computer. A GEMINI_API_KEY in the environment goes straight to Google
+// instead. It isn't read from a file here, since the agent can read files and a page can ask it to.
+function config(store) {
+  const key = process.env.GEMINI_API_KEY;
+  const url = process.env.GEMINI_BASE_URL || (key ? '' : store + '/api/gemini');
   // Gemini needs opencode's own Google connection. Through its OpenAI-style one, Gemini refuses
   // every tool call, because the signature it adds to each one gets lost on the way back.
-  if (key) {
-    const url = setting(root, 'GEMINI_BASE_URL');
-    out.model = 'google/gemini-3.5-flash';
-    out.provider = { google: { options: { apiKey: key, ...(url ? { baseURL: url } : {}) }, models: { 'gemini-3.5-flash': { name: 'Gemini' } } } };
-  }
-  return out;
+  // A round of chat is many short steps, and this model took about a quarter as long on each as
+  // Gemini 4 Argon, which is stronger but ran past four minutes on a first round.
+  return {
+    permission: LIMITS,
+    enabled_providers: ['google'],
+    model: 'google/gemini-3.6-flash',
+    small_model: 'google/gemini-3.6-flash',
+    provider: { google: { options: { apiKey: key || 'kept-on-the-server', ...(url ? { baseURL: url } : {}) }, models: { 'gemini-3.6-flash': { name: 'Gemini' } } } },
+  };
 }
 
 function plainError(e) {
   const text = String((e && (e.data && e.data.message)) || (e && e.message) || e);
   if (/api.?key|unauthori[sz]ed|permission.?denied|\b40[13]\b|no.+(provider|model)|model.+not found/i.test(text)) {
-    return 'Opencode has no AI model it can use. In this folder, run opencode once and choose a model with /connect, or put the workshop’s key in .env as GEMINI_API_KEY=…, then start npm run dev again.';
+    return 'The AI model turned this down. Tell one of the organizers.';
   }
   if (/quota|rate.?limit|\b429\b|resource.?exhausted|overloaded/i.test(text)) {
     return 'The AI model is at its limit right now. Wait a minute and send it again. If it keeps happening, tell one of the organizers.';
@@ -72,11 +69,11 @@ export function createAgent(root, store) {
 
   function launch() {
     return new Promise((done, fail) => {
-      const env = { ...process.env, OPENCODE_SERVER_PASSWORD: password, OPENCODE_CONFIG_CONTENT: JSON.stringify(config(root)),
+      const env = { ...process.env, OPENCODE_SERVER_PASSWORD: password, OPENCODE_CONFIG_CONTENT: JSON.stringify(config(store)),
         // Opencode also reads ~/.claude/CLAUDE.md, a person's private notes, and would send it to
         // the shared model with every message.
         OPENCODE_DISABLE_CLAUDE_CODE: '1' };
-      if (setting(root, 'GEMINI_API_KEY')) delete env.ANTHROPIC_API_KEY; // nothing else gets billed
+      delete env.ANTHROPIC_API_KEY; // nothing else gets billed
       child = spawn('opencode', ['serve', '--hostname', '127.0.0.1', '--port', '0'], { cwd: root, env, shell: WINDOWS, stdio: ['ignore', 'pipe', 'pipe'] });
       let said = '';
       const read = (d) => {

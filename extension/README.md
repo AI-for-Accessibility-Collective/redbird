@@ -24,7 +24,7 @@ If a starter folder is running on your computer (`npm run dev`, see [starter/](.
 
 If [opencode](https://opencode.ai) is installed, you can also chat with it in the **Build your adapter** tab. You don't need to start opencode, since `npm run dev` does that. From this chat, opencode can read the folder and change the adapter. A site could hide instructions in the text that goes to opencode, so it can't run commands or open websites from here. To let it do more, run opencode yourself in the folder.
 
-For now, opencode uses its own model settings unless the folder's `.env` file has a `GEMINI_API_KEY` line.
+There's no key to set up: from the panel, opencode uses the workshop's shared AI model.
 
 ## What is different from Redbird
 
