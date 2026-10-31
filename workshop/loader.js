@@ -913,6 +913,11 @@
     host.id = 'ws-root';
     host.setAttribute('lang', 'en'); // stays English when translate-page switches the page to Spanish
     root = host.attachShadow({ mode: 'open' });
+    // Keys pressed in the panel are for the panel. On a real site they'd otherwise reach the site's
+    // shortcuts: on YouTube, typing an m mutes the video, and on GitHub an s jumps to the search box.
+    ['keydown', 'keypress', 'keyup'].forEach(function (type) {
+      host.addEventListener(type, function (e) { if (!(e.altKey && e.shiftKey)) e.stopPropagation(); });
+    });
     root.innerHTML = '<style>' + CSS + '</style>' +
       '<aside class="ws-panel" aria-label="AI4A11y Toolkit" data-side="' + ui.side + '">' +
         '<a class="ws-skip" href="#" id="ws-skip">Skip to the ' + (onStore ? 'store' : 'page') + '</a>' +
