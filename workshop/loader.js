@@ -46,6 +46,13 @@
   // "local" is then the adapter.js in that folder, and the page reloads when the file is saved.
   var LOCAL = window.RB_LOCAL || null;
   if (!LOCAL) names = names.filter(function (n) { return n !== 'local'; }); // there is no folder to run
+  // On a real site the folder's adapter is on unless it was turned off in the panel, whatever the
+  // address says. It stands in for the panel's own copy, which is usually where the folder came from.
+  if (LOCAL && LOCAL.bridge) {
+    var folderOff = null;
+    try { folderOff = localStorage.getItem('redbird:folder-off'); } catch (e) {}
+    if (!folderOff) names = names.filter(function (n) { return n !== 'mine' && n !== 'local'; }).concat('local');
+  }
   // A toolkit to connect to: an AI for Accessibility toolkit's address and the person's token.
   // It comes from the developer console's Open Redbird link (after the #, which never reaches a
   // server), from a starter folder started with TOOLKIT_URL and TOOLKIT_TOKEN, or from the form in
