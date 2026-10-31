@@ -31,6 +31,7 @@
   // The extension in extension/ also puts this panel on other sites, which have none of the store's
   // planted problems.
   var onStore = location.origin === new URL(base).origin;
+  var SITES = onStore ? 'shopping websites' : 'websites'; // what the questions in the panel ask about
   var qs = new URLSearchParams(location.search);
   function remember(key, param) {
     var v = qs.get(param);
@@ -1367,7 +1368,7 @@
     var q = function (id, text, v) { return '<label class="ws-lab" for="' + id + '">' + text + '</label><textarea id="' + id + '" class="ws-input" rows="2">' + esc(v) + '</textarea>'; };
     el.innerHTML = '<div class="ws-card"><h3 class="ws-h">Make your own profile</h3>' +
       '<p class="ws-help">Answer in your own words, and the toolkit picks adapters for you.</p>' +
-      q('ws-me1', 'What gets in your way on shopping websites?', a[0]) + q('ws-me2', 'What would make shopping websites easier for you?', a[1]) + q('ws-me3', 'Is there anything you don’t want changed?', a[2]) +
+      q('ws-me1', 'What gets in your way on ' + SITES + '?', a[0]) + q('ws-me2', 'What would make ' + SITES + ' easier for you?', a[1]) + q('ws-me3', 'Is there anything you don’t want changed?', a[2]) +
       '<div class="ws-row"><button type="button" class="ws-btn" id="ws-me-go">' + (me ? 'Update my profile' : 'Make my profile') + '</button>' +
       (me ? '<button type="button" class="ws-link" id="ws-me-cancel">Cancel</button>' : '') + '</div>' +
       '<p class="ws-help" id="ws-me-msg"></p>' +
@@ -1466,7 +1467,7 @@
     var tick = setInterval(function () { btn.textContent = 'Making your profile… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
     var stop = function () { clearInterval(tick); btn.textContent = label; btn.disabled = false; };
     meSays('Making your profile…');
-    var input = { catalog: catalog(), answers: 'What gets in my way on shopping websites: ' + (a[0] || '-') + '\nWhat would make shopping websites easier for me: ' + (a[1] || '-') + '\nWhat I don’t want changed: ' + (a[2] || '-') };
+    var input = { catalog: catalog(), answers: 'What gets in my way on ' + SITES + ': ' + (a[0] || '-') + '\nWhat would make ' + SITES + ' easier for me: ' + (a[1] || '-') + '\nWhat I don’t want changed: ' + (a[2] || '-') };
     // One more try if the answer doesn't come back or isn't a profile.
     ask('myProfile', input).then(parseMine).catch(function () { return ask('myProfile', input).then(parseMine); })
       .then(function (d) {
@@ -1923,8 +1924,8 @@
           '<textarea id="ws-person" class="ws-input" rows="2" aria-describedby="ws-person-help" placeholder="e.g., Mark has ADHD and anxiety. Countdown timers make him rush."></textarea>' +
           '<p class="ws-help" id="ws-person-help">A sentence or two about them, like your card game’s ability profile.</p>' +
           '<details class="ws-more" id="ws-ask"><summary>Not sure what to write? Answer three questions</summary>' +
-            '<label class="ws-lab" for="ws-q1">What on shopping sites gets in their way?</label><textarea id="ws-q1" class="ws-input" rows="2"></textarea>' +
-            '<label class="ws-lab" for="ws-q2">What would make shopping sites easier for them?</label><textarea id="ws-q2" class="ws-input" rows="2"></textarea>' +
+            '<label class="ws-lab" for="ws-q1">What on ' + SITES + ' gets in their way?</label><textarea id="ws-q1" class="ws-input" rows="2"></textarea>' +
+            '<label class="ws-lab" for="ws-q2">What would make ' + SITES + ' easier for them?</label><textarea id="ws-q2" class="ws-input" rows="2"></textarea>' +
             '<label class="ws-lab" for="ws-q3">Is there anything they don’t want changed?</label><textarea id="ws-q3" class="ws-input" rows="2"></textarea>' +
             '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-askgo">Write it for me</button></div></details>' +
         '</div>' +
@@ -2026,7 +2027,7 @@
     var a = ['#ws-q1', '#ws-q2', '#ws-q3'].map(function (q) { return $(q).value.trim(); });
     if (!a.join('')) { msg('Answer at least one question first.'); $('#ws-q1').focus(); return; }
     var done = wait($('#ws-askgo'), 'Writing who it’s for…');
-    ask('profileFromChat', { answers: 'What gets in their way on shopping sites: ' + (a[0] || '-') + '\nWhat would make shopping sites easier for them: ' + (a[1] || '-') + '\nWhat they don’t want changed: ' + (a[2] || '-') })
+    ask('profileFromChat', { answers: 'What gets in their way on ' + SITES + ': ' + (a[0] || '-') + '\nWhat would make ' + SITES + ' easier for them: ' + (a[1] || '-') + '\nWhat they don’t want changed: ' + (a[2] || '-') })
       .then(function (text) {
         done();
         var main = text.split(/\n\s*Support areas:/i)[0].trim();
