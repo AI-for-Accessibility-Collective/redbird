@@ -2533,45 +2533,59 @@
   // The chat with opencode in the folder (starter/tools/agent.mjs). The conversation lives in the
   // folder's server, so it's still here after the page reloads for a new adapter.js.
   var CHAT_SAID = 'redbird:chat-said', CHAT_FOCUS = 'redbird:chat-focus';
-  var chat = { messages: [], busy: false, doing: '' }, chatDrawn = '', chatTimer = null, reloadLater = false, chatStarted = 0;
+  var chat = { messages: [], busy: false, doing: '' }, chatDrawn = [], chatTimer = null, reloadLater = false, chatStarted = 0, sending = false, chatMissed = 0;
   function chatRead() {
     clearTimeout(chatTimer);
     return localFetch(LOCAL.chat, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
+      chatMissed = 0;
       var replies = (s.messages || []).filter(function (m) { return m.who === 'opencode'; }).length;
       // The folder can answer before opencode has picked up the message that was just sent.
       var justSent = !s.busy && Date.now() - chatStarted < 8000 && replies <= chat.repliesBefore;
-      chat = { messages: s.messages || [], busy: !!s.busy || justSent, doing: s.doing || '', repliesBefore: chat.repliesBefore };
+      var was = chat.busy;
+      chat = { messages: s.messages || [], busy: !!s.busy || justSent || sending, doing: s.doing || '', repliesBefore: chat.repliesBefore };
       if (!chat.busy && reloadLater) { reloadLater = false; reloadNow(); return; }
       chatShow();
-      chatSpeak();
+      chatSpeak(was);
       if (chat.busy || s.starting) chatTimer = setTimeout(chatRead, 1200);
-    }).catch(function () { chat.busy = false; chatShow(); folderMsg('Couldn’t reach your folder. Is npm run dev still running?'); });
+    }).catch(function () {
+      // One missed answer doesn't mean the folder has gone. Opencode may still be working.
+      if (chat.busy && ++chatMissed < 6) { chatTimer = setTimeout(chatRead, 2000); return; }
+      chat.busy = false; chatShow(); folderMsg('Couldn’t reach your folder. Is npm run dev still running?');
+    });
   }
   function chatShow() {
     var log = rendered && $('#ws-chat-log');
     if (!log) return;
-    var box = $('#ws-chat-box'), drawn = JSON.stringify(chat.messages);
-    if (drawn !== chatDrawn) {
-      chatDrawn = drawn;
-      log.innerHTML = chat.messages.map(function (m) {
-        return '<li><span class="ws-who">' + (m.who === 'you' ? 'You' : 'Opencode') + '</span><span class="ws-said">' + esc(m.text) + '</span>' +
-          (m.error ? '<span class="ws-err">' + esc(m.error) + '</span>' : '') + '</li>';
-      }).join('');
-      log.hidden = !chat.messages.length;
-      if (log.lastElementChild) log.lastElementChild.scrollIntoView({ block: 'nearest' });
-    }
+    var box = $('#ws-chat-box'), added = false;
+    // Only what changed is redrawn, so someone reading the conversation doesn't lose their place.
+    chat.messages.forEach(function (m, i) {
+      var html = '<span class="ws-who">' + (m.who === 'you' ? 'You' : 'Opencode') + '</span><span class="ws-said">' + esc(m.text) + '</span>' +
+        (m.error ? '<span class="ws-err">' + esc(m.error) + '</span>' : '');
+      if (chatDrawn[i] === html) return;
+      chatDrawn[i] = html;
+      var li = log.children[i];
+      if (!li) { li = log.appendChild(document.createElement('li')); added = true; }
+      li.innerHTML = html;
+    });
+    while (log.children.length > chat.messages.length) log.lastElementChild.remove();
+    chatDrawn.length = chat.messages.length;
+    log.hidden = !chat.messages.length;
+    if (added) log.lastElementChild.scrollIntoView({ block: 'nearest' });
     $('#ws-chat-status').textContent = chat.busy ? (chat.doing || 'Working') + '…' : '';
-    $('#ws-chat-stop').hidden = !chat.busy;
+    var stop = $('#ws-chat-stop');
+    if (!chat.busy && root.activeElement === stop) box.focus(); // Stop is about to hide, with the focus on it
+    stop.hidden = !chat.busy;
     if (readKey(CHAT_FOCUS)) { writeKey(CHAT_FOCUS, null); box.focus(); }
   }
   // Reads each finished reply aloud once, including one that finished just before a reload.
-  function chatSpeak() {
+  function chatSpeak(wasBusy) {
     if (chat.busy) return;
-    var replies = chat.messages.filter(function (m) { return m.who === 'opencode'; });
-    if (replies.length > Number(readKey(CHAT_SAID) || 0)) {
+    var replies = chat.messages.filter(function (m) { return m.who === 'opencode'; }), said = readKey(CHAT_SAID);
+    // On a site the panel hasn't been on yet, the conversation so far has been said already.
+    if (said != null && replies.length > Number(said)) {
       var last = replies[replies.length - 1];
       say(last.text + (last.error ? ' ' + last.error : ''), true);
-    }
+    } else if (wasBusy) say('Opencode stopped without a reply.', true);
     writeKey(CHAT_SAID, String(replies.length));
   }
   function sendChat() {
@@ -2581,19 +2595,21 @@
     var pointed = target && target.from === '#ws-point3' ? target : null;
     var note = { text: text, url: location.href, snapshot: snapshot(document.body, 40000), error: errors.local || '',
       pointedAt: pointed ? pointed.html : '', pointedAtLabel: pointed ? pointed.label : '' };
-    chat.busy = true;
+    chat.busy = sending = true;
+    chat.repliesBefore = chat.messages.filter(function (m) { return m.who === 'opencode'; }).length;
+    writeKey(CHAT_SAID, String(chat.repliesBefore));
     chatShow();
     folderMsg('');
     localFetch(LOCAL.chat, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) }).then(function (r) {
+      sending = false;
       if (!r.ok) throw new Error();
       box.value = '';
       writeKey(FOLDER_NOTE_KEY, null);
       if (pointed) { target = null; renderTarget(); }
-      chat.repliesBefore = chat.messages.filter(function (m) { return m.who === 'opencode'; }).length;
       chatStarted = Date.now();
       say('Sent. Opencode is working.', true);
       chatRead();
-    }).catch(function () { chat.busy = false; chatShow(); folderMsg('Couldn’t send it. Is npm run dev still running in the folder?'); });
+    }).catch(function () { sending = chat.busy = false; chatShow(); folderMsg('Couldn’t send it. Is npm run dev still running in the folder?'); });
   }
   function stopChat() {
     localFetch(LOCAL.chat + '/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(chatRead, function () {});
@@ -2601,8 +2617,8 @@
   // A new adapter.js loads with the page. While opencode is still working, that waits until it's
   // done, so the page doesn't reload under someone reading or typing, and they end up back in the box.
   function reloadNow() {
-    var box = rendered && $('#ws-chat-box');
-    if (box && root.activeElement === box) writeKey(CHAT_FOCUS, '1');
+    var el = rendered && root.activeElement;
+    if (el && el.closest('#ws-folder')) writeKey(CHAT_FOCUS, '1');
     location.reload();
   }
   function reloadForAdapter() {
@@ -2968,7 +2984,7 @@
   var events = null, checking = null;
   function checkFile() {
     if (document.hidden || localCode == null) return;
-    localFetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); })
+    localFetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : localCode; })
       .then(function (code) { if (code !== localCode) reloadForAdapter(); }, function () {});
   }
   function listen() {

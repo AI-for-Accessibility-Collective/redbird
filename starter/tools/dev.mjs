@@ -145,7 +145,7 @@ async function chat(req, res) {
   try { note = JSON.parse((await readBody(req)).toString('utf8')); } catch (e) {}
   const text = String(note.text || '').trim();
   if (!text) return json(res, 400, { error: 'empty message' });
-  await agent.send({ ...note, text });
+  agent.send({ ...note, text }); // answers at once: starting opencode can take longer than a browser waits
   json(res, 200, { ok: true });
 }
 

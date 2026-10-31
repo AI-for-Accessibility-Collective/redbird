@@ -47,6 +47,8 @@ function config(store) {
   };
 }
 
+const DROPPED = /EPROTO|ECONN|ETIMEDOUT|EAI_AGAIN|fetch failed|socket|TLS/i;
+
 function plainError(e) {
   const text = String((e && (e.data && e.data.message)) || (e && e.message) || e);
   if (/api.?key|unauthori[sz]ed|permission.?denied|\b40[13]\b|no.+(provider|model)|model.+not found/i.test(text)) {
@@ -55,7 +57,7 @@ function plainError(e) {
   if (/quota|rate.?limit|\b429\b|resource.?exhausted|overloaded/i.test(text)) {
     return 'The AI model is at its limit right now. Wait a minute and send it again. If it keeps happening, tell one of the organizers.';
   }
-  if (/EPROTO|ECONN|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|fetch failed|socket|TLS|network/i.test(text)) {
+  if (DROPPED.test(text) || /ENOTFOUND|network/i.test(text)) {
     return 'Opencode couldn’t reach the AI model. Check the internet connection and send it again.';
   }
   return 'Opencode ran into a problem: ' + text.slice(0, 300);
@@ -65,7 +67,7 @@ export function createAgent(root, store) {
   const found = spawnSync('opencode', ['--version'], { shell: WINDOWS, stdio: 'ignore' }).status === 0;
   const password = crypto.randomBytes(24).toString('hex');
   const auth = 'Basic ' + Buffer.from('opencode:' + password).toString('base64');
-  let child = null, base = '', session = null, starting = null, failure = '';
+  let child = null, base = '', session = null, starting = null, failure = '', queue = Promise.resolve(), waiting = 0, last = [], earlier = [], retried = new Set();
 
   function launch() {
     return new Promise((done, fail) => {
@@ -85,9 +87,12 @@ export function createAgent(root, store) {
       child.stderr.on('data', read);
       child.once('error', fail);
       child.once('exit', () => {
+        // A new start can't pick up this chat, but the person can still read it.
+        if (base) { failure = 'Opencode stopped. Send your message again. It won’t remember this chat.'; earlier = last; }
         child = null; base = ''; session = null;
         fail(new Error('it stopped while starting: ' + said.slice(-200)));
       });
+      setTimeout(() => { if (!base) { child?.kill(); fail(new Error('it took too long to start')); } }, 90000);
     });
   }
 
@@ -110,32 +115,49 @@ export function createAgent(root, store) {
     const parts = m.parts || [];
     const text = parts.filter((p) => p.type === 'text' && !p.synthetic).map((p) => p.text).join('\n').trim();
     if (m.info.role === 'user') return { who: 'you', text: text.split(ADDED)[0] };
-    return { who: 'opencode', text, error: m.info.error ? plainError(m.info.error) : '' };
+    return { who: 'opencode', text, error: m.info.error && !retried.has(m.info.id) ? plainError(m.info.error) : '' };
+  }
+
+  async function deliver({ text, url, snapshot, pointedAt, pointedAtLabel, error }) {
+    await ready();
+    if (!session) session = (await api('POST', '/session', { title: 'From the panel' })).id;
+    fs.writeFileSync(path.join(root, 'page.html'), String(snapshot || '').slice(0, 200000));
+    let added = `This came from the chat in the panel, so follow "Messages from the panel" in AGENTS.md. They are on ${url}. A shortened copy of that page is in page.html in this folder.`;
+    if (pointedAt) added += `\nThey pointed at ${pointedAtLabel || 'this'}:\n\n\`\`\`html\n${String(pointedAt).slice(0, 3000)}\n\`\`\``;
+    if (error) added += `\nThe panel shows this error from adapter.js: ${error}`;
+    await api('POST', `/session/${session}/prompt_async`, { parts: [{ type: 'text', text: text + ADDED + added }] });
   }
 
   return {
     name: found ? 'opencode' : null,
     warm() { if (found) ready().catch(() => {}); },
 
-    async send({ text, url, snapshot, pointedAt, pointedAtLabel, error }) {
-      await ready();
-      if (!session) session = (await api('POST', '/session', { title: 'From the panel' })).id;
-      fs.writeFileSync(path.join(root, 'page.html'), String(snapshot || '').slice(0, 200000));
-      let added = `This came from the chat in the panel, so follow "Messages from the panel" in AGENTS.md. They are on ${url}. A shortened copy of that page is in page.html in this folder.`;
-      if (pointedAt) added += `\nThey pointed at ${pointedAtLabel || 'this'}:\n\n\`\`\`html\n${String(pointedAt).slice(0, 3000)}\n\`\`\``;
-      if (error) added += `\nThe panel shows this error from adapter.js: ${error}`;
-      await api('POST', `/session/${session}/prompt_async`, { parts: [{ type: 'text', text: text + ADDED + added }] });
+    // One at a time, so two sends can't each start a chat and lose the first one's reply.
+    send(note) {
+      waiting++;
+      failure = '';
+      queue = queue.then(() => deliver(note)).catch((e) => { failure = plainError(e); }).finally(() => { waiting--; });
     },
-
     async read() {
       if (!found) return { messages: [], busy: false };
-      if (!session) return { messages: failure ? [{ who: 'opencode', text: '', error: failure }] : [], busy: false, starting: !!starting };
+      const failed = failure ? [{ who: 'opencode', text: '', error: failure }] : [];
+      if (!session) return { messages: last.concat(failed), busy: waiting > 0, starting: !!starting };
       const [status, list] = await Promise.all([api('GET', '/session/status'), api('GET', `/session/${session}/message`)]);
       const now = status && status[session];
       const running = list.flatMap((m) => m.parts || []).filter((p) => p.type === 'tool' && p.state && p.state.status === 'running').pop();
+      // About one model call in 150 loses its connection, which would otherwise end a round of about
+      // 15 calls with an error. Carries on by itself, once for each time it happens.
+      const end = list[list.length - 1];
+      let again = false;
+      if ((!now || now.type === 'idle') && end && end.info.error && !retried.has(end.info.id) && DROPPED.test(String(end.info.error.data?.message || end.info.error.message || ''))) {
+        retried.add(end.info.id);
+        await api('POST', `/session/${session}/prompt_async`, { parts: [{ type: 'text', text: ADDED + 'The connection to the model dropped. Carry on from where you stopped.' }] });
+        again = true;
+      }
+      last = earlier.concat(list.map(message).filter((m) => m.text || m.error));
       return {
-        messages: list.map(message).filter((m) => m.text || m.error),
-        busy: !!now && now.type !== 'idle',
+        messages: last.concat(failed),
+        busy: again || waiting > 0 || (!!now && now.type !== 'idle'),
         doing: running ? DOING[running.tool] || 'Working' : '',
       };
     },
