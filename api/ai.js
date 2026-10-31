@@ -104,7 +104,8 @@ function plain(t) {
 }
 
 // Same request, same answer: the store's text barely changes, so most requests in a workshop
-// room repeat. Kept per server instance, which is enough to save most calls.
+// room repeat. Kept per server instance, which is enough to save most calls. Not for the long
+// tasks, where trying again after a bad answer has to give a new one.
 const cache = new Map();
 // A guard against a runaway loop, not a limit people should ever notice.
 let windowStart = 0, inWindow = 0;
@@ -133,7 +134,7 @@ module.exports = async function handler(req, res) {
   }
 
   const id = body.task + '\n' + built.text + '\n' + (built.data ? built.data.length + built.data.slice(0, 200) + built.data.slice(-200) : '');
-  if (cache.has(id)) return res.status(200).json({ result: cache.get(id), cached: true });
+  if (!built.long && cache.has(id)) return res.status(200).json({ result: cache.get(id), cached: true });
 
   const now = Date.now();
   if (now - windowStart > 60000) { windowStart = now; inWindow = 0; }
@@ -155,7 +156,7 @@ module.exports = async function handler(req, res) {
     // A cut-off answer would read as broken text on the page, so treat it as no answer.
     if (!text || d.candidates?.[0]?.finishReason === 'MAX_TOKENS') return res.status(502).json({ error: 'AI returned nothing' });
     if (cache.size > 2000) cache.delete(cache.keys().next().value);
-    cache.set(id, text);
+    if (!built.long) cache.set(id, text);
     return res.status(200).json({ result: text });
   } catch (e) {
     return res.status(502).json({ error: 'AI request failed' });

@@ -460,7 +460,8 @@
   }
   // The workshop examples get rewrite(text, instructions). Without AI, product descriptions fall
   // back to the store's own plain version, so the reading-level guide still works.
-  var rewrite = traced(function (text, instructions) { return ai('rewrite', { text: text, instructions: instructions }); });
+  // With no text, the model answers by asking for some, and that would land on the page.
+  var rewrite = traced(function (text, instructions) { return String(text || '').trim() ? ai('rewrite', { text: text, instructions: instructions }) : Promise.resolve(null); });
   function storeFallback(text) {
     var p = (window.RB_CATALOG || []).find(function (x) { return x.jargon === text.trim(); });
     return p ? p.plain : null;
@@ -2126,8 +2127,10 @@
   function writeNew(need, btn, keep) {
     var done = wait(btn, 'No adapter does this yet, so AI is writing one. This takes about 30 seconds…');
     var pointed = target && target.from !== '#ws-point3' ? target : null;
-    ask('writeAdapter', { description: askFor({ need: need }), person: person(), snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() })
-      .then(function (code) { finishAdapter(need, cleanCode(code), 'Done. AI wrote a new adapter, and it’s on.', keep); })
+    var input = { description: askFor({ need: need }), person: person(), snapshot: snapshot(document.body, 14000), target: pointed ? pointed.html : '', url: here() };
+    // One more try if the answer doesn't come back or isn't an adapter.
+    ask('writeAdapter', input).then(cleanCode).catch(function () { return ask('writeAdapter', input).then(cleanCode); })
+      .then(function (code) { finishAdapter(need, code, 'Done. AI wrote a new adapter, and it’s on.', keep); })
       .catch(function (e) { done(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
   function finishAdapter(need, code, text, kept) {
@@ -2182,7 +2185,8 @@
       .then(parseSkill).then(function (s) {
         done2();
         writeKey(FB_KEY, null);
-        if (s.adapters.length) return useSkill(result.need, s);
+        // The same adapters again have nothing new for this change, so AI writes one for it.
+        if (s.adapters.length && !same(idsOf(s), idsOf(result))) return useSkill(result.need, s);
         writeNew(result.need + '. ' + feedback, btn, result.adapters);
       }, function (e) { done2(); asking = null; msg('That didn’t work: ' + e.message + '. Try again.'); });
   }
