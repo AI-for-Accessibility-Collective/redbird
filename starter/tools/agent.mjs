@@ -64,7 +64,7 @@ function plainError(e) {
   return 'Opencode ran into a problem: ' + text.slice(0, 300);
 }
 
-export function createAgent(root) {
+export function createAgent(root, store) {
   const found = spawnSync('opencode', ['--version'], { shell: WINDOWS, stdio: 'ignore' }).status === 0;
   const password = crypto.randomBytes(24).toString('hex');
   const auth = 'Basic ' + Buffer.from('opencode:' + password).toString('base64');

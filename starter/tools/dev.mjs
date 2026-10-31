@@ -182,16 +182,19 @@ export function start(port = Number(process.env.PORT) || 5179, { live = true } =
       else res.end();
     });
   });
-  if (live) {
-    watch();
-    agent = createAgent(ROOT);
-    LOCAL.agent = agent.name;
-    LOCAL.chat = agent.name ? '/__rb/chat' : null;
-    agent.warm();
-  }
   return new Promise((done, fail) => {
     server.once('error', fail);
-    server.listen(port, '127.0.0.1', () => done(server));
+    server.listen(port, '127.0.0.1', () => {
+      // Only once the port is ours. A busy port is tried again, and this would run a second opencode.
+      if (live) {
+        watch();
+        agent = createAgent(ROOT, STORE);
+        LOCAL.agent = agent.name;
+        LOCAL.chat = agent.name ? '/__rb/chat' : null;
+        agent.warm();
+      }
+      done(server);
+    });
   });
 }
 
