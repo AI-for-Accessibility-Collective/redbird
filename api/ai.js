@@ -7,7 +7,10 @@
 //
 //   POST /api/ai  { "task": "simplify", "text": "..." }  →  { "result": "..." }
 
-const MODEL = 'gemini-3.5-flash';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+// Writing an adapter or a profile takes the stronger model, which gets more of them right the first
+// time. The short tasks run many times a page, where it would be slower and cost more.
+const LONG_MODEL = process.env.GEMINI_LONG_MODEL || 'gemini-4-argon';
 const MAX_TEXT = 6000;       // characters of page text per request
 const MAX_IMAGE = 4000000;   // characters of base64 image data (about 3 MB, under Vercel's 4.5 MB request limit)
 const MAX_NOTE = 600;        // characters of custom instructions from a workshop adapter
@@ -138,7 +141,7 @@ module.exports = async function handler(req, res) {
 
   const parts = built.data ? [{ inlineData: { mimeType: built.mime, data: built.data } }, { text: built.text }] : [{ text: built.text }];
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${built.long ? LONG_MODEL : MODEL}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({ contents: [{ parts }], generationConfig: built.long
