@@ -16,6 +16,11 @@
   ],
   "redirects": [
     {
+      "source": "/workshop",
+      "destination": "/workshop/",
+      "permanent": false
+    },
+    {
       "source": "/workshop/real-arrival-dates(\\.html)?",
       "destination": "/workshop/example-adapters#real-arrival-dates",
       "permanent": false
