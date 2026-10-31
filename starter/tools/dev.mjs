@@ -11,6 +11,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createAgent } from './agent.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const STORE = (process.env.REDBIRD || 'https://redbird-workshop.vercel.app').replace(/\/$/, '');
@@ -26,7 +27,7 @@ const TOOLKIT = process.env.TOOLKIT_URL && process.env.TOOLKIT_TOKEN
   : null;
 
 // What the store's pages are told, so the workshop panel loads adapter.js from here.
-const LOCAL = { adapter: '/__rb/adapter.js', events: '/__rb/events', feedback: '/__rb/feedback', fix: '/__rb/fix.json', store: STORE, toolkit: TOOLKIT };
+const LOCAL = { adapter: '/__rb/adapter.js', events: '/__rb/events', feedback: '/__rb/feedback', fix: '/__rb/fix.json', chat: null, agent: null, store: STORE, toolkit: TOOLKIT };
 
 export function readFix() {
   let text;
@@ -39,7 +40,8 @@ export function readFix() {
 
 // The store page to open, with the adapter on: the page in fix.json, plus any toolkit adapters it uses.
 export function startPath(fix = readFix()) {
-  const page = fix.page || '/product?id=rb-20w-usbc-charger';
+  // A fix built on a real website has no page in the store.
+  const page = (!fix.site && fix.page) || '/product?id=rb-20w-usbc-charger';
   const q = new URL(page, 'http://x').searchParams;
   const toolkit = (fix.toolkitAdapters || []).map((a) => a.id).filter(Boolean);
   q.set('try', ['local', ...toolkit].join(','));
@@ -131,6 +133,29 @@ async function feedback(req, res) {
   send(res, { status: 200, headers: { 'content-type': 'application/json' }, body: Buffer.from('{"ok":true}') });
 }
 
+// The chat in the panel's Build tab, when opencode is installed (tools/agent.mjs).
+let agent = null;
+function json(res, status, value) {
+  send(res, { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }, body: Buffer.from(JSON.stringify(value)) });
+}
+async function chat(req, res) {
+  if (!agent || !agent.name) return json(res, 404, { error: 'opencode isn’t installed' });
+  if (req.method === 'GET') return json(res, 200, await agent.read());
+  let note = {};
+  try { note = JSON.parse((await readBody(req)).toString('utf8')); } catch (e) {}
+  const text = String(note.text || '').trim();
+  if (!text) return json(res, 400, { error: 'empty message' });
+  agent.send({ ...note, text }); // answers at once: starting opencode can take longer than a browser waits
+  json(res, 200, { ok: true });
+}
+
+// Any website a person visits can send requests to this computer. These change the folder or reach
+// the agent, so they only answer the store pages served from here and the panel's extension.
+function trusted(req) {
+  const origin = req.headers.origin || '';
+  return origin.startsWith('chrome-extension://') || origin === 'http://' + req.headers.host;
+}
+
 // Tells open store pages when adapter.js changes. Editors often save by replacing the file, so this
 // watches the folder rather than the file.
 const listeners = new Set();
@@ -157,10 +182,19 @@ export function start(port = Number(process.env.PORT) || 5179, { live = true } =
       else res.end();
     });
   });
-  if (live) watch();
   return new Promise((done, fail) => {
     server.once('error', fail);
-    server.listen(port, '127.0.0.1', () => done(server));
+    server.listen(port, '127.0.0.1', () => {
+      // Only once the port is ours. A busy port is tried again, and this would run a second opencode.
+      if (live) {
+        watch();
+        agent = createAgent(ROOT, STORE);
+        LOCAL.agent = agent.name;
+        LOCAL.chat = agent.name ? '/__rb/chat' : null;
+        agent.warm();
+      }
+      done(server);
+    });
   });
 }
 
@@ -168,10 +202,17 @@ export function start(port = Number(process.env.PORT) || 5179, { live = true } =
 // error page above, so the server keeps running.
 async function handle(req, res) {
   const p = req.url.split('?')[0];
+  // A website can point a name of its own at this computer, which gets past the check in trusted().
+  if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host || '')) return send(res, { status: 403, headers: { 'content-type': 'text/plain' }, body: Buffer.from('Not from this computer\n') });
   if (p === LOCAL.adapter) return file(res, 'adapter.js', 'text/javascript; charset=utf-8');
   if (p === LOCAL.fix) return file(res, 'fix.json', 'application/json; charset=utf-8');
   if (p === LOCAL.events) return events(req, res);
+  // The panel's extension looks for this to find a folder when it opens on another website.
+  if (p === '/__rb/hello') return json(res, 200, { agent: LOCAL.agent });
+  if (req.method === 'POST' && p.startsWith('/__rb/') && !trusted(req)) return send(res, { status: 403, headers: { 'content-type': 'text/plain' }, body: Buffer.from('Not from the store\n') });
   if (p === LOCAL.feedback && req.method === 'POST') return feedback(req, res);
+  if (p === '/__rb/chat') return chat(req, res);
+  if (p === '/__rb/chat/stop' && req.method === 'POST') { if (agent) await agent.stop(); return json(res, 200, { ok: true }); }
   if (p === '/api/ai' && req.method === 'POST') return ai(req, res);
   if (req.method === 'GET' || req.method === 'HEAD') return proxy(req, res);
   send(res, { status: 405, headers: { 'content-type': 'text/plain' }, body: Buffer.from('Not here\n') });
@@ -181,14 +222,25 @@ async function handle(req, res) {
 // Node resolves links in import.meta.url, and Windows can differ in the drive letter's case.
 function same(a, b) { try { return fs.realpathSync(a).toLowerCase() === fs.realpathSync(b).toLowerCase(); } catch (e) { return false; } }
 if (process.argv[1] && same(process.argv[1], fileURLToPath(import.meta.url))) {
-  const port = Number(process.argv[2]) || Number(process.env.PORT) || 5179;
+  const chosen = Number(process.argv[2]) || Number(process.env.PORT) || 0;
   process.on('unhandledRejection', (e) => console.error('Something went wrong:', e && e.message ? e.message : e));
-  start(port).then(() => {
+  // Another program on this computer may have 5179. The panel's extension looks at these five.
+  const open = async (port, left) => {
+    try { await start(port); return port; } catch (e) {
+      if (e.code !== 'EADDRINUSE' || !left) throw e;
+      return open(port + 1, left - 1);
+    }
+  };
+  open(chosen || 5179, chosen ? 0 : 4).then((port) => {
     console.log(`Redbird is running with your adapter.js at:\n\n  http://localhost:${port}${startPath()}\n`);
     if (TOOLKIT) console.log(`It connects to your toolkit at ${TOOLKIT.url}: look for Redbird demo under Apps in the developer console.\n`);
+    if (LOCAL.agent) console.log('Opencode is starting, so you can chat with it in the panel’s Build tab.\n');
+    const site = readFix().site;
+    console.log(`To try your adapter on a real website, open ${site || 'the site'} in Chrome and click the Redbird panel extension.`);
     console.log('Save adapter.js and the page runs it again. Press Ctrl+C to stop.');
+    for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => (agent ? agent.close() : Promise.resolve()).finally(() => process.exit(0)));
   }, (e) => {
-    if (e.code === 'EADDRINUSE') console.error(`Port ${port} is already in use. Maybe the store is already running here? Or try npm run dev -- ${port + 1}`);
+    if (e.code === 'EADDRINUSE') console.error(`That port is already in use. Maybe the store is already running here? Or try another port from 5179 to 5183, like npm run dev -- 5181`);
     else console.error(e);
     process.exit(1);
   });

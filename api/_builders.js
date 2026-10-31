@@ -244,7 +244,7 @@ Return only the revised JavaScript module. No fences, no explanation.`;
 function profileFromChat({ answers }) {
   return `You help someone describe a person's accessibility needs for the AI for Accessibility Toolkit, so its adapters can change web pages for that person.
 
-From the answers below, write two or three plain sentences about the person, in the third person. Say what on shopping websites gets in their way, what helps, and what should stay the same. Describe the website as the problem, not the person. For example: "Small gray text is hard for Bill to read. Bigger, darker text and bigger buttons help." Use only what the answers say. If the answers name a disability, use the same words. Don't add a diagnosis, don't guess, and don't use the word "user". Write it the way the person would be glad to read about themselves. If the answers don't name the person, call them "they".
+From the answers below, write two or three plain sentences about the person, in the third person. Say what on websites gets in their way, what helps, and what should stay the same. Describe the website as the problem, not the person. For example: "Small gray text is hard for Bill to read. Bigger, darker text and bigger buttons help." Use only what the answers say. If the answers name a disability, use the same words. Don't add a diagnosis, don't guess, and don't use the word "user". Write it the way the person would be glad to read about themselves. If the answers don't name the person, call them "they".
 
 Then, on its own last line, write "Support areas:" followed by the ones that apply, from this list only: vision, hearing, motor, cognitive, reading, sensory.
 
@@ -275,7 +275,7 @@ ${answers}
 Return only a JSON object, with no other text:
 {"about": "...", "supportAreas": [], "readingLevel": null, "urgency": null, "adapters": []}
 
-- about: two or three short, plain sentences in the first person, the way they'd write it themselves. Say what gets in their way and what helps, in their own words where you can. For example: "I have low vision. Small gray text is hard for me to read, and bigger, darker text helps." Don't repeat "on shopping websites" or "would make shopping easier for me" in every sentence. Describe the websites as the problem, not the person. If they name a disability, keep it, in their words. Don't add a diagnosis or anything they didn't say. Write it in the language they wrote in.
+- about: two or three short, plain sentences in the first person, the way they'd write it themselves. Say what gets in their way and what helps, in their own words where you can. For example: "I have low vision. Small gray text is hard for me to read, and bigger, darker text helps." Don't repeat "on websites" or "would make websites easier for me" in every sentence, and only mention shopping if they did. Describe the websites as the problem, not the person. If they name a disability, keep it, in their words. Don't add a diagnosis or anything they didn't say. Write it in the language they wrote in.
 - supportAreas: the ones that apply, from this list only: vision, hearing, motor, cognitive, reading, sensory.
 - readingLevel: a school grade from 3 to 12 if they asked for simpler or shorter text, otherwise null.
 - urgency: "hide" if countdowns, "only 2 left" messages or pressure to buy fast bother them, otherwise null.

@@ -27,6 +27,8 @@ Your choice is remembered in your browser.
 
 Add `?try=` and an adapter's name to any page. For example, `product?id=hearth-oak-kettle&issues=6&try=swatch-names` names the kettle's color choices for a screen reader. The [workshop folder](workshop/README.md) has four example adapters, three sample profiles, and a template for writing your own. To go through them step by step, start with the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
 
+To build and try adapters on other sites, like NYTimes, install the [Redbird panel extension](extension/README.md). It opens the same panel on whatever site you are on. With a starter folder running, the site runs that folder's adapter, and you can chat with opencode in the panel.
+
 To keep building a fix with a coding agent like Claude Code or Codex, download it from the panel as a folder. [starter/](starter/README.md) is that folder: the adapter, a way to run the store with it on your computer, and tests.
 
 The [AI for Accessibility extension](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Extension) also works on Redbird the same way it works on any other site.

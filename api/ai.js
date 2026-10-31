@@ -7,7 +7,10 @@
 //
 //   POST /api/ai  { "task": "simplify", "text": "..." }  →  { "result": "..." }
 
-const MODEL = 'gemini-3.5-flash';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+// Writing an adapter or a profile takes the stronger model, which gets more of them right the first
+// time. The short tasks run many times a page, where it would be slower and cost more.
+const LONG_MODEL = process.env.GEMINI_LONG_MODEL || 'gemini-4-argon';
 const MAX_TEXT = 6000;       // characters of page text per request
 const MAX_IMAGE = 4000000;   // characters of base64 image data (about 3 MB, under Vercel's 4.5 MB request limit)
 const MAX_NOTE = 600;        // characters of custom instructions from a workshop adapter
@@ -101,7 +104,8 @@ function plain(t) {
 }
 
 // Same request, same answer: the store's text barely changes, so most requests in a workshop
-// room repeat. Kept per server instance, which is enough to save most calls.
+// room repeat. Kept per server instance, which is enough to save most calls. Not for the long
+// tasks, where trying again after a bad answer has to give a new one.
 const cache = new Map();
 // A guard against a runaway loop, not a limit people should ever notice.
 let windowStart = 0, inWindow = 0;
@@ -109,6 +113,12 @@ const PER_MINUTE = 600;
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  // The extension in extension/ puts the panel on other sites, which then call this from their own
+  // pages, so the browser has to be told any page may. Anyone could already call it from a server.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: 'The shared AI key is not set up.' });
@@ -124,7 +134,7 @@ module.exports = async function handler(req, res) {
   }
 
   const id = body.task + '\n' + built.text + '\n' + (built.data ? built.data.length + built.data.slice(0, 200) + built.data.slice(-200) : '');
-  if (cache.has(id)) return res.status(200).json({ result: cache.get(id), cached: true });
+  if (!built.long && cache.has(id)) return res.status(200).json({ result: cache.get(id), cached: true });
 
   const now = Date.now();
   if (now - windowStart > 60000) { windowStart = now; inWindow = 0; }
@@ -132,7 +142,7 @@ module.exports = async function handler(req, res) {
 
   const parts = built.data ? [{ inlineData: { mimeType: built.mime, data: built.data } }, { text: built.text }] : [{ text: built.text }];
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${built.long ? LONG_MODEL : MODEL}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({ contents: [{ parts }], generationConfig: built.long
@@ -146,7 +156,7 @@ module.exports = async function handler(req, res) {
     // A cut-off answer would read as broken text on the page, so treat it as no answer.
     if (!text || d.candidates?.[0]?.finishReason === 'MAX_TOKENS') return res.status(502).json({ error: 'AI returned nothing' });
     if (cache.size > 2000) cache.delete(cache.keys().next().value);
-    cache.set(id, text);
+    if (!built.long) cache.set(id, text);
     return res.status(200).json({ result: text });
   } catch (e) {
     return res.status(502).json({ error: 'AI request failed' });

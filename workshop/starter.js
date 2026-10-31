@@ -9,7 +9,7 @@
 (function () {
   var here = document.currentScript.src.replace(/[^/]*$/, ''); // .../workshop/
   var STARTER = ['README.md', 'AGENTS.md', 'CLAUDE.md', 'package.json', 'adapter.js', 'fix.json', 'feedback.md', 'gitignore',
-    'tools/dev.mjs', 'tools/test.mjs', 'tools/page.mjs', 'checks/README.md'];
+    'tools/dev.mjs', 'tools/agent.mjs', 'tools/test.mjs', 'tools/page.mjs', 'checks/README.md'];
   // The workshop's example adapters, for the coding agent to learn from.
   var EXAMPLES = ['swatch-names', 'calm-urgency', 'reading-level', 'real-arrival-dates', 'pause-moving-things'];
 

@@ -29,6 +29,8 @@ Press Open Redbird on the Apps page of your toolkit's developer console, or use 
 
 To keep changing a fix with a coding agent like Claude Code or Codex, open **Keep building in code** under the fix in the Build tab and download it as a folder. The folder is a copy of [`starter/`](../starter/) with the fix's code and conversation in it. `npm run dev` runs the store on your computer with the adapter on and reloads it when the file changes, `npm test` tests it on the store's pages, and `npm run page` prints a page's markup after the store's scripts render it. Its `README.md` is for people and its `AGENTS.md` is for the coding agent.
 
+With the [panel extension](../extension/README.md), the same folder runs on real websites too. If opencode is installed, the Build tab has a chat with it, on the store and on real websites. `starter/tools/agent.mjs` starts opencode and limits what it can do from the panel.
+
 ## The four examples
 
 | file | what it fixes | try it |

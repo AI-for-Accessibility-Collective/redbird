@@ -12,6 +12,22 @@ This folder has one adapter for Redbird, the workshop's practice store. You can 
 
 The agent starts the store and gives you a link, like `http://localhost:5179/product?id=rb-20w-usbc-charger&try=local`. Open it in Chrome. It's the same store and workshop panel, but it runs your `adapter.js` on every page, and the page runs it again each time `adapter.js` is saved.
 
+## Try it on a real website
+
+1. Install the [Redbird panel extension](https://github.com/AI-for-Accessibility-Collective/redbird/blob/main/extension/README.md).
+2. Keep `npm run dev` running.
+3. Open the site in Chrome and click the extension's button (or press Alt+Shift+R). The page loads again with the panel, and it runs your `adapter.js`.
+
+Each time `adapter.js` is saved, the page runs it again. `npm test` only works on the store.
+
+## Chat with opencode in the panel
+
+If [opencode](https://opencode.ai) is installed (`npm install -g opencode-ai`), `npm run dev` starts it for you. Open the panel's **Build your adapter** tab on the store or on a real site, and say what should change. Opencode reads the page, changes `adapter.js`, and the page runs the new version when it's done, which usually takes a minute or two.
+
+From the panel, opencode can only read this folder and change the adapter. To let it do more, run `opencode` yourself in this folder.
+
+There's no key to set up: from the panel, opencode uses the workshop's shared AI model. To use your own Gemini key instead, start the folder with `GEMINI_API_KEY=... npm run dev`.
+
 ## Show it in your developer console
 
 If your workshop runs an AI for Accessibility toolkit, start the store with your toolkit's address and the default token from its developer console:
