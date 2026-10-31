@@ -1,8 +1,18 @@
 # Working on this adapter
 
-This folder has one accessibility adapter for Redbird, a practice online store for the AI for Accessibility workshop. The store has 36 accessibility problems built in on purpose, and the adapter is JavaScript that changes the store's pages for one person (e.g., naming the color circles for a screen reader user).
+This folder has one accessibility adapter for Redbird, a practice online store for the AI for Accessibility workshop. The store has 36 accessibility problems built in on purpose, and the adapter is JavaScript that changes the store's pages for one person (e.g., naming the color circles for a screen reader user). It can also run on real websites, through the workshop's Chrome extension.
 
 The person you're working with may not code, and may use a screen reader, only a keyboard, or zoom.
+
+## Messages from the panel
+
+A message with `[From the panel]` in it was typed in the chat in the panel's Build tab, on the page named there. The person might be anyone on the team, and your reply is read aloud to some of them. These rules replace "Start here" and "Each change" below:
+
+- You can read this folder and change `adapter.js` and `fix.json`. You have no shell, so don't try `npm`, and the store is already running.
+- Read `page.html` to see the page they're on, then `adapter.js`, then change `adapter.js` once, in one go. The page updates by itself when you're done, so don't save it several times.
+- If the page isn't on the store, follow "Real websites" below.
+- Reply in one or two plain sentences: what changed and what to try, e.g., "The photos are hidden now. Tell me if any are left." Don't name files, functions or code, and don't say what you're about to do.
+- If what they want isn't clear, ask one short question instead of guessing.
 
 ## Start here
 
@@ -24,6 +34,15 @@ The person you're working with may not code, and may use a screen reader, only a
 
 When the person says how they would check it themselves (e.g., "I can Tab to the price and hear $18.99"), write that as a check in `checks/`. There is an example in `checks/README.md`. Some planted problems only show up after an action, like a failed payment, and some can't be checked automatically at all, like the checkout timer. For those, `npm test` reports a PROBLEM until a check covers them.
 
+## Real websites
+
+Teams try their adapter on real sites by turning on the workshop's Chrome extension on the site, while `npm run dev` runs in this folder. The panel then runs `adapter.js` there, and runs it again each time it's saved. If `fix.json` has a `site`, the fix was started on that page.
+
+- `npm test` and `npm run page` only work on the store. `page.html` has the real page, if the person is using the chat. Otherwise ask them to open the Build tab on the site and paste what you need.
+- Real sites change their markup, so pick elements by role, heading level, link text and `alt`, not by class names. Many class names on real sites are random and change every week.
+- Sites differ, so check for the page first: on any other site, the adapter should do nothing and not throw errors.
+- Don't touch anything the person types into, and never click or submit anything for them.
+
 ## The adapter
 
 `adapter.js` is an ES module that exports one object with four parts (its name doesn't matter):
@@ -41,7 +60,7 @@ Rules:
 
 - `disable()` has to undo everything `enable()` changed or added: every attribute, text and element. Keep a list of what you changed as you go, since the test turns the adapter off and lists anything left behind.
 - The store adds content after the page loads (e.g., search results, the cart, the "Added to cart" panel). Watch for it with a `MutationObserver`, wait about half a second after changes stop, and skip elements you already changed. The exception is a message that answers something the person just did, like a payment error: change it right away, since a screen reader reads it at once.
-- Never touch the workshop's own parts: anything inside `#ws-root`, `#ws-live` or `#rb-spotlight`.
+- Never touch the workshop's own parts: anything inside `#ws-root`, `#ws-live` or `#rb-spotlight`. That includes `html`'s padding, which makes room for the panel.
 - Work only from what is on the page, the way you would on a real shop. Teams try their adapters on real websites after Redbird, so don't read the store's own data (`window.RB_CATALOG` or anything else starting with `RB_`, apart from `say()` using `RB_SAY` when it's there). Reading the store's scripts to understand how a page works is fine.
 - Pick elements by what they are (roles, `data-` attributes, element types, visible text) rather than by long chains of classes. Most of each page is rendered by the store's scripts, so `curl` only gets an empty page. Run `npm run page -- "/search?q=charger"` to see the markup after it's rendered, or `npm run page -- "/search?q=charger" ".card"` for one kind of element. For markup that only shows up after an action (e.g., a payment error), read the page's script, like http://localhost:5179/assets/js/pages/checkout.js, or write a check that does the action.
 - Use `say()` to tell screen reader users when the adapter turns on and when it turns off, and not on every change.
@@ -59,10 +78,10 @@ Rules:
 
 ### The store's AI
 
-The store has its own AI, so there is no key to set up, and you should never ask for one or add one. Send a task to `/api/ai`:
+The store has its own AI, so there is no key to set up, and you should never ask for one or add one. Send a task to its address, which works from the store and from real websites:
 
 ```js
-const r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+const r = await fetch('https://redbird-workshop.vercel.app/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ task: 'summarize', text }) });
 const { result } = await r.json(); // the answer as text, or no result if it failed
 ```
@@ -94,7 +113,7 @@ Answers take a few seconds and sometimes fail, so the adapter has to work withou
 ## Don't
 
 - Don't change `tools/` unless the person asks.
-- Don't add API keys, or packages the adapter would need at runtime. It runs in the browser as one file.
+- Don't put a key in `adapter.js`, or add packages the adapter would need at runtime. It runs in the browser as one file.
 - Don't commit `node_modules/` or `test-report.md`.
 
 ## Sharing

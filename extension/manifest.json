@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Redbird workshop panel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Opens the Redbird workshop panel on the site you are on, so you can build and try adapters on real websites.",
   "permissions": ["declarativeNetRequest", "scripting", "storage", "webNavigation"],
   "host_permissions": ["<all_urls>"],
@@ -10,6 +10,7 @@
     "default_title": "Open the Redbird panel on this page",
     "default_icon": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" }
   },
+  "commands": { "_execute_action": { "suggested_key": { "default": "Alt+Shift+R" }, "description": "Open or close the Redbird panel on this page" } },
   "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
   "content_scripts": [
     { "matches": ["https://redbird-workshop.vercel.app/*"], "js": ["carry.js"], "run_at": "document_idle" }

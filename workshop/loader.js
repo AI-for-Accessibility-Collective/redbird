@@ -237,7 +237,7 @@
   if (!isPerson(profileName)) profileName = 'me';
   // In a starter folder the store runs at another address, without the person's profile, so it
   // comes from the folder's fix.json.
-  var profile = (LOCAL && LOCAL.fix && profileName === 'me' ? fetch(LOCAL.fix, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (f) {
+  var profile = (LOCAL && LOCAL.fix && profileName === 'me' ? localFetch(LOCAL.fix, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (f) {
     if (f && f.profile && f.profile.freeText) localStorage.setItem(ME_KEY, JSON.stringify(Object.assign({ name: 'My profile', adapters: [] }, f.profile)));
   }).catch(function () {}) : Promise.resolve()).then(function () { return loadProfile(profileName); });
 
@@ -692,7 +692,7 @@
     }
     if (name === 'local') {
       if (!LOCAL) return Promise.reject(new Error('your folder’s server isn’t running. Start it with npm run dev'));
-      return fetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      return localFetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error('your folder has no adapter.js');
         return r.text();
       }).then(function (code) { localCode = code; return import(URL.createObjectURL(new Blob([code], { type: 'text/javascript' }))); });
@@ -1812,6 +1812,8 @@
     ['id', 'q', 'cat'].forEach(function (k) { if (qs.get(k)) q.set(k, qs.get(k)); });
     q.set('workshop', 'on');
     Object.keys(extra || {}).forEach(function (k) { q.set(k, extra[k]); });
+    // From a real website, a share link opens the store, which is the one place everyone has the panel.
+    if (LOCAL && LOCAL.bridge) return LOCAL.store + '/?' + q;
     return (LOCAL ? LOCAL.store : location.origin) + location.pathname + '?' + q;
   }
   function fixLink(f) {
@@ -2411,6 +2413,7 @@
     });
     return {
       name: kebab(f.name), need: f.need || f.description || '', person: person(), page: (f.base && f.base.page) || pageKey(), pages: [],
+      site: onStore ? '' : location.href, // built on a real website through the extension
       issues: issues.sort(function (a, b) { return a - b; }),
       toolkitAdapters: (f.adapters || []).filter(function (a) { return a.id !== 'mine'; }),
       pointedAt: (f.target || {}).html || '',
@@ -2435,17 +2438,26 @@
 
   // ── Your folder ───────────────────────────────────────────────────────────
   // When the store runs from a starter folder (npm run dev), the Build tab starts with that folder's
-  // adapter: what it changed, a box for notes to the coding agent working in the folder (they go
-  // into its feedback.md), and Share.
+  // adapter: what it changed, a chat with opencode if it's installed, or else a box for notes to the
+  // coding agent working in the folder (they go into its feedback.md), and Share. The panel's
+  // extension does the same on real websites while a folder is running.
   function folderHTML() {
     if (!LOCAL) return '';
     return '<div class="ws-card" id="ws-folder"><h3 class="ws-h">Your folder</h3>' +
       '<p class="ws-help">This page runs adapter.js from your folder, and runs it again each time the file is saved.</p>' +
       '<div id="ws-folder-state"></div>' +
-      '<label class="ws-lab" for="ws-note">What’s still wrong, or what should change?</label>' +
-      '<textarea id="ws-note" class="ws-input" rows="2" aria-describedby="ws-note-help" placeholder="e.g., VoiceOver still reads the price in the cart as dollar 18 99"></textarea>' +
-      '<p class="ws-help" id="ws-note-help">It goes at the bottom of feedback.md in your folder, with this page’s address.</p>' +
-      '<div class="ws-row"><button type="button" class="ws-btn" id="ws-send">Add note for the coding agent</button>' +
+      (LOCAL.chat
+        ? '<ol class="ws-thread" id="ws-chat-log" tabindex="0" aria-label="Your conversation with opencode" hidden></ol>' +
+          '<p class="ws-help" id="ws-chat-status"></p>' +
+          '<label class="ws-lab" for="ws-chat-box">What should change?</label>' +
+          '<textarea id="ws-chat-box" class="ws-input" rows="2" aria-describedby="ws-chat-help" placeholder="e.g., Hide the photos, so only the headlines are left"></textarea>' +
+          '<p class="ws-help" id="ws-chat-help">Opencode reads this page and changes adapter.js in your folder. Press Control and Enter, or Command and Enter, to send.</p>' +
+          '<div class="ws-row"><button type="button" class="ws-btn" id="ws-chat-send">Send to opencode</button>' +
+            '<button type="button" class="ws-btn ws-quiet" id="ws-chat-stop" hidden>Stop</button>'
+        : '<label class="ws-lab" for="ws-note">What’s still wrong, or what should change?</label>' +
+          '<textarea id="ws-note" class="ws-input" rows="2" aria-describedby="ws-note-help" placeholder="e.g., VoiceOver still reads the price in the cart as dollar 18 99"></textarea>' +
+          '<p class="ws-help" id="ws-note-help">It goes at the bottom of feedback.md in your folder, with this page’s address.</p>' +
+          '<div class="ws-row"><button type="button" class="ws-btn" id="ws-send">Add note for the coding agent</button>') +
         '<button type="button" class="ws-link" id="ws-point3" aria-pressed="false">Point at it on the page</button></div>' +
       '<p class="ws-help" id="ws-target3"></p><p class="ws-msg" id="ws-folder-msg"></p>' +
       '<div class="ws-row"><button type="button" class="ws-btn ws-quiet" id="ws-lshare">Share it</button></div><div class="ws-msg" id="ws-lshare-msg"></div>' +
@@ -2454,7 +2466,8 @@
   function folderState() {
     var el = rendered && $('#ws-folder-state');
     if (!el) return;
-    var box = $('#ws-note');
+    chatShow();
+    var box = $('#ws-note') || $('#ws-chat-box');
     if (box && !box.value) box.value = readKey(FOLDER_NOTE_KEY) || '';
     if (names.indexOf('local') === -1) { el.innerHTML = '<p class="ws-help">It’s off. <button type="button" class="ws-link" id="ws-lon">Turn it on</button></p>'; return; }
     if (errors.local) { el.innerHTML = '<p class="ws-err">' + esc(errors.local) + '</p><p class="ws-help">Send the error to the coding agent, or run npm test in the folder.</p>'; return; }
@@ -2468,8 +2481,8 @@
     if (!text) { folderMsg('Write what’s wrong first.'); box.focus(); return; }
     var done = wait($('#ws-send'), 'Adding the note…');
     var pointed = target && target.from === '#ws-point3' ? target : null;
-    var note = { text: text + (errors.local ? '\n\nThe panel shows this error: ' + errors.local : ''), page: here(), pointedAt: pointed ? pointed.html : '', pointedAtLabel: pointed ? pointed.label : '' };
-    fetch(LOCAL.feedback, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) }).then(function (r) {
+    var note = { text: text + (errors.local ? '\n\nThe panel shows this error: ' + errors.local : ''), page: LOCAL.bridge ? location.href : here(), pointedAt: pointed ? pointed.html : '', pointedAtLabel: pointed ? pointed.label : '' };
+    localFetch(LOCAL.feedback, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) }).then(function (r) {
       if (!r.ok) throw new Error();
       done();
       msg('');
@@ -2479,11 +2492,111 @@
       folderMsg('Added to the bottom of feedback.md. Ask the coding agent to read it.');
     }).catch(function () { done(); msg(''); folderMsg('Couldn’t add it. Is npm run dev still running in the folder?'); });
   }
+  // On another site the panel's extension carries requests to the folder, since Chrome asks before a
+  // public page can reach this computer. In the folder's own store they're ordinary requests.
+  function localFetch(url, init) {
+    if (!LOCAL.bridge) return fetch(url, init);
+    var id = 'rb-' + Math.random();
+    return new Promise(function (done, fail) {
+      function answer(e) {
+        if (e.source !== window || !e.data || e.data.rbAnswer !== id) return;
+        removeEventListener('message', answer);
+        clearTimeout(timer);
+        if (e.data.status) done(new Response(e.data.body, { status: e.data.status }));
+        else fail(new Error('the folder isn’t answering'));
+      }
+      // Opencode can take a while to start the first time.
+      var timer = setTimeout(function () { removeEventListener('message', answer); fail(new Error('the folder isn’t answering')); }, 90000);
+      addEventListener('message', answer);
+      window.postMessage({ rbAsk: id, path: url, method: (init && init.method) || 'GET', body: (init && init.body) || null }, location.origin);
+    });
+  }
+
+  // The chat with opencode in the folder (starter/tools/agent.mjs). The conversation lives in the
+  // folder's server, so it's still here after the page reloads for a new adapter.js.
+  var CHAT_SAID = 'redbird:chat-said', CHAT_FOCUS = 'redbird:chat-focus';
+  var chat = { messages: [], busy: false, doing: '' }, chatDrawn = '', chatTimer = null, reloadLater = false, chatStarted = 0;
+  function chatRead() {
+    clearTimeout(chatTimer);
+    return localFetch(LOCAL.chat, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
+      var replies = (s.messages || []).filter(function (m) { return m.who === 'opencode'; }).length;
+      // The folder can answer before opencode has picked up the message that was just sent.
+      var justSent = !s.busy && Date.now() - chatStarted < 8000 && replies <= chat.repliesBefore;
+      chat = { messages: s.messages || [], busy: !!s.busy || justSent, doing: s.doing || '', repliesBefore: chat.repliesBefore };
+      if (!chat.busy && reloadLater) { reloadLater = false; reloadNow(); return; }
+      chatShow();
+      chatSpeak();
+      if (chat.busy || s.starting) chatTimer = setTimeout(chatRead, 1200);
+    }).catch(function () { chat.busy = false; chatShow(); folderMsg('Couldn’t reach your folder. Is npm run dev still running?'); });
+  }
+  function chatShow() {
+    var log = rendered && $('#ws-chat-log');
+    if (!log) return;
+    var box = $('#ws-chat-box'), drawn = JSON.stringify(chat.messages);
+    if (drawn !== chatDrawn) {
+      chatDrawn = drawn;
+      log.innerHTML = chat.messages.map(function (m) {
+        return '<li><span class="ws-who">' + (m.who === 'you' ? 'You' : 'Opencode') + '</span><span class="ws-said">' + esc(m.text) + '</span>' +
+          (m.error ? '<span class="ws-err">' + esc(m.error) + '</span>' : '') + '</li>';
+      }).join('');
+      log.hidden = !chat.messages.length;
+      if (log.lastElementChild) log.lastElementChild.scrollIntoView({ block: 'nearest' });
+    }
+    $('#ws-chat-status').textContent = chat.busy ? (chat.doing || 'Working') + '…' : '';
+    $('#ws-chat-stop').hidden = !chat.busy;
+    if (readKey(CHAT_FOCUS)) { writeKey(CHAT_FOCUS, null); box.focus(); }
+  }
+  // Reads each finished reply aloud once, including one that finished just before a reload.
+  function chatSpeak() {
+    if (chat.busy) return;
+    var replies = chat.messages.filter(function (m) { return m.who === 'opencode'; });
+    if (replies.length > Number(readKey(CHAT_SAID) || 0)) {
+      var last = replies[replies.length - 1];
+      say(last.text + (last.error ? ' ' + last.error : ''), true);
+    }
+    writeKey(CHAT_SAID, String(replies.length));
+  }
+  function sendChat() {
+    var box = $('#ws-chat-box'), text = box.value.trim();
+    if (!text) { folderMsg('Write what should change first.'); box.focus(); return; }
+    if (chat.busy) { folderMsg('Opencode is still working on your last message.'); return; }
+    var pointed = target && target.from === '#ws-point3' ? target : null;
+    var note = { text: text, url: location.href, snapshot: snapshot(document.body, 40000), error: errors.local || '',
+      pointedAt: pointed ? pointed.html : '', pointedAtLabel: pointed ? pointed.label : '' };
+    chat.busy = true;
+    chatShow();
+    folderMsg('');
+    localFetch(LOCAL.chat, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) }).then(function (r) {
+      if (!r.ok) throw new Error();
+      box.value = '';
+      writeKey(FOLDER_NOTE_KEY, null);
+      if (pointed) { target = null; renderTarget(); }
+      chat.repliesBefore = chat.messages.filter(function (m) { return m.who === 'opencode'; }).length;
+      chatStarted = Date.now();
+      say('Sent. Opencode is working.', true);
+      chatRead();
+    }).catch(function () { chat.busy = false; chatShow(); folderMsg('Couldn’t send it. Is npm run dev still running in the folder?'); });
+  }
+  function stopChat() {
+    localFetch(LOCAL.chat + '/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(chatRead, function () {});
+  }
+  // A new adapter.js loads with the page. While opencode is still working, that waits until it's
+  // done, so the page doesn't reload under someone reading or typing, and they end up back in the box.
+  function reloadNow() {
+    var box = rendered && $('#ws-chat-box');
+    if (box && root.activeElement === box) writeKey(CHAT_FOCUS, '1');
+    location.reload();
+  }
+  function reloadForAdapter() {
+    if (chat.busy) reloadLater = true;
+    else reloadNow();
+  }
+
   // A share link for the live store, carrying adapter.js and the toolkit adapters fix.json names.
   function shareLocal() {
     Promise.all([
-      fetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.text(); }),
-      fetch(LOCAL.fix, { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
+      localFetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.text(); }),
+      localFetch(LOCAL.fix, { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return {}; }),
     ]).then(function (r) {
       var fx = r[1] || {};
       share({ name: kebab(fx.name || 'my-adapter'), need: fx.need || '', description: fx.need || '', md: '', code: r[0],
@@ -2604,7 +2717,7 @@
     if (e.type === 'click') setTarget(e.target);
   }
   // Each Point button, the box it fills in, and where it says what it's pointing at.
-  var POINT = { '#ws-point': ['#ws-need', '#ws-target'], '#ws-point2': ['#ws-fb', '#ws-target2'], '#ws-point3': ['#ws-note', '#ws-target3'] };
+  var POINT = { '#ws-point': ['#ws-need', '#ws-target'], '#ws-point2': ['#ws-fb', '#ws-target2'], '#ws-point3': [LOCAL && LOCAL.chat ? '#ws-chat-box' : '#ws-note', '#ws-target3'] };
   function setTarget(el) {
     stopPick();
     target = { html: snapshot(el, 3000), label: describe(el), from: pickFrom, issues: window.RB_ISSUES_AT ? window.RB_ISSUES_AT(el) : [] };
@@ -2700,9 +2813,10 @@
     // notes are kept until they're sent.
     pane.addEventListener('input', function (e) {
       if (e.target.id === 'ws-fb') writeKey(FB_KEY, e.target.value || null);
-      if (e.target.id === 'ws-note') writeKey(FOLDER_NOTE_KEY, e.target.value || null);
+      if (e.target.id === 'ws-note' || e.target.id === 'ws-chat-box') writeKey(FOLDER_NOTE_KEY, e.target.value || null);
     });
     pane.addEventListener('click', function (e) { if (e.target.closest('#ws-point2, #ws-point3')) startPick({ currentTarget: e.target.closest('button') }); });
+    pane.addEventListener('keydown', function (e) { if (e.target.id === 'ws-chat-box' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendChat(); } });
     pane.addEventListener('toggle', function (e) {
       if (e.target.id === 'ws-code-box' && e.target.open && $('#ws-code')) $('#ws-code').focus();
     }, true);
@@ -2726,6 +2840,8 @@
       else if (t.hasAttribute('data-ver')) goBack(+t.getAttribute('data-ver'));
       else if (id === 'ws-dl') downloadFolder(result);
       else if (id === 'ws-send') sendNote();
+      else if (id === 'ws-chat-send') sendChat();
+      else if (id === 'ws-chat-stop') stopChat();
       else if (id === 'ws-lshare') shareLocal();
       else if (id === 'ws-lon') toggle('local', true);
       else if (id === 'ws-close') {
@@ -2738,7 +2854,7 @@
         var code = $('#ws-code').value;
         if (result) { result = nextResult(Object.assign({}, result, { code: code }), 'You changed the code by hand.'); keep(DRAFT_KEY, result); }
         install(code, 'Saved your code and ran it.', result ? idsOf(result) : names.indexOf('mine') === -1 ? names.concat('mine') : names);
-      } else if (t.hasAttribute('data-untarget')) { target = null; renderTarget(); (t.closest('.ws-card') ? $('#ws-fb') || $('#ws-note') : need).focus(); }
+      } else if (t.hasAttribute('data-untarget')) { target = null; renderTarget(); (t.closest('.ws-card') ? $('#ws-fb') || $('#ws-note') || $('#ws-chat-box') : need).focus(); }
       else if (t.hasAttribute('data-ready')) useReady(READY[+t.getAttribute('data-ready')]);
       else if (t.hasAttribute('data-idea')) { need.value = t.textContent; writeKey(NEED_KEY, need.value); need.focus(); }
       else if (t.hasAttribute('data-starter')) {
@@ -2831,22 +2947,28 @@
   // Saving adapter.js in the starter folder runs it again on a fresh page.
   // Browsers keep only a few connections open to one address, so only a visible tab with the
   // folder's adapter on listens. A tab that comes back checks whether the file changed meanwhile.
-  var events = null;
+  var events = null, checking = null;
+  function checkFile() {
+    if (document.hidden || localCode == null) return;
+    localFetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); })
+      .then(function (code) { if (code !== localCode) reloadForAdapter(); }, function () {});
+  }
   function listen() {
-    if (!LOCAL || !LOCAL.events || !window.EventSource || names.indexOf('local') === -1) return;
+    if (!LOCAL || names.indexOf('local') === -1) return;
+    // A real website has no open connection to the folder, so it asks every second and a half.
+    if (LOCAL.bridge) { checking = checking || setInterval(checkFile, 1500); return; }
+    if (!LOCAL.events || !window.EventSource) return;
     if (document.hidden) { if (events) { events.close(); events = null; } return; }
     if (events) return;
     events = new EventSource(LOCAL.events);
-    events.onmessage = function (e) { if (e.data === 'adapter.js') location.reload(); };
+    events.onmessage = function (e) { if (e.data === 'adapter.js') reloadForAdapter(); };
   }
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && !events && localCode != null && names.indexOf('local') !== -1) {
-      fetch(LOCAL.adapter + '?at=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); })
-        .then(function (code) { if (code !== localCode) location.reload(); }, function () {});
-    }
+    if (!document.hidden && !events && names.indexOf('local') !== -1) checkFile();
     listen();
   });
   listen();
+  if (LOCAL && LOCAL.chat) chatRead();
 
   // ── The toolkit connection ────────────────────────────────────────────────
   // workshop/toolkit.js connects this tab to the person's toolkit as Redbird demo. It gets this
@@ -2872,7 +2994,7 @@
       changes: function (n) { return count(n); },
       code: function (n) {
         if (n === 'mine') return copied.then(myCode);
-        if (n === 'local' && LOCAL) return fetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
+        if (n === 'local' && LOCAL) return localFetch(LOCAL.adapter, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; });
         return Promise.resolve(null);
       },
       // toolkit.js hands over a way to wait until the next answer has reached the toolkit.
@@ -3281,6 +3403,7 @@
     '.ws-thread{list-style:none;margin:8px 0!important;padding:0!important;border-left:2px solid #d1d9e0}.ws-thread li{padding:4px 0 4px 10px}' +
     '.ws-who{display:block;font-size:12px;font-weight:600;color:#59636e}.ws-ver .ws-who{color:#1f2328}.ws-checks{display:block;color:#59636e;font-size:12px;margin-top:2px}' +
     '#ws-folder{border-color:#0969da;margin:0 0 12px!important}#ws-folder .ws-lab{margin-top:10px!important}' +
+    '#ws-chat-log{max-height:260px;overflow-y:auto}.ws-said{white-space:pre-wrap;overflow-wrap:anywhere}' +
     '.ws-for{margin:0 0 6px!important}.ws-starters li{padding:1px 0}#ws-starters .ws-help{margin-top:6px!important}' +
     '.ws-newfix{position:absolute;top:6px;right:10px}#ws-result .ws-card .ws-h{padding-right:64px}#ws-code-box .ws-lab{margin-top:10px!important}' +
     '.ws-plain{list-style:none;margin-top:4px!important}.ws-plain li{padding:3px 0}.ws-block{display:block}' +
