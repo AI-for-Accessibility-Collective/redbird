@@ -666,6 +666,25 @@
   });
   // Two toolkit files export functions rather than an adapter with enable() and disable().
   var WRAP = {
+    // The toolkit's version looks through everything inside each element, then does that again for
+    // each of those elements. The work doubles with each level of the page, so a deep one, like
+    // Amazon or GitHub, freezes the tab. This looks at each element once.
+    'dismiss-overlays': function (m) {
+      var a = m.DismissOverlays;
+      function hide(el) {
+        if (!el || el.nodeType !== 1 || a.hidden.has(el) || el.classList.contains(a.hiddenClass) || !a.isOverlay(el)) return false;
+        el.classList.add(a.hiddenClass);
+        a.hidden.add(el);
+        return true;
+      }
+      a.sweep = function (top) {
+        var n = 0;
+        try { top.querySelectorAll('div, section, aside, dialog, [role="dialog"], [aria-modal="true"]').forEach(function (el) { if (hide(el)) n++; }); } catch (e) {}
+        return n;
+      };
+      a.consider = function (el) { return hide(el) || !!(el && el.querySelector && a.sweep(el)); };
+      return a;
+    },
     'read-aloud': function (m) {
       return { enable: function () { m.ReadAloud.speakPage(); }, disable: function () { m.ReadAloud.stop(); } };
     },
