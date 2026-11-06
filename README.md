@@ -9,11 +9,11 @@ Everything in the store is fake, including the brands, products, reviews and pho
 ## Open it
 
 - Online: https://redbird-workshop.vercel.app/
-- On your computer: download the repository, run `python3 tools/serve.py` inside the folder, and open http://localhost:8000. There is nothing to install or build. The AI parts only work on the live site, since they need the Gemini key and it is kept on the server.
+- On your computer: download the repository, run `python3 tools/serve.py` inside the folder, and open http://localhost:8000. There is nothing to install or build. The AI parts work on the live site, where the store's server has the Gemini key, or while the store is connected to your toolkit.
 
 ## Planted issues
 
-36 problems are turned on by default. For example, there are photos without alt text, color choices with no names, countdown timers, and shipping times with no date. [ISSUES.md](ISSUES.md) lists all of them, who each one affects, and whether an adapter already exists for it.
+36 problems are turned on by default. For example, there are photos without alt text, color choices with no names, countdown timers, and shipping times with no date. [ISSUES.md](ISSUES.md) lists all of them, who each one affects, and which adaptation fixes it, if any.
 
 | address | what you get |
 |---|---|
@@ -25,22 +25,18 @@ Your choice is remembered in your browser.
 
 ## Try an adapter
 
-Add `?try=` and an adapter's name to any page. For example, `product?id=hearth-oak-kettle&issues=6&try=swatch-names` names the kettle's color choices for a screen reader. The [workshop folder](workshop/README.md) has four example adapters, three sample profiles, and a template for writing your own. To go through them step by step, start with the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
+Add `?try=` and an adaptation's name to any page. For example, `product?id=hearth-oak-kettle&issues=6&try=swatch-names` names the kettle's color choices for a screen reader. The [workshop folder](workshop/README.md) has Redbird's own adaptations, four sample profiles, and a template. To go through them step by step, start with the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
 
-To build and try adapters on other sites, like NYTimes, install the [Redbird panel extension](extension/README.md). It opens the same panel on whatever site you are on. With a starter folder running, the site runs that folder's adapter, and you can chat with opencode in the panel.
-
-To keep building a fix with a coding agent like Claude Code or Codex, download it from the panel as a folder. [starter/](starter/README.md) is that folder: the adapter, a way to run the store with it on your computer, and tests.
-
-The [AI for Accessibility extension](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Extension) also works on Redbird the same way it works on any other site.
+Fixes are built with the [AI for Accessibility toolkit](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit): in its browser extension's Builder, or in code with a coding agent and the toolkit's skill. They run in your own Chrome through the extension, on the store and on any other site. The toolkit is an active research project, pre-alpha, a technology probe: its adapters are unvalidated, and it is not a replacement for assistive technology. In practice, a fix can change a page in ways nobody has checked with the people it is meant for.
 
 ## Connect to your toolkit
 
-If your workshop runs an [AI for Accessibility toolkit](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit), sign in to its developer console, go to Apps, and press Open Redbird. The store opens connected to your account:
+Sign in to your toolkit's developer console, go to Apps, press **+ Connect an app**, and press Open Redbird with the store's address. The store opens connected to your account:
 
-- Each Redbird tab shows up in the console under Apps, as Redbird demo. From there you can turn the workshop adapters on and off, and so can a coding agent that has your token.
-- You can shop as your own toolkit profile ("Your toolkit profile" in the panel's Profiles tab).
+- Each Redbird tab shows up in the console under Apps, as Redbird demo. From there you can turn Redbird's adaptations on and off, and so can a coding agent that has your token.
+- You can shop as your own toolkit profile ("Your toolkit profile" in the panel's Profiles tab), and the store's own needs, like real delivery dates, are suggested in the extension's Profile tab.
 
-The toolkit has to allow the store's address, so start it with `npm run dev:workshop`. To connect by hand instead, open the panel's Profiles tab, then Connect to your toolkit, and paste the toolkit's address and your default token. The toolkit is pre-alpha research software, so expect rough edges.
+The toolkit has to allow the store's address, so start a local one with `npm run dev:workshop`. To connect by hand instead, open the panel's Profiles tab, then Connect to your toolkit, and paste the toolkit's address and your default token.
 
 ## Agent task
 

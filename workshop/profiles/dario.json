@@ -1,12 +1,33 @@
 {
   "name": "Dario Almondei, cognitive disability",
-  "supportAreas": ["cognitive", "reading"],
+  "supportAreas": [
+    "cognitive",
+    "reading"
+  ],
   "freeText": "Long pages with lots of words and choices are hard for me to follow. I need short, plain sentences, one thing at a time, and nothing popping up while I read. I like to see the original if I want to check something.",
   "fields": {
     "readingLevel": 5,
     "needs": [
-      { "dimension": "concreteDates", "value": true, "strength": "preference", "unit": "boolean" },
-      { "dimension": "urgency", "value": "hide", "strength": "preference", "unit": "enum" }
+      {
+        "dimension": "simplify",
+        "value": true,
+        "strength": "preference"
+      },
+      {
+        "dimension": "reduceMotion",
+        "value": true,
+        "strength": "preference"
+      },
+      {
+        "dimension": "redbird/real-dates",
+        "value": true,
+        "strength": "preference"
+      },
+      {
+        "dimension": "redbird/no-pressure",
+        "value": true,
+        "strength": "preference"
+      }
     ]
   }
 }

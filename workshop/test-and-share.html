@@ -22,7 +22,7 @@
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share" aria-current="page">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Keep building in code</a></li><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share" aria-current="page">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Build it in code</a></li><li><a href="example-adapters">Redbird’s adaptations</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
@@ -34,26 +34,28 @@
 <p>Go through the checks in your verification plan. These are the ways to check on Redbird:</p>
 <div class="table-wrap"><table>
   <tr><th scope="col">What to check</th><th scope="col">How</th></tr>
-  <tr><td>It changed what you wanted</td><td>Under your fix, open the list of changes and press each one to see it on the page.</td></tr>
-  <tr><td>It didn't break anything</td><td>Press <b>Turn off to compare</b>, then turn it back on, and look at the whole page.</td></tr>
-  <tr><td>A screen reader gets it</td><td>In <b>Audit</b>, open <b>What a screen reader hears</b>, or turn on VoiceOver with Command-F5.</td></tr>
+  <tr><td>It changed what you wanted</td><td>In the <b>Builder</b>, open the preview's line in the chat to see its checks and what it changed.</td></tr>
+  <tr><td>It didn't break anything</td><td>Turn <b>Apply previews</b> off and on again, and look at the whole page. Once it's in your account, use its switch under <b>Applied on this page</b> in the sidebar's <b>Profile</b> tab.</td></tr>
+  <tr><td>The review found nothing</td><td>The <b>Builder</b> shows how the background review is going, and the assistant fixes what it finds. In code, the agent's <code>verify</code> report says the same.</td></tr>
+  <tr><td>A screen reader gets it</td><td>In the store panel's <b>Audit</b> tab, open <b>What a screen reader hears</b>, or turn on VoiceOver with Command-F5.</td></tr>
   <tr><td>It works with only the keyboard</td><td>Put the mouse away and use Tab, Shift-Tab, Enter and the arrow keys.</td></tr>
-  <tr><td>The problems went away</td><td>Turn on <b>Show accessibility problems on the page</b> at the top of the panel, and check that your problem's badge turns green.</td></tr>
+  <tr><td>The problems went away</td><td>Turn on <b>Show accessibility problems on the page</b> at the top of the store's panel, and check that your problem's badge turns green.</td></tr>
   <tr><td>It works on other pages</td><td>Open the search results, another product and checkout, and check again.</td></tr>
 </table></div>
-<p>If a check fails, write what's wrong under <b>What should change next?</b> and press <b>Change it</b>. If you're working in a folder, send it to the coding agent from <b>Your folder</b> instead, and ask the agent to turn the check into a test (see <a href="keep-building-in-code#test-it">Keep building in code</a>).</p>
+<p>If a check fails, tell the assistant what's wrong under <b>Additional requests?</b>, or tell your coding agent.</p>
 
 <h2 id="share-it">Share it</h2>
 <ol>
-  <li>Go to the page your fix changes. In the <b>Build your adapter</b> tab, under <b>Saved fixes</b>, press <b>Share</b> next to your fix to copy the link. If you're working in a folder, press <b>Share it</b> under <b>Your folder</b> instead.</li>
-  <li>Paste it in the workshop chat.</li>
-  <li>Your fix shows up in the <b>Build your adapter</b> tab of whoever opens the link. If the fix has an adapter AI wrote, that adapter only runs after the person opening the link reads its code and presses <b>Run it</b>.</li>
+  <li>In the developer console, open <b>Adapters</b> and press <b>Share</b> on your fix. (In code, the agent can do this for you.)</li>
+  <li>Say its name in the workshop chat.</li>
+  <li>Other teams find it in their console under <b>Shared with you</b>, and press <b>Run in my browser</b>. It stays on the version they installed until they choose <b>Update</b>.</li>
 </ol>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>A shared fix is code that runs in the browser of whoever installs it. The toolkit refuses code that sends data over the network, but that is not a sandbox. Read a fix's code before you run someone else's.</p></div>
 
 <h2 id="for-the-demo-to-the-group">For the demo to the group</h2>
 <ol>
   <li>Say who you built the fix for, and what on the page got in their way.</li>
-  <li>Press <b>Turn off to compare</b> under your fix, and show the page as the store has it. Then turn it back on and show what changed.</li>
+  <li>Turn your fix off with its switch in the sidebar, and show the page as the store has it. Then turn it back on and show what changed.</li>
   <li>Show one check from your verification plan. For example, turn on VoiceOver and let the group hear what a screen reader says now.</li>
 </ol>
 </main>

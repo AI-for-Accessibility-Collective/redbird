@@ -9,6 +9,7 @@
 // purchase, and adds a short note to each so you know what changed and can pick it again.
 // Anything you change yourself after that is left alone.
 //
+// Options: none.
 // Profile: nothing to read. It helps anyone who wants to pay only for what they picked.
 // Try it: product?id=rb-20w-usbc-charger&try=no-surprise-extras&profile=bill
 
@@ -16,21 +17,6 @@
 const PLAN = 'input#protect';                // "Add a 2-year protection plan" checkbox
 const REPEAT = 'input[name=buy][value=sub]'; // "Subscribe & Save", sent again every 6 months
 const ONCE = 'input[name=buy][value=once]';  // "One-time purchase"
-
-function say(text) {
-  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
-  if (window.RB_SAY) return window.RB_SAY(text);
-  let live = document.getElementById('ws-live');
-  if (!live) {
-    live = Object.assign(document.createElement('div'), { id: 'ws-live' });
-    live.setAttribute('aria-live', 'polite');
-    live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
-    document.body.appendChild(live);
-  }
-  // Empty it first, so the same words said twice are read twice.
-  live.textContent = '';
-  setTimeout(() => { live.textContent = text; }, 60);
-}
 
 // A click on a checkbox or radio button sends "input" and "change" events. Send the same ones,
 // so any store code that watches the choice (a price, a total) sees the new one.
@@ -47,70 +33,71 @@ function summary(done) {
 }
 
 export const NoSurpriseExtras = {
-  enabled: false,
-  changed: null, // input we turned off → { picked: the one we picked instead (or null), note }
-  theirs: null, // inputs the person changed themselves: never touched again
-  observer: null,
-
-  enable() {
-    if (this.enabled) return;
-    this.enabled = true;
-    this.changed = new Map();
-    this.theirs = new WeakSet();
-    this.onChange = (e) => this.noticed(e);
-    document.addEventListener('change', this.onChange, true);
-    const done = this.apply();
+  enable(options = {}, toolkit) {
+    if (this.s && !this.s.ended) return;
+    const s = (this.s = toolkit.session());
+    this.changed = new Map(); // input we turned off → { picked: the one we picked instead (or null), note }
+    this.theirs = new WeakSet(); // inputs the person changed themselves: never touched again
+    // Notes are at least 16px, and larger when the person's text size is.
+    const px = Math.round(16 * Math.max(100, Number(s.profile.get('fontScale')) || 100)) / 100;
+    s.css('extras', `.ws-extras-note{display:block;margin:4px 0 0;padding:4px 8px;border-radius:6px;background:#eef3f8;color:#1f2933;font-size:${px}px;line-height:1.4}`);
+    s.listen(document, 'change', (e) => this.noticed(e), true);
+    const done = this.apply(s);
     // Some pages add these choices after they load, so look again when the page changes. This
     // store changes every second (countdown timers), so look at most twice a second.
     let queued = false;
-    this.observer = new MutationObserver(() => {
-      if (queued || !this.enabled) return;
+    s.watch.added(document.body, () => {
+      if (queued) return;
       queued = true;
-      setTimeout(() => {
+      s.timer(() => {
         queued = false;
-        if (!this.enabled) return;
-        const more = this.apply();
-        if (more.length) say(summary(more));
+        const more = this.apply(s);
+        if (more.length) s.announce(summary(more));
       }, 500);
-    });
-    this.observer.observe(document.body, { childList: true, subtree: true });
-    say(done.length ? summary(done) : 'Watching for extras the store picks for you');
+    }, { batch: true });
+    s.announce(done.length ? summary(done) : 'Watching for extras the store picks for you');
   },
 
   // Untick the plan and pick the one-time purchase, unless the person has already chosen.
-  apply() {
+  apply(s) {
     const done = [];
     for (const plan of document.querySelectorAll(PLAN)) {
-      if (!plan.checked || this.skip(plan)) continue;
+      if (!plan.checked || this.skip(s, plan)) continue;
       plan.checked = false;
       tell(plan);
-      this.note(plan, null, 'Unticked for you. Tick it if you want the plan.');
+      this.note(s, plan, null, 'Unticked for you. Tick it if you want the plan.');
       done.push('unticked the protection plan');
     }
     for (const repeat of document.querySelectorAll(REPEAT)) {
       const once = repeat.closest('fieldset, form')?.querySelector(ONCE);
-      if (!repeat.checked || !once || this.skip(repeat) || this.skip(once)) continue;
+      if (!repeat.checked || !once || this.skip(s, repeat) || this.skip(s, once)) continue;
       once.checked = true; // picking one radio button unpicks the other
       tell(once);
-      this.note(repeat, once, 'Changed to a one-time purchase for you. Pick the other choice if you want repeat orders.');
+      this.note(s, repeat, once, 'Changed to a one-time purchase for you. Pick the other choice if you want repeat orders.');
       done.push('picked a one-time purchase instead of a repeat order');
     }
     return done;
   },
 
-  skip(input) {
-    return this.theirs.has(input) || !!input.closest('#ws-root, .ws-panel');
+  skip(s, input) {
+    return this.theirs.has(input) || !!input.closest('#ws-root, .ws-panel') || s.page.isOurs(input);
   },
 
   // A short note under the choice. One note per choice, even if the store ticks it again.
-  note(input, picked, text) {
+  // disable() takes the note away and ticks the store's choice again, unless the person has
+  // chosen since.
+  note(s, input, picked, text) {
     if (this.changed.has(input)) return;
-    const note = document.createElement('span');
-    note.className = 'ws-extras-note';
-    note.textContent = text;
-    note.style.cssText = 'display:block;margin:4px 0 0;padding:4px 8px;border-radius:6px;background:#eef3f8;color:#1f2933;font-size:14px';
-    (input.closest('label') || input).after(note);
+    const note = s.el('span', { text, attrs: { class: 'ws-extras-note' } });
+    const after = input.closest('label') || input;
+    s.insert(after.parentNode, note, after.nextSibling);
     this.changed.set(input, { picked, note });
+    const theirs = this.theirs;
+    s.onEnd(() => {
+      if (theirs.has(input) || !input.isConnected) return;
+      input.checked = true;
+      tell(input);
+    });
   },
 
   // The person changed a choice, so it's theirs now and its note is out of date. A real click
@@ -126,23 +113,7 @@ export const NoSurpriseExtras = {
   },
 
   disable() {
-    if (!this.enabled) return;
-    this.enabled = false;
-    this.observer.disconnect();
-    document.removeEventListener('change', this.onChange, true);
-    // Put back what the store picked, except where the person has chosen since.
-    for (const [input, c] of this.changed) {
-      c.note.remove();
-      if (this.theirs.has(input) || !input.isConnected) continue;
-      input.checked = true;
-      tell(input);
-    }
-    this.changed.clear();
-    say('Extras back as the store picked them');
-  },
-
-  toggle(options) {
-    if (this.enabled) this.disable();
-    else this.enable(options);
+    this.s?.end();
+    this.s = null;
   },
 };

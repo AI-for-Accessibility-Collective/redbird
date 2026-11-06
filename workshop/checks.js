@@ -5,8 +5,8 @@
 //
 //   RB_CHECKS[19](win)  → Promise of [{ ok, says }], or [] when the problem isn't on that page
 //
-// The workshop panel runs them in its hidden copy of the page after each new version, and the starter
-// folder's tests (tools/test.mjs) run them on the page with the adapter on. win is that page's window.
+// Nothing on the store loads this file. A coding agent testing an adapter on the store loads it into
+// the page with the adapter on and calls them. win is that page's window.
 (function () {
   function pause(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
   function text(el) { return (el && el.textContent || '').replace(/\s+/g, ' ').trim(); }

@@ -1,93 +1,70 @@
-# Workshop adapters
+# Workshop
 
-This folder lets you run an adapter on Redbird without installing the extension. You write one JavaScript file, open a store page with `?try=` and the file's name, and the adapter runs on that page.
+This folder is the store's toolkit panel, Redbird's own adaptations, the four made-up shoppers and the workshop guides. For the workshop itself (touring the store, building a fix with the toolkit, and testing it), open the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
 
-For the workshop itself (touring the store, making a skill, describing a fix for AI to write, and testing it), open the [workshop guides](https://redbird-workshop.vercel.app/workshop/).
+The [AI for Accessibility Toolkit](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit) is an active research project: pre-alpha, a technology probe. Its adapters, and the adaptations here, are unvalidated, and it is not a replacement for assistive technology. In practice, a fix can change the store in ways nobody has checked with the people it is meant for.
 
-The store has to be opened from a web address, not as a file. Use the live site, or run `python3 tools/serve.py` in the repository folder and open `http://localhost:8000`. The AI parts (rewriting text, describing photos, naming buttons) only work on the live site, because that's where the Gemini key is. On your own computer, adapters fall back to what they can do without AI.
+The store has to be opened from a web address, not as a file. Use the live site, or run `python3 tools/serve.py` in the repository folder and open `http://localhost:8000`. On your own computer, the AI parts (rewriting text) work only while the store is connected to your toolkit, which runs them. On the live site, they also work through the store's own server (`api/ai.js`).
 
-## Try one
+## Where fixes are built
+
+Fixes are built with the toolkit, not in this folder:
+
+- **In the toolkit's extension.** Its sidebar's **Builder** is an assistant: say what gets in the way, it builds an adapter, previews it on the page with checks, and adds it to your account. It runs in your Chrome on the store and on any other website.
+- **In code.** A coding agent (Claude Code, Codex, opencode) with the toolkit's `ai4a11y-toolkit` skill writes the adapter on the toolkit's building blocks, publishes it to your account with the skill's `adapter.mjs`, and checks it. For the store, it runs on `https://redbird-workshop.vercel.app/*`. Start from [adapters/_template.js](adapters/_template.js) if you like.
+
+The panel's **Build** tab says the same, with links to the guides.
+
+## The panel
+
+`loader.js` puts a panel next to the store, with four tabs: **Profiles** (who to shop as), **Adapter Library** (a switch for each adaptation), **Build** and **Audit** (common problems on the page, from the toolkit's auditors). It loads the toolkit's building blocks and built-in adapters from the toolkit's repository, pinned to one commit (`TOOLKIT` at the top of `loader.js`), and gives each adaptation its own session of the blocks, so turning it off puts back what it changed. The panel lists each adaptation's changes from that session.
 
 | address | what it does |
 |---|---|
 | `?try=swatch-names` | run `adapters/swatch-names.js` |
-| `?try=motion-reducer` | run an adapter from the [toolkit](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit/tree/main/tools/adapters) itself, loaded from its GitHub repo |
-| `?try=toolkit-fixes` | run the toolkit's automatic fixes (alt text, button names, contrast, link text) |
+| `?try=text-size` | run one of the toolkit's built-in adapters |
 | `?try=swatch-names,calm-urgency` | run two at once |
-| `?profile=sam` | run the adapters with the profile in `profiles/sam.json` |
+| `?profile=sam` | shop as Sam: turn on the adaptations Sam's profile asks for |
+| `?profile=toolkit` | shop as your own toolkit profile, once the store is connected |
 | `?try=none` | stop running them |
 
-The adapters and profile you pick are saved in your browser until you change them. A panel in the bottom-left corner shows the profile and has a switch for each adapter, so you can compare the page with and without it.
+The adaptations and profile you pick are saved in your browser until you change them.
 
-The panel's Build tab makes fixes without writing code, using the same two builders as the toolkit's extension. "Make a skill" sends a need to the toolkit's Engineer prompt, which picks existing adapters and writes a SKILL.md. "Describe a fix" sends a description and a shortened copy of the page to the Adapter Builder's prompt, and the adapter it writes runs as `?try=mine`. Both prompts are in `api/_builders.js`. Skills and adapters are saved in the browser, and their share links carry them after the `#`.
+## Redbird's adaptations
 
-## Connect to your toolkit
-
-Press Open Redbird on the Apps page of your toolkit's developer console, or use Connect to your toolkit in the panel's Profiles tab. Each tab then shows up in the console as Redbird demo, where you (or a coding agent with your token) can turn the adapters below on and off and undo a change. [toolkit.js](toolkit.js) does the connecting; it uses the panel's own switches, so the panel always shows what is on.
-
-## Keep building in code
-
-To keep changing a fix with a coding agent like Claude Code or Codex, open **Keep building in code** under the fix in the Build tab and download it as a folder. The folder is a copy of [`starter/`](../starter/) with the fix's code and conversation in it. `npm run dev` runs the store on your computer with the adapter on and reloads it when the file changes, `npm test` tests it on the store's pages, and `npm run page` prints a page's markup after the store's scripts render it. Its `README.md` is for people and its `AGENTS.md` is for the coding agent.
-
-With the [panel extension](../extension/README.md), the same folder runs on real websites too. If opencode is installed, the Build tab has a chat with it, on the store and on real websites. `starter/tools/agent.mjs` starts opencode and limits what it can do from the panel.
-
-## The four examples
+Redbird is an app with its own adaptations, the way the toolkit's skill describes one. They are written like any toolkit web adapter (`enable(options, toolkit)` and `disable()`, every change through `toolkit.session()`), so each file can also be published to the toolkit as it is.
 
 | file | what it fixes | try it |
 |---|---|---|
-| `real-arrival-dates.js` | Turns "5–7 business days" into dates, like "arrives Tue, Nov 3 – Thu, Nov 5". Reads `concreteDates` from the profile. | `search?q=charger&issues=31&try=real-arrival-dates&profile=sam` |
+| `real-arrival-dates.js` | Turns "5–7 business days" into dates, like "arrives Tue, Nov 3 – Thu, Nov 5". | `search?q=charger&issues=31&try=real-arrival-dates` |
 | `swatch-names.js` | Gives unnamed color circles a name ("sage green") and makes them work with the arrow keys. | `product?id=hearth-oak-kettle&issues=6&try=swatch-names` |
-| `calm-urgency.js` | Finds countdowns, "Only 2 left" and "14 other people" messages. Labels them, or hides them if the profile's `urgency` is `hide`. | `?issues=24&try=calm-urgency&profile=mark` |
-| `reading-level.js` | Rewrites hard paragraphs at the profile's `readingLevel`, with a button to show the original. On the live site it uses Gemini through the store's own server. Without AI, it uses the store's own plain description. | `product?id=rb-20w-usbc-charger&issues=27&try=reading-level&profile=dario` |
+| `calm-urgency.js` | Finds countdowns, "Only 2 left" and "14 other people" messages, and labels them, or hides them (option `mode: "hide"`). | `?issues=24&try=calm-urgency&profile=mark` |
+| `reading-level.js` | Rewrites hard paragraphs at the person's reading level with the toolkit's AI text block, with a button to show the original. Without AI, it uses the store's own plain description. | `product?id=rb-20w-usbc-charger&issues=27&try=reading-level&profile=dario` |
+| `pause-moving-things.js` | Holds the deals bar, banner, product rows and video still, while the person can still move them. | `?issues=33,34,35&try=pause-moving-things` |
+| `no-surprise-extras.js` | Unticks the protection plan and picks one-time purchase, with a note saying so. | `product?id=rb-20w-usbc-charger&try=no-surprise-extras` |
+| `always-show-buttons.js` | Shows the "Add to cart" buttons that only appear on mouse hover, and makes them work with the keyboard. | `search?q=charger&issues=21&try=always-show-buttons` |
 
-The Gemini key stays on the server (`api/ai.js`) and is never sent to the browser. That server only does the store's own AI tasks, so it can't be used as a general Gemini proxy.
+## Connect to your toolkit
 
-## Ideas to build
+Press **Open Redbird** on the Apps page of your toolkit's developer console (under **+ Connect an app**), or use **Connect to your toolkit** in the panel's Profiles tab. [toolkit.js](toolkit.js) does the connecting, with the toolkit's Adapter MCP SDK:
 
-If you are not sure where to start, pick one of these. Each one fixes an issue we built into the store on purpose, and no adapter in the toolkit handles it yet. The issue column is the issue's number in [ISSUES.md](../ISSUES.md), so you can open the store with only that issue turned on (e.g., `?issues=21`).
+- Each tab shows up in the console under Apps as **Redbird demo**. You, or a coding agent with your token, can turn the first five adaptations above on and off there, change calm-urgency's mode, and undo a change. The skill's `adapter.mjs verify --app redbird` checks them.
+- The store registers two needs that its adaptations meet: `redbird/real-dates` (real-arrival-dates) and `redbird/no-pressure` (calm-urgency). The toolkit suggests them to people whose profiles could use them, in the extension's Profile tab.
+- **Your toolkit profile** is on the Profiles tab's list. Shopping as it turns on the adaptations that meet your profile's needs, and follows the profile when it changes. While you shop as it, switching an adaptation on or off tells your toolkit in one plain sentence, and it may suggest a change to your profile. It never sends what is on the page.
 
-| idea | what it does | issue | who it helps | how hard |
-|---|---|---|---|---|
-| Real buttons | Turns clickable `div`s into real buttons that work with Tab and Enter. | 3 | keyboard and screen reader users | easy |
-| Star reader | Adds "4.6 out of 5 stars" as text next to the star pictures. | 4 | screen reader users | easy |
-| One price | Makes "$18.99" read as one price instead of three pieces. | 5 | screen reader users | easy |
-| Focus ring | Puts back a thick, high-contrast focus outline. | 20 | keyboard and low vision users | easy |
-| Show hidden buttons | Shows the "Add to cart" buttons that only appear on mouse hover. | 21 | keyboard and motor users | easy |
-| Clickable photos | Turns the hover-only photo thumbnails into buttons. | 22 | keyboard and motor users | easy |
-| Stop the ticker | Stops the scrolling deals bar and shows it as one line. | 35 | people distracted by motion | easy |
-| Ad labels | Finds sponsored results and gives each one a clear "Ad" label. | 7 | everyone, and AI agents | medium |
-| Price boxes | Swaps the drag-only price slider for min and max boxes. | 18 | keyboard and switch users | medium |
-| More time | Adds 10 minutes to the checkout timer, or stops it. | 19 | people with motor or cognitive disabilities | medium |
-| Yes or no | Rewrites double-negative checkboxes as plain yes-or-no questions. | 29 | people with cognitive disabilities | medium |
-| Friendly errors | Explains payment error codes in plain words, with what to do next. | 30 | people with cognitive disabilities | medium |
-| Short titles | Cuts keyword-stuffed titles down to the brand, the product and one key fact. | 25 | screen reader users and people with cognitive disabilities | uses AI |
-| Plain bullets | Rewrites "About this item" as three short, plain points. | 26 | people with cognitive or reading disabilities | uses AI |
-| Plain policy | Turns the long legal text into three answers: can I return it, by when, and who pays. | 28 | people with cognitive or reading disabilities | uses AI |
-
-Bigger ideas that combine several fixes for one profile:
-
-- **Page summary:** puts the price, arrival date, rating, colors and stock in one short block at the top of a product page, so a screen reader user hears the key facts first.
-- **Total cost:** shows the price with tax and delivery next to "Add to cart". This lets a person or an agent check it against a budget.
-- **Compare helper:** a plain side-by-side table for products that look the same in search (e.g., the 12 wall chargers that come up when you search "USB-C charger").
-- **Review finder:** finds reviews that mention what the profile cares about (e.g., "VoiceOver", "small buttons" or "hard to open").
-- **Calm mode:** one switch for a cognitive profile that hides ads, countdowns and moving rows together.
-
-## Write your own
-
-1. Copy `adapters/_template.js` to a new name, for example `adapters/real-buttons.js`.
-2. Fill in `enable()` so it finds the problem and fixes it, and `disable()` so it puts the page back.
-3. Open a page with `?issues=` set to the issue you are fixing and `?try=real-buttons`. [ISSUES.md](../ISSUES.md) lists every issue and where it shows up.
-
-Every adapter is an object with `enabled`, `enable(options)`, `disable()` and `toggle()`, the same shape as the adapters in the [toolkit](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit). So once one works here, it can move into the toolkit's `tools/adapters/` folder. The toolkit's [adding-to-the-catalog guide](https://github.com/AI-for-Accessibility-Collective/AI-for-Accessibility-Toolkit/blob/main/docs/adding-to-the-catalog.md) has the steps.
+The toolkit has to allow the store's address. A local one does when started with `npm run dev:workshop`.
 
 ## Profiles
 
-A profile describes one person's needs. The adapters get it as `options.profile`. The three here are made up:
+A profile describes what one person needs. The four here are made up, and are starting points, not descriptions of real people:
 
 - `sam.json`: Sam Saltman, blind, uses a screen reader
+- `dario.json`: Dario Almondei, cognitive disability, prefers short, plain text
 - `mark.json`: Mark Sugarberg, ADHD and anxiety, wants pressure messages hidden
-- `dario.json`: Dario Almondei, dyslexia, prefers short, plain text at about a sixth grade level
+- `bill.json`: Bill Grapes, an older adult, wants bigger text and buttons
 
-When the store is connected to your toolkit, "Your toolkit profile" is also on the list: the profile you edit on the Profiles page of the developer console. With one of the console's built-in presets selected (Profile 1–9), the store turns on a few adapters for it, such as captions and a sign for sounds for Profile 6 (deafness). Pick a preset under "Saved on your toolkit" to change your toolkit's profile from the store. While you shop as yourself (your toolkit profile or My profile), switching an adapter on or off tells your toolkit too, and it learns from it: its suggested profile changes show on the developer console's Profiles page, under "What your toolkit learned".
+They use the toolkit's profile shape: needs in `fields.needs`, like `{ "dimension": "reduceMotion", "value": true }`, including Redbird's own (`redbird/real-dates`). The panel turns on the adaptations that meet them, and the blocks read the person's settings (text size, reading level, less motion) from the same profile.
 
-They use the toolkit's profile shape. For example, a need looks like `{ "dimension": "urgency", "value": "hide" }`, and the reading level is `fields.readingLevel`. To make a new one, copy a file and change the needs.
+## Ready-made checks
+
+[checks.js](checks.js) has checks for some of the planted problems that try the fix the way the person would (press Enter, type a price, let the cart timer run out). A coding agent testing an adapter on the store can load it and call `RB_CHECKS[n](window)`. `window.RB_ISSUE_REPORT()` on any store page says which planted problems are fixed, the same check the panel's red and green badges use.

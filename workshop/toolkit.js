@@ -1,45 +1,64 @@
-// Connects this Redbird tab to an AI for Accessibility toolkit as the app
-// "Redbird demo", using the toolkit's Adapter MCP SDK.
+// Connects this Redbird tab to an AI for Accessibility toolkit as the app "Redbird demo", using
+// the toolkit's Adapter MCP SDK. Redbird is an app with its own adaptations, as the toolkit's skill
+// describes one: they are part of the store's code, they follow the person's toolkit profile, and
+// connecting shows them under Apps.
 //
 // What that gives the workshop:
-//   - The tab shows up in the toolkit's developer console under Apps, grouped
-//     with every other Redbird tab (and starter folder) on the same account.
-//   - The console, or a coding agent holding the same token, can turn
-//     Redbird's adapters on and off, read whether they're on, and undo a
-//     change, all through the standard MCP tools the SDK provides.
+//   - The tab shows up in the toolkit's developer console under Apps, grouped with every other
+//     Redbird tab on the same account.
+//   - The console, or a coding agent holding the same token, can turn Redbird's adaptations on
+//     and off, read whether they're on, undo a change, and check them all (app_verify), through
+//     the standard MCP tools the SDK provides.
+//   - The needs Redbird's adaptations meet that the toolkit has no name for are registered with
+//     the toolkit, so its profile agent can suggest them to the people they fit.
 //
-// The SDK is loaded from the toolkit itself (<toolkit>/sdk/adapter-mcp.js), so
-// Redbird always speaks the version of the contract that toolkit understands.
-// loader.js hands over a small bridge to its own adapter switches; nothing
-// here loads or runs adapters by itself, and the panel stays in charge.
+// The SDK is loaded from the toolkit itself (<toolkit>/sdk/adapter-mcp.js), so Redbird always
+// speaks the version of the contract that toolkit understands. loader.js hands over a small bridge
+// to its own switches; nothing here loads or runs adaptations by itself, and the panel stays in
+// charge. The toolkit's own built-in adapters, which the panel also runs, are the toolkit's, not
+// Redbird's, so they are not offered here.
 
-// The adapters Redbird exports: the workshop examples, the fix-this-page
-// button, and whatever the person built. The rest of the panel's library
-// stays internal (it runs here, but no one outside can call it).
-const EXPORTED = ['real-arrival-dates', 'swatch-names', 'calm-urgency', 'reading-level', 'pause-moving-things', 'toolkit-fixes', 'mine', 'local'];
+// Redbird's own adaptations (the workshop examples in workshop/adapters/).
+const EXPORTED = ['real-arrival-dates', 'swatch-names', 'calm-urgency', 'reading-level', 'pause-moving-things'];
 const TITLES = {
   'real-arrival-dates': 'Real arrival dates',
   'swatch-names': 'Swatch names',
   'calm-urgency': 'Calm urgency',
   'reading-level': 'Reading level',
   'pause-moving-things': 'Pause moving things',
-  'toolkit-fixes': 'Fix this page',
-  mine: 'Your adapter (Build tab)',
-  local: 'Your folder’s adapter.js',
 };
-// Parameters an adapter takes from outside, as JSON Schema. Most workshop
-// adapters only read the person's profile, which comes from the profile the
-// panel is shopping as, not from the caller.
+const AREAS = {
+  'real-arrival-dates': ['vision', 'cognitive'],
+  'swatch-names': ['vision'],
+  'calm-urgency': ['cognitive', 'sensory'],
+  'reading-level': ['cognitive', 'reading'],
+  'pause-moving-things': ['cognitive', 'sensory'],
+};
+// The needs an adaptation meets that the profile has no name for. (Swatch names, reading level
+// and pausing moving things meet needs the toolkit already has: names for controls, simpler text
+// and less motion.) Once the person has one, their profile says '<appId>/<id>', and the store
+// turns the adaptation on.
+const NEEDS = {
+  'real-arrival-dates': [{
+    id: 'real-dates', phrase: 'Real dates instead of business days',
+    description: 'Shows the day something arrives, like “arrives Tue, Nov 3”, instead of “5–7 business days”.',
+    abilities: 'Working a date out from a count of business days takes memory and attention, and a screen reader reads the count without the date.',
+  }],
+  'calm-urgency': [{
+    id: 'no-pressure', phrase: 'No pressure to buy now',
+    description: 'Labels or hides countdown timers, “only 2 left” and “14 people have this in their carts”.',
+    abilities: 'Messages made to rush people can take over the page for someone with anxiety or attention differences, and lead to buying too fast.',
+  }],
+};
+// Parameters an adaptation takes from outside, as JSON Schema. Most of Redbird's adaptations take
+// the person's settings from the profile the panel is shopping as, not from the caller.
 const PARAMETERS = {
   'calm-urgency': {
     mode: { enum: ['label', 'hide'], description: 'label dims countdowns and low-stock messages and adds a short note; hide hides them.' },
   },
 };
-// Turning these off reloads the page (it is the only clean way to undo
-// them), so they cannot offer undo.
-const RELOADS = new Set(['toolkit-fixes', 'mine', 'local']);
 // Address parts that steer the workshop panel rather than pick the page.
-const CONTROL_PARAMS = ['try', 'workshop', 'profile', 'issues', 'today', 'spotlight', 'from', 'reset', 'need', 'new', 'rbtest', 'at'];
+const CONTROL_PARAMS = ['try', 'workshop', 'profile', 'issues', 'today', 'spotlight', 'reset', 'tab', 'at'];
 
 function pageKey(url) {
   const u = new URL(url, location.href);
@@ -47,11 +66,6 @@ function pageKey(url) {
   u.searchParams.sort();
   const path = u.pathname.replace(/\.html$/, '').replace(/\/index$/, '/') || '/';
   return `${u.origin}${path}${u.searchParams.toString() ? `?${u.searchParams}` : ''}`;
-}
-
-async function sha256(text) {
-  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
-  return `sha256:${[...bytes].map(b => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function randomId() {
@@ -73,20 +87,20 @@ export async function connect(config, bridge, onStatus) {
   const here = () => pageKey(location.href);
   const target = { platforms: ['*'], urls: [`${location.origin}/*`] };
 
-  async function registration(id) {
+  function registration(id) {
     const info = bridge.info(id);
-    const reloads = RELOADS.has(id);
     const params = PARAMETERS[id] || {};
-    const code = id === 'mine' || id === 'local' ? await bridge.code(id) : null;
     const descriptor = defineDescriptor({
       appId: 'redbird',
       id,
       name: TITLES[id] || id,
       description: [info.help, info.who ? `For: ${info.who}.` : ''].filter(Boolean).join(' '),
-      version: id === 'mine' || id === 'local' ? 'draft' : bridge.version,
+      version: bridge.version,
       reach: 'self',
       surfaces: ['web'],
       targets: [target],
+      supportAreas: AREAS[id],
+      ...(NEEDS[id] ? { needs: NEEDS[id] } : {}),
       inputSchema: { type: 'object', properties: params, additionalProperties: false },
       outputSchema: {
         type: 'object',
@@ -98,8 +112,8 @@ export async function connect(config, bridge, onStatus) {
         additionalProperties: false,
       },
       requires: { host: ['web.document'], profileScopes: [], dependencies: info.ai ? [{ name: 'redbird.ai', optional: true, fallback: 'works without AI, with less' }] : [] },
-      effects: { writes: ['web.dom'], idempotent: true, reversibility: reloads ? 'partial' : 'full' },
-      operations: reloads ? ['query', 'check', 'apply', 'targets'] : ['query', 'check', 'apply', 'revert', 'targets'],
+      effects: { writes: ['web.dom'], idempotent: true, reversibility: 'full' },
+      operations: ['query', 'check', 'apply', 'revert', 'targets'],
     });
     // The panel's own switch is the adapter: turning it on here is the same
     // as ticking it in the panel, so both always agree.
@@ -111,7 +125,8 @@ export async function connect(config, bridge, onStatus) {
     return fromToggleAdapter({
       descriptor,
       adapter,
-      executionArtifactDigest: code ? await sha256(code) : null,
+      // What it is on with, so undo puts back the parameters it had.
+      parameters: () => bridge.parameters(id),
       // The page records what the adapter changed; give it a moment to see it.
       observe: async () => {
         await new Promise(r => setTimeout(r, 300));
@@ -133,66 +148,27 @@ export async function connect(config, bridge, onStatus) {
       appId: 'redbird',
       name: 'Redbird demo',
       version: bridge.version,
-      description: 'The workshop’s practice store, with accessibility problems built in on purpose.',
+      description: 'The workshop’s practice store, with accessibility problems built in on purpose, and its own adaptations for them.',
       supportedPlatforms: [{ environment: 'web-page' }],
       platform: detectBrowserPlatform(),
       surfaces: ['web'],
     },
-    adapters: await Promise.all(ids.map(registration)),
-    instructions: 'Redbird is a practice store. Each instance is one browser tab showing one page; adapter_targets gives its address. Turn the workshop adapters on and off with adapter_apply, or the apply_<id> shortcuts.',
+    adapters: ids.map(registration),
+    instructions: 'Redbird is a practice store. Each instance is one browser tab showing one page; adapter_targets gives its address. Turn Redbird’s own adaptations on and off with adapter_apply, or the apply_<id> shortcuts; app_verify checks them all.',
   });
 
-  // A switch that reloads the page (loader.js) waits until its answer has reached the toolkit.
-  const waiting = [];
-  bridge.afterAnswer?.((then) => waiting.push(then));
-  const answering = (input, init) => {
-    const sent = fetch(input, init);
-    if (init?.method === 'POST' && String(input).endsWith('/channel')) sent.finally(() => waiting.splice(0).forEach(f => f())).catch(() => {});
-    return sent;
-  };
   const link = connectToToolkit({
     url: base,
     token: config.token,
     provider,
-    fetch: answering,
     // A new id per page load: two tabs never share one, and the toolkit's
     // per-app endpoint still finds the tab when it is the only one.
     providerId: randomId(),
-    label: `${bridge.local ? 'Starter folder' : 'Store tab'} — ${document.title} (${location.pathname}${location.search})`,
+    label: `Store tab — ${document.title} (${location.pathname}${location.search})`,
     onStatus,
   });
   addEventListener('pagehide', () => { link.close(); });
-  publishOwn(sdk, base, config.token, bridge).catch(() => { /* sharing is extra; the store works without it */ });
   return link;
-}
-
-/**
- * Put the participant's own adapter (their starter folder's adapter.js) in the
- * toolkit's adapter registry, private to their account: it then appears on the
- * console's Adapters page, where they can run it in their browser on any
- * website (with the adapter runtime extension) or share it with the other
- * teams. The Build tab's adapter ("mine") stays out of the registry: it is
- * registered with this app only, under Apps. Publishing the same code again
- * is not a new revision, so every page load can do this.
- */
-async function publishOwn(sdk, base, token, bridge) {
-  const registry = sdk.createRegistryClient({ url: base, token });
-  for (const id of ['local']) {
-    if (!bridge.has(id)) continue;
-    const code = await bridge.code(id);
-    if (!code || sdk.lintWebModule(code).some(f => f.level === 'error')) continue;
-    const info = bridge.info(id);
-    await registry.publish({
-      appName: 'Redbird demo',
-      code,
-      descriptor: sdk.defineDescriptor({
-        appId: 'redbird', id, name: TITLES[id] || id, version: 'draft',
-        description: [info.help, info.who ? `For: ${info.who}.` : ''].filter(Boolean).join(' '),
-        targets: [{ platforms: ['*'], urls: [`${location.origin}/*`] }],
-        inputSchema: { type: 'object', properties: PARAMETERS[id] || {}, additionalProperties: false },
-      }),
-    });
-  }
 }
 
 /**

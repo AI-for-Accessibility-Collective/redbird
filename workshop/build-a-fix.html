@@ -22,46 +22,47 @@
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix" aria-current="page">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Keep building in code</a></li><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix" aria-current="page">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Build it in code</a></li><li><a href="example-adapters">Redbird’s adaptations</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Steps<span aria-hidden="true">/</span><a href="build-a-fix" aria-current="page">3. Build a fix</a></nav>
 <h1>Build a fix</h1>
-<p class="lede">Describe a change in plain words, and the toolkit builds it. Try these two examples first. Each takes about 10 minutes.</p>
+<p class="lede">Say what gets in the way, and the toolkit's assistant builds a fix with you. Try these two examples first. Each takes about 10 minutes.</p>
 
-<h2 id="what-happens-when-you-press-build-it">What happens when you press Build it</h2>
-<p>When you press <b>Build it</b>, the toolkit looks for adapters it already has that make the change. If some fit, you get a <b>skill</b>, a short list of those adapters to turn on together (no new code). If none fit, AI writes a new <b>adapter</b> (the code that makes the change). This takes about 30 seconds. The card under Build it says which one you got.</p>
-<p>Then the panel checks the page. If the planted problem you're fixing is still there, or the adapter stopped with an error, the AI tries once more by itself, and both versions show up under your fix.</p>
-<p>Example 1 below ends up as a skill, and example 2 as a new adapter.</p>
+<h2 id="how-the-builder-works">How the Builder works</h2>
+<p>The extension's <b>Builder</b> tab is an assistant beside the page. You say what gets in the way and for whom. It asks a few questions, like who the change helps most and which pages it should run on, and asks to see the page. Then it writes an adapter and <b>previews</b> it on the page: the change shows up right away, but only in this tab, until you add it to your account.</p>
+<p>Each preview runs checks, and the assistant tries again by itself when one fails. When it has a version that passes, it offers it to you. A review then runs in the background while you keep trying it and asking for changes.</p>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>When the assistant asks to see the page, you choose what to share: the address only, the address and the page source (what is on the page, like headings, buttons and text), also a screenshot, or nothing. With the page source, a copy of the page is kept to check the fix on later. What you share is kept on the toolkit's server for the research and is not used to identify you. Redbird is a practice store, so it has nothing personal on it.</p></div>
+<p>Example 1 below uses one of the toolkit's built-in adapters, and example 2 builds a new one.</p>
 
 <h2 id="example-1-a-calmer-page-for-mark">Example 1: a calmer page for Mark</h2>
 <ol>
-  <li>Open the <a href="../product?id=pebble-20w-2pack&amp;issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">Pebble charger page<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>. Notice the countdown, "Only 2 left in stock" and the scrolling deals bar.</li>
-  <li>In the panel, open the <b>Build your adapter</b> tab.</li>
-  <li>Next to <b>For:</b>, press <b>Change</b> and type: "Mark has ADHD and anxiety. Countdowns and messages like only 2 left make him rush."</li>
-  <li>In <b>What should change on this page?</b>, type: "Hide the countdowns and only 2 left messages, and stop things from moving."</li>
-  <li>Press <b>Build it</b>. It turns on adapters from the toolkit, and lists them.</li>
-  <li>Press <b>Turn off to compare</b>, then turn it back on.</li>
-  <li>If something is missing, write it under <b>What should change next?</b> and press <b>Change it</b>. The new version shows up in the list under your fix.</li>
-  <li>Press <b>Save</b>.</li>
+  <li>Open the <a href="../product?id=pebble-20w-2pack&amp;issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">Pebble charger page<span class="sr-only"> (opens in a new tab)</span></a>. Notice the countdown, "Only 2 left in stock" and the scrolling deals bar.</li>
+  <li>Open the extension's sidebar and go to <b>Builder</b>.</li>
+  <li>Type: "I'm building for Mark. He has ADHD and anxiety. Countdowns and messages like only 2 left make him rush, and things moving on the page distract him." Press <b>Send</b>.</li>
+  <li>Answer the assistant's questions. When it asks to see the page, share the page source.</li>
+  <li>The assistant may say the toolkit already has adapters for some of this, like <b>calm-page</b>, and suggest adding those, or build a new adapter for what they don't cover. When a preview is on the page, the deals bar stops and the countdown is labeled or gone.</li>
+  <li>Turn <b>Apply previews</b> off to see the page as it was, then on again.</li>
+  <li>If something is missing, say it in the box (<b>Additional requests?</b>), like "The countdown at checkout is still there". The assistant changes the adapter and previews the new version.</li>
+  <li>When it works, press <b>Add to my account</b>. It now runs on the pages it was made for, every time you open them.</li>
 </ol>
+<div class="alert tip"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"/></svg>Tip</p><p>Redbird has its own adaptation for this too: <b>calm-urgency</b> in the store panel's <b>Adapter Library</b>. Compare what the assistant built with it. Turn one off before you try the other, so you can tell which one made a change.</p></div>
 
 <h2 id="example-2-star-ratings-for-sam">Example 2: star ratings for Sam</h2>
-<p>Each rating is a picture of stars, so a screen reader only reads the number of ratings, like "(1,203)". No adapter in the toolkit fixes this, so AI writes one.</p>
+<p>Each rating is a picture of stars, so a screen reader only reads the number of ratings, like "(1,203)". None of the toolkit's adapters fix this, so the assistant writes one.</p>
 <ol>
-  <li>Open the <a href="../search?q=charger&amp;issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">search results for "charger"<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a>.</li>
-  <li>In the <b>Build your adapter</b> tab, press <b>New fix</b>. Next to <b>For:</b>, press <b>Change</b> and replace what's there with: "Sam is blind and shops with VoiceOver."</li>
-  <li>In <b>What should change on this page?</b>, type: "Read the star ratings out as numbers, like 4.6 out of 5 stars."</li>
-  <li>Press <b>Point at it on the page</b>, and click the stars under any product.</li>
-  <li>Press <b>Build it</b>, and wait about half a minute.</li>
-  <li>Under the result, version 1 says what it changed, and whether it fixed problem 4 (the star ratings) on this page.</li>
-  <li>Open the list of changes under the result, and press one to see where it is on the page. The stars look the same, since the change is only for the screen reader.</li>
-  <li>Ask for one more change under <b>What should change next?</b>, e.g., "Also say how many ratings there are", and version 2 shows up under version 1.</li>
+  <li>Open the <a href="../search?q=charger&amp;issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">search results for "charger"<span class="sr-only"> (opens in a new tab)</span></a>.</li>
+  <li>In the extension's <b>Builder</b>, press <b>New chat</b>, and type: "I'm building for Sam, who is blind and shops with VoiceOver. Read the star ratings out as numbers, like 4.6 out of 5 stars."</li>
+  <li>Answer its questions. When it asks which pages to run on, pick this website.</li>
+  <li>When the preview is on, the stars look the same, since the change is only for the screen reader. Turn on VoiceOver (Command-F5 on a Mac) and move to a rating, or open the preview's line in the chat to see its checks.</li>
+  <li>In the store's panel, turn on <b>Show accessibility problems on the page</b>. Badge 4 (the star ratings) turns green.</li>
+  <li>Ask for one more change, like "Also say how many ratings there are". The assistant previews the new version.</li>
+  <li>Press <b>Add to my account</b>.</li>
 </ol>
-<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>To see the code the AI wrote, open <b>More</b> under the result. You can also edit the code there. To undo a change, press <b>Go back to version 1</b> (or whichever version worked).</p></div>
+<div class="alert"><p class="t"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>Note</p><p>The assistant leaves code out of the chat. To see the code, press <b>Export</b> to save the file, or open the adapter on the console's <b>Adapters</b> page.</p></div>
 </main>
-<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#what-happens-when-you-press-build-it">What happens when you press Build it</a></li><li><a href="#example-1-a-calmer-page-for-mark">Example 1: a calmer page for Mark</a></li><li><a href="#example-2-star-ratings-for-sam">Example 2: star ratings for Sam</a></li></ul></nav>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#how-the-builder-works">How the Builder works</a></li><li><a href="#example-1-a-calmer-page-for-mark">Example 1: a calmer page for Mark</a></li><li><a href="#example-2-star-ratings-for-sam">Example 2: star ratings for Sam</a></li></ul></nav>
 </div>
 </div>
 <script src="guide.js"></script>

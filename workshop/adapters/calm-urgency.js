@@ -3,12 +3,13 @@
 //
 // These messages are built to rush people. For someone with anxiety or ADHD they can take over
 // the whole page, and a ticking timer pulls attention every second. This adapter finds them by
-// their wording, stops anything blinking, and then does what the profile asks.
+// their wording, stops anything blinking, and then does what the option says.
 //
-// Profile: reads the need "urgency". A skill can set it too, as the setting mode.
+// Options: mode
 //   "label" (the default)  dims the message and adds a short plain note after the first one
 //                          of each kind (twelve notes on one page would be clutter of their own)
 //   "hide"                 hides it from view and from screen readers
+// Profile: nothing to read. The store's panel picks the mode for the person.
 // Try it: ?issues=24&try=calm-urgency&profile=mark
 
 const KINDS = [
@@ -21,93 +22,59 @@ const KINDS = [
     note: 'Pressure message. You can take your time.' },
 ];
 
-function need(options, dimension, fallback) {
-  const n = (options.profile?.fields?.needs || []).find((x) => x.dimension === dimension);
-  return n ? n.value : fallback;
-}
-
-function say(text) {
-  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
-  if (window.RB_SAY) return window.RB_SAY(text);
-  let live = document.getElementById('ws-live');
-  if (!live) {
-    live = Object.assign(document.createElement('div'), { id: 'ws-live' });
-    live.setAttribute('aria-live', 'polite');
-    live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
-    document.body.appendChild(live);
-  }
-  // Messages that come at the same moment (several adapters starting together) are read
-  // together, instead of the last one replacing the rest. The region is emptied first, so
-  // the same words said twice are read twice.
-  live.waiting = (live.waiting || []).concat(text);
-  clearTimeout(live.timer);
-  live.timer = setTimeout(() => {
-    const words = live.waiting.join('. ');
-    live.waiting = [];
-    live.textContent = '';
-    setTimeout(() => { live.textContent = words; }, 60);
-  }, 50);
-}
-
 export const CalmUrgency = {
-  styleId: 'ws-calm-styles',
-  enabled: false,
-  found: null, // element → { kind, note, hadAriaHidden }
-  observer: null,
-
-  enable(options = {}) {
-    if (this.enabled) return;
-    this.enabled = true;
-    this.mode = (options.mode || need(options, 'urgency', 'label')) === 'hide' ? 'hide' : 'label';
-    this.found = new Map();
-    const style = document.createElement('style');
-    style.id = this.styleId;
-    style.textContent =
+  enable(options = {}, toolkit) {
+    if (this.s && !this.s.ended) return;
+    const s = (this.s = toolkit.session());
+    this.mode = options.mode === 'hide' ? 'hide' : 'label';
+    this.found = new Map(); // element → { kind, note }
+    // Notes are at least 16px, and larger when the person's text size is.
+    const px = Math.round(16 * Math.max(100, Number(s.profile.get('fontScale')) || 100)) / 100;
+    s.css('calm',
       '.ws-calm-label{color:#5f6368 !important;font-weight:400 !important;animation:none !important}' +
       '.ws-calm-hide{display:none !important}' +
-      '.ws-calm-note{display:block;font-size:13px;color:#3c4043;background:#eef3f8;border-radius:6px;padding:3px 8px;margin:3px 0}' +
-      '.ws-calm-still{animation:none !important;visibility:visible !important}';
-    document.head.appendChild(style);
-    const n = this.sweep();
+      `.ws-calm-note{display:block;font-size:${px}px;line-height:1.4;color:#3c4043;background:#eef3f8;border-radius:6px;padding:3px 8px;margin:3px 0}` +
+      '.ws-calm-still{animation:none !important;visibility:visible !important}');
+    const n = this.sweep(s);
     // Pages like this one change every second (countdown timers), so scan at most twice a second.
     let queued = false;
-    this.observer = new MutationObserver(() => {
-      if (queued || !this.enabled) return;
+    s.watch.added(document.body, () => {
+      if (queued) return;
       queued = true;
-      setTimeout(() => { queued = false; if (this.enabled) this.sweep(); }, 500);
-    });
-    this.observer.observe(document.body, { childList: true, subtree: true });
-    say(n ? `${this.mode === 'hide' ? 'Hid' : 'Labeled'} ${n} pressure message${n === 1 ? '' : 's'}` : 'Watching for pressure messages');
+      s.timer(() => { queued = false; this.sweep(s); }, 500);
+    }, { batch: true });
+    s.announce(n ? `${this.mode === 'hide' ? 'Hid' : 'Labeled'} ${n} pressure message${n === 1 ? '' : 's'}` : 'Watching for pressure messages');
   },
 
-  sweep() {
+  sweep(s) {
     let n = 0;
+    const ours = (el) => s.page.isOurs(el) || !!el.closest('.ws-panel, .ws-calm-note');
     // Stop anything that blinks or flashes, whatever it says.
     for (const el of document.body.querySelectorAll('*')) {
-      if (el.closest('.ws-panel') || !el.classList || el.classList.contains('ws-calm-still')) continue;
+      if (!el.classList || el.classList.contains('ws-calm-still') || ours(el)) continue;
       const anim = getComputedStyle(el).animationName, text = el.textContent.trim();
       // Short text only (a badge, not a whole panel sliding in), and not an empty spinner.
-      if (anim && anim !== 'none' && text && text.length < 30) el.classList.add('ws-calm-still');
+      if (anim && anim !== 'none' && text && text.length < 30) s.addClass(el, 'ws-calm-still');
     }
     // The smallest element whose text matches a pressure pattern.
     for (const el of document.body.querySelectorAll('div, span, p, li, b, strong')) {
-      if (this.found.has(el) || el.closest('.ws-panel, .ws-calm-note')) continue;
+      if (this.found.has(el) || ours(el)) continue;
       const text = el.textContent;
       const hit = KINDS.find((k) => k.test.test(text));
       if (!hit || [...el.children].some((c) => hit.test.test(c.textContent))) continue;
-      const rec = { kind: hit.kind, hadAriaHidden: el.getAttribute('aria-hidden') };
+      const rec = { kind: hit.kind, note: null };
       if (this.mode === 'hide') {
-        el.classList.add('ws-calm-hide');
-        el.setAttribute('aria-hidden', 'true');
+        s.addClass(el, 'ws-calm-hide');
+        s.setAttr(el, 'aria-hidden', 'true');
       } else {
-        el.classList.add('ws-calm-label');
+        s.addClass(el, 'ws-calm-label');
         const noted = [...this.found.values()].some((r) => r.kind === hit.kind && r.note?.isConnected);
-        if (!noted) {
-          rec.note = Object.assign(document.createElement('span'), { className: 'ws-calm-note', textContent: hit.note });
-          el.after(rec.note);
+        if (!noted && el.parentNode) {
+          rec.note = s.el('span', { text: hit.note, attrs: { class: 'ws-calm-note' } });
+          s.insert(el.parentNode, rec.note, el.nextSibling);
         }
         // A ticking timer is noise for a screen reader. The note says what it is.
-        if (hit.kind === 'timer') el.setAttribute('aria-hidden', 'true');
+        if (hit.kind === 'timer') s.setAttr(el, 'aria-hidden', 'true');
       }
       this.found.set(el, rec);
       n++;
@@ -116,22 +83,7 @@ export const CalmUrgency = {
   },
 
   disable() {
-    if (!this.enabled) return;
-    this.enabled = false;
-    this.observer.disconnect();
-    for (const [el, rec] of this.found) {
-      el.classList.remove('ws-calm-hide', 'ws-calm-label');
-      rec.hadAriaHidden === null ? el.removeAttribute('aria-hidden') : el.setAttribute('aria-hidden', rec.hadAriaHidden);
-      rec.note?.remove();
-    }
-    this.found.clear();
-    document.querySelectorAll('.ws-calm-still').forEach((el) => el.classList.remove('ws-calm-still'));
-    document.getElementById(this.styleId)?.remove();
-    say('Pressure messages back as the store showed them');
-  },
-
-  toggle(options) {
-    if (this.enabled) this.disable();
-    else this.enable(options);
+    this.s?.end();
+    this.s = null;
   },
 };

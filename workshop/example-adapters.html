@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Example adapters - Redbird workshop</title>
+<title>Redbird’s adaptations - Redbird workshop</title>
 <meta property="og:site_name" content="Redbird workshop">
-<meta property="og:title" content="Example adapters">
+<meta property="og:title" content="Redbird’s adaptations">
 <meta property="og:description" content="Fix a practice online store for disabled people and older adults, using the AI for Accessibility Toolkit.">
 <meta property="og:image" content="https://redbird-workshop.vercel.app/assets/img/share-workshop.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -22,33 +22,33 @@
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Keep building in code</a></li><li><a href="example-adapters" aria-current="page">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Build it in code</a></li><li><a href="example-adapters" aria-current="page">Redbird’s adaptations</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Reference<span aria-hidden="true">/</span><a href="example-adapters" aria-current="page">Example adapters</a></nav>
-<h1>Example adapters</h1>
-<p class="lede">We wrote these three adapters for Redbird. Each one fixes one problem on the store, for a different group of shoppers.</p>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="./">Redbird workshop</a><span aria-hidden="true">/</span>Reference<span aria-hidden="true">/</span><a href="example-adapters" aria-current="page">Redbird’s adaptations</a></nav>
+<h1>Redbird’s adaptations</h1>
+<p class="lede">Redbird has its own adaptations, built into the store. Each one removes one barrier on the store, for a different group of shoppers. They are written like any toolkit adapter, on the same building blocks.</p>
 
 <div class="table-wrap"><table class="ex-table">
-<thead><tr><th>Adapter</th><th>Who it's for</th><th>What it fixes</th></tr></thead>
+<thead><tr><th>Adaptation</th><th>Who it's for</th><th>What it fixes</th></tr></thead>
 <tbody>
 <tr><td><a href="#reading-level">reading-level</a></td><td>People with cognitive or reading disabilities</td><td>Long, wordy product descriptions</td></tr>
 <tr><td><a href="#pause-moving-things">pause-moving-things</a></td><td>People with ADHD or anxiety, and people who get dizzy from motion</td><td>Parts of the page that move by themselves</td></tr>
 <tr><td><a href="#swatch-names">swatch-names</a></td><td>Blind and low-vision shoppers</td><td>Color choices a screen reader can't name</td></tr>
 </tbody>
 </table></div>
-<p><b>See the problem</b> opens the store with the adapter off, and <b>See the fix</b> opens it with the adapter on. <b>Edit a copy</b> opens the adapter in the panel's <b>Build your adapter</b> tab, under <b>More</b>, where you can change its code.</p>
+<p>The store panel's <b>Adapter Library</b> has all of them, with a <b>Read the code</b> link under each. Because Redbird is connected to your toolkit, they also show in the developer console under <b>Apps</b>, as <b>Redbird demo</b>, and the ones that meet a need in your profile come on when you shop as yourself.</p>
 
 <h2 id="reading-level">reading-level</h2>
 <p><b>Who it's for:</b> people with cognitive or reading disabilities, like Dario.</p>
 <p><b>The problem:</b> the product descriptions are long sentences full of marketing words.</p>
-<p><b>What it does:</b> it finds the paragraphs that are harder than the person's reading level, and asks AI to rewrite them in short, plain sentences. A <b>Show original</b> link under each one brings back the store's text. If your adapter needs AI, look at how this one asks AI to rewrite the text.</p>
+<p><b>What it does:</b> it finds the paragraphs that are harder than the person's reading level, and asks AI to rewrite them in short, plain sentences. A <b>Show original</b> link under each one brings back the store's text. If your fix needs AI, look at how this one uses the toolkit's AI text block.</p>
 <div class="ba stack">
   <figure><figcaption>Before</figcaption><img src="img/reading-level-before.png" width="569" height="178" alt="Product description: Leveraging next-gen GaN III semiconductor architecture with intelligent PD 3.0/PPS protocol negotiation, this ultra-compact power solution delivers optimized 20W output while multi-layer thermal safeguards ensure best-in-class charging efficiency across your entire device ecosystem."></figure>
   <figure><figcaption>After</figcaption><img src="img/reading-level-after.png" width="575" height="178" alt="Product description: This tiny charger uses new GaN III tech and smart PD 3.0 and PPS systems to send 20W of power to your devices. It works safely with all your tech because special heat guards keep it cool while it charges fast. Under it: Rewritten in plain language. Show original."></figure>
 </div>
-<p class="ex-links"><a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=none&amp;profile=none&amp;workshop=on#desc" target="_blank" rel="noopener">See the problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=reading-level&amp;profile=dario&amp;workshop=on#desc" target="_blank" rel="noopener">See the fix<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=mine&amp;from=reading-level&amp;profile=dario&amp;workshop=on#desc" target="_blank" rel="noopener">Edit a copy<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="adapters/reading-level.js" target="_blank" rel="noopener">Read the code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></p>
+<p class="ex-links"><a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=none&amp;profile=none&amp;workshop=on#desc" target="_blank" rel="noopener">See the problem<span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=rb-20w-usbc-charger&amp;issues=27&amp;try=reading-level&amp;profile=none&amp;workshop=on#desc" target="_blank" rel="noopener">See the fix<span class="sr-only"> (opens in a new tab)</span></a></p>
 
 <h2 id="pause-moving-things">pause-moving-things</h2>
 <p><b>Who it's for:</b> people with ADHD or anxiety like Mark, and people who get dizzy from motion.</p>
@@ -60,24 +60,24 @@
   <li>On a product page, the video stays paused, with a play button.</li>
 </ul>
 <p>The person can still move things themselves. The banner's arrows, scrolling a row and the video's play button all still work.</p>
-<p class="ex-links"><a href="../?issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">See the problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="../?issues=on&amp;try=pause-moving-things&amp;profile=mark&amp;workshop=on" target="_blank" rel="noopener">See the fix<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="../?issues=on&amp;try=mine&amp;from=pause-moving-things&amp;profile=mark&amp;workshop=on" target="_blank" rel="noopener">Edit a copy<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="adapters/pause-moving-things.js" target="_blank" rel="noopener">Read the code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></p>
+<p class="ex-links"><a href="../?issues=on&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">See the problem<span class="sr-only"> (opens in a new tab)</span></a> · <a href="../?issues=on&amp;try=pause-moving-things&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">See the fix<span class="sr-only"> (opens in a new tab)</span></a></p>
 
 <h2 id="swatch-names">swatch-names</h2>
 <p><b>Who it's for:</b> blind and low-vision shoppers, like Sam.</p>
 <p><b>The problem:</b> the colors on a product page are plain circles, so a screen reader can't say which color you're picking, and the keyboard skips them.</p>
 <p><b>What it does:</b> it gives each circle the name of the closest color, like "sage green", and lets the arrow keys pick one.</p>
 <img class="ex-img" src="img/swatch-names.png" width="324" height="89" alt="Color: Matte black, with three color circles: black, cream and sage green.">
-<p>The circles look the same with the adapter on, but a screen reader can now say their names:</p>
+<p>The circles look the same with it on, but a screen reader can now say their names:</p>
 <div class="ba">
   <figure><figcaption>Before</figcaption><p class="said">"Color: Matte black", and nothing for the three circles.</p></figure>
   <figure><figcaption>After</figcaption><p class="said">"Color: Matte black", then three choices: black (picked), cream and sage green.</p></figure>
 </div>
-<p class="ex-links"><a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">See the problem<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=swatch-names&amp;profile=sam&amp;workshop=on" target="_blank" rel="noopener">See the fix<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=mine&amp;from=swatch-names&amp;profile=sam&amp;workshop=on" target="_blank" rel="noopener">Edit a copy<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a> <a href="adapters/swatch-names.js" target="_blank" rel="noopener">Read the code<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5 3 9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span class="sr-only"> (opens in a new tab)</span></a></p>
+<p class="ex-links"><a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=none&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">See the problem<span class="sr-only"> (opens in a new tab)</span></a> · <a href="../product?id=hearth-oak-kettle&amp;issues=6&amp;try=swatch-names&amp;profile=none&amp;workshop=on" target="_blank" rel="noopener">See the fix<span class="sr-only"> (opens in a new tab)</span></a></p>
 
-<h2 id="your-own-adapters">Your own adapters</h2>
-<p>The adapters you build in the <b>Build your adapter</b> tab are listed under these three in the panel's <b>Adapter Library</b> tab, each with its own switch. Only one of them runs at a time, so turning one on turns off the one that was on.</p>
+<h2 id="your-own-adapters">Your own fixes</h2>
+<p>The fixes you build run in the extension, not in the store's panel, so they are listed in the extension's sidebar, under <b>Applied on this page</b>, each with its own switch.</p>
 </main>
-<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#reading-level">reading-level</a></li><li><a href="#pause-moving-things">pause-moving-things</a></li><li><a href="#swatch-names">swatch-names</a></li><li><a href="#your-own-adapters">Your own adapters</a></li></ul></nav>
+<nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#reading-level">reading-level</a></li><li><a href="#pause-moving-things">pause-moving-things</a></li><li><a href="#swatch-names">swatch-names</a></li><li><a href="#your-own-adapters">Your own fixes</a></li></ul></nav>
 </div>
 </div>
 <script src="guide.js"></script>

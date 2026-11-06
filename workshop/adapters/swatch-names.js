@@ -10,6 +10,7 @@
 //   - color dots that aren't clickable (like on product cards) just get their name
 // It doesn't change how anything looks. disable() puts every attribute back.
 //
+// Options: none.
 // Profile: nothing to read. It helps anyone who can't see the colors.
 // Try it: product?id=hearth-oak-kettle&issues=6&try=swatch-names
 
@@ -41,58 +42,28 @@ function closestName(color) {
   return best;
 }
 
-function say(text) {
-  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
-  if (window.RB_SAY) return window.RB_SAY(text);
-  let live = document.getElementById('ws-live');
-  if (!live) {
-    live = Object.assign(document.createElement('div'), { id: 'ws-live' });
-    live.setAttribute('aria-live', 'polite');
-    live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
-    document.body.appendChild(live);
-  }
-  // Messages that come at the same moment (several adapters starting together) are read
-  // together, instead of the last one replacing the rest. The region is emptied first, so
-  // the same words said twice are read twice.
-  live.waiting = (live.waiting || []).concat(text);
-  clearTimeout(live.timer);
-  live.timer = setTimeout(() => {
-    const words = live.waiting.join('. ');
-    live.waiting = [];
-    live.textContent = '';
-    setTimeout(() => { live.textContent = words; }, 60);
-  }, 50);
-}
-
 export const SwatchNames = {
-  enabled: false,
-  touched: null, // element → the attributes it had before
-  observer: null,
-
-  enable() {
-    if (this.enabled) return;
-    this.enabled = true;
-    this.touched = new Map();
-    this.onKey = (e) => this.key(e);
-    this.onClick = (e) => this.picked(e);
-    const n = this.sweep();
-    document.addEventListener('keydown', this.onKey, true);
-    document.addEventListener('click', this.onClick, true);
+  enable(options = {}, toolkit) {
+    if (this.s && !this.s.ended) return;
+    const s = (this.s = toolkit.session());
+    this.touched = new WeakSet(); // elements we gave a role and a name
+    const n = this.sweep(s);
+    s.listen(document, 'keydown', (e) => this.key(e), true);
+    s.listen(document, 'click', (e) => this.picked(s, e), true);
     // Pages like this one change every second (countdown timers), so scan at most twice a second.
     let queued = false;
-    this.observer = new MutationObserver(() => {
-      if (queued || !this.enabled) return;
+    s.watch.added(document.body, () => {
+      if (queued) return;
       queued = true;
-      setTimeout(() => { queued = false; if (this.enabled) this.sweep(); }, 500);
-    });
-    this.observer.observe(document.body, { childList: true, subtree: true });
-    say(n ? `Named ${n} color swatch${n === 1 ? '' : 'es'}` : 'Watching for color swatches');
+      s.timer(() => { queued = false; this.sweep(s); }, 500);
+    }, { batch: true });
+    s.announce(n ? `Named ${n} color swatch${n === 1 ? '' : 'es'}` : 'Watching for color swatches');
   },
 
   // A swatch: small, round, empty, filled with one color, and with no name of its own.
-  isSwatch(el) {
+  isSwatch(s, el) {
     if (this.touched.has(el) || el.children.length || el.textContent.trim()) return false;
-    if (el.closest('label, button, [role=img], [role=radio], [aria-label], .ws-panel')) return false;
+    if (el.closest('label, button, [role=img], [role=radio], [aria-label], .ws-panel') || s.page.isOurs(el)) return false;
     const r = el.getBoundingClientRect();
     if (r.width < 8 || r.width > 64 || Math.abs(r.width - r.height) > 4) return false;
     const cs = getComputedStyle(el);
@@ -103,17 +74,13 @@ export const SwatchNames = {
     return c && !/rgba\(.*, 0\)$/.test(cs.backgroundColor) && !/transparent/.test(cs.backgroundColor);
   },
 
-  mark(el, attrs) {
-    if (!this.touched.has(el)) {
-      const before = {};
-      for (const k of Object.keys(attrs)) before[k] = el.getAttribute(k);
-      this.touched.set(el, before);
-    }
-    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  mark(s, el, attrs) {
+    this.touched.add(el);
+    for (const [k, v] of Object.entries(attrs)) s.setAttr(el, k, v);
   },
 
-  sweep() {
-    const found = [...document.body.querySelectorAll('span, div, i, a')].filter((el) => this.isSwatch(el));
+  sweep(s) {
+    const found = [...document.body.querySelectorAll('span, div, i, a')].filter((el) => this.isSwatch(s, el));
     // Swatches that share a parent's parent form one group (one color picker).
     const groups = new Map();
     for (const el of found) {
@@ -125,33 +92,33 @@ export const SwatchNames = {
       const clickable = els.length > 1 && getComputedStyle(els[0]).cursor === 'pointer';
       els.forEach((el) => {
         const name = closestName(rgb(getComputedStyle(el).backgroundColor));
-        if (!clickable) return this.mark(el, { role: 'img', 'aria-label': name });
-        this.mark(el, { role: 'radio', 'aria-label': name, 'aria-checked': 'false', tabindex: '-1' });
+        if (!clickable) return this.mark(s, el, { role: 'img', 'aria-label': name });
+        this.mark(s, el, { role: 'radio', 'aria-label': name, 'aria-checked': 'false', tabindex: '-1' });
       });
       if (clickable) {
-        this.mark(group, { role: 'radiogroup', 'aria-label': 'Color' });
+        this.mark(s, group, { role: 'radiogroup', 'aria-label': 'Color' });
         // The picked one is usually drawn differently from the rest (a ring or outline).
         const looks = els.map((el) => getComputedStyle(el).boxShadow + getComputedStyle(el).outlineStyle);
         const odd = els.find((el, i) => looks.filter((l) => l === looks[i]).length === 1);
-        this.check(odd || null, els);
+        this.check(s, odd || null, els);
       }
     }
     return found.length;
   },
 
-  check(el, els) {
+  check(s, el, els) {
     els.forEach((x, i) => {
-      x.setAttribute('aria-checked', String(x === el));
-      x.setAttribute('tabindex', x === el || (!el && i === 0) ? '0' : '-1');
+      s.setAttr(x, 'aria-checked', String(x === el));
+      s.setAttr(x, 'tabindex', x === el || (!el && i === 0) ? '0' : '-1');
     });
   },
 
-  picked(e) {
+  picked(s, e) {
     const el = e.target.closest?.('[role=radio]');
     if (!el || !this.touched.has(el)) return;
     const els = [...el.closest('[role=radiogroup]').querySelectorAll('[role=radio]')];
-    this.check(el, els);
-    say(`${el.getAttribute('aria-label')} selected`);
+    this.check(s, el, els);
+    s.announce(`${el.getAttribute('aria-label')} selected`);
   },
 
   key(e) {
@@ -172,20 +139,7 @@ export const SwatchNames = {
   },
 
   disable() {
-    if (!this.enabled) return;
-    this.enabled = false;
-    this.observer.disconnect();
-    document.removeEventListener('keydown', this.onKey, true);
-    document.removeEventListener('click', this.onClick, true);
-    for (const [el, before] of this.touched) {
-      for (const [k, v] of Object.entries(before)) v === null ? el.removeAttribute(k) : el.setAttribute(k, v);
-    }
-    this.touched.clear();
-    say('Color swatch names removed');
-  },
-
-  toggle(options) {
-    if (this.enabled) this.disable();
-    else this.enable(options);
+    this.s?.end();
+    this.s = null;
   },
 };

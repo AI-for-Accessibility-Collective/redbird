@@ -22,7 +22,7 @@
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework" aria-current="page">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Keep building in code</a></li><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework" aria-current="page">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Build it in code</a></li><li><a href="example-adapters">Redbird’s adaptations</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
@@ -31,24 +31,23 @@
 <p class="lede">The workshop's framework has three parts: an ability profile, an adaptation, and a way to verify it. You can try each one on Redbird.</p>
 
 <h2 id="ability-profile">Ability profile</h2>
-<p>A profile says what a person needs, in their own words. The toolkit reads it to decide what to change. For example, Dario's profile asks for short, plain sentences, so the reading-level adapter rewrites hard paragraphs for him.</p>
-<p>The idea is for each person to make their own profile. On Redbird, pick <b>My profile</b> in the panel's <b>Profiles</b> tab and answer a few questions, and the toolkit writes your profile and picks adapters for it. You can save it as a file for the toolkit's browser extension, so it works on other websites too. The four shoppers in the <b>Profiles</b> tab are made-up examples of what different profiles do.</p>
-<p>A profile also remembers your changes: if you turn one of its adapters off, it stays off next time. When you build, the <b>Build your adapter</b> tab uses this profile, and you can describe someone else by pressing <b>Change</b> next to <b>For:</b>.</p>
+<p>A profile says what a person needs, in their own words. The toolkit keeps it in the person's account, and every app and adapter they use reads the same one. For example, Dario's profile asks for plain language and less motion, so the store rewrites hard paragraphs for him and holds moving things still.</p>
+<p>The person edits their profile in the extension's <b>Profile</b> tab or on the console's <b>Profiles</b> page. Adapters and apps say which needs they meet, and the toolkit suggests them to the people whose profiles could use them. A profile is a starting point the person changes, not a description of them. The four shoppers on Redbird are made-up examples of what different profiles turn on.</p>
 
 <h2 id="adaptation">Adaptation</h2>
-<p>An adaptation changes the page to fix the accessibility problems that person runs into. The toolkit has two kinds:</p>
+<p>An adaptation changes the page to remove a barrier the person runs into. There are two kinds:</p>
 <ul>
-  <li><b>An adapter</b> is code that changes one thing on a page, and turning it off puts the page back. The toolkit has about 40. For example, <code>motion-reducer</code> stops animations.</li>
-  <li><b>A skill</b> has no code. It lists a few adapters to turn on together for one need, in a short file called SKILL.md. For example, the toolkit's <code>calm-browsing</code> skill turns on <code>motion-reducer</code>, <code>dark-mode</code> and <code>focus-mode</code>.</li>
+  <li><b>An adapter</b> is one small file of code that changes one thing on a web page, and puts the page back when it's turned off. It runs in the person's own Chrome, through the extension, on the pages it was made for. The toolkit has 11 built in, like <code>text-size</code> and <code>calm-page</code>, and you build new ones.</li>
+  <li><b>An app's own adaptation</b> is built into the app itself. Redbird is an app like that: <code>real-arrival-dates</code> and <code>calm-urgency</code> are part of the store. It follows the person's toolkit profile, and shows up under <b>Apps</b> in the developer console, where the person (or a coding agent) can turn its adaptations on and off.</li>
 </ul>
-<p>The panel's <b>Build your adapter</b> tab can make both, the same way the toolkit's browser extension does. It first looks for adapters the toolkit already has, and writes them up as a skill. If none of them fit, AI writes a new adapter.</p>
+<p>Both are built on the toolkit's <b>building blocks</b>: small, tested pieces for things like styles, announcements, keyboard shortcuts and AI text. Every change goes through a session, so turning an adaptation off puts back exactly what it changed.</p>
 
 <h2 id="verification">Verification</h2>
-<p>Verification is how you, and the person, can tell a change did what it should and didn't break anything else. On Redbird you can check it three ways:</p>
+<p>Verification is how you, and the person, can tell a change did what it should and didn't break anything else. With the toolkit it happens in three layers:</p>
 <ul>
-  <li>In <b>Profiles</b>, open each adapter's list of changes to see them before and after, and turn on <b>Show accessibility problems on the page</b> at the top of the panel to see which ones are fixed.</li>
-  <li>In <b>Audit</b>, run the audit. It counts common problems, like photos with no description. After you press <b>Fix this page</b>, run it again and the count goes down.</li>
-  <li>Use the page the way the person would, e.g., with a screen reader, with only the keyboard, or zoomed in to 200%.</li>
+  <li><b>Checks while you build.</b> Each preview in the extension's <b>Builder</b> runs checks: whether the adapter ran, which accessibility problems it added or fixed, and whether the page jumped around. The assistant can only offer an adapter whose checks passed.</li>
+  <li><b>A review in the background.</b> After the first version is built, the toolkit checks it again on copies of the page and has reviewers look at what it changed, while you keep trying it. On Redbird, the red and green badges and the <b>Audit</b> tab show which problems are fixed too.</li>
+  <li><b>Testing with people.</b> Use the page the way the person would, for example with a screen reader, with only the keyboard, or zoomed in to 200%. Only the person can tell you whether it works for them.</li>
 </ul>
 </main>
 <nav class="toc" aria-label="In this article"><h2>In this article</h2><ul><li><a href="#ability-profile">Ability profile</a></li><li><a href="#adaptation">Adaptation</a></li><li><a href="#verification">Verification</a></li></ul></nav>

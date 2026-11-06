@@ -22,7 +22,7 @@
 <div class="layout">
 <nav class="side" aria-label="Workshop pages">
   <a class="product" href="./">Redbird workshop</a>
-  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Keep building in code</a></li><li><a href="example-adapters">Example adapters</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
+  <ul><li><a href="./">Get started</a></li></ul><p class="group">Steps</p><ul class="sub"><li><a href="tour">1. Try the toolkit</a></li><li><a href="framework">2. Learn the framework</a></li><li><a href="build-a-fix">3. Build a fix</a></li><li><a href="build-your-own">4. Build your own</a></li><li><a href="test-and-share">5. Test it and share it</a></li></ul><p class="group">Reference</p><ul class="sub"><li><a href="keep-building-in-code">Build it in code</a></li><li><a href="example-adapters">Redbird’s adaptations</a></li><li><a href="first-adapter">Write an adapter by hand</a></li></ul><p class="group">Store</p><ul class="sub"><li><a href="reset">Reset the store</a></li></ul>
 </nav>
 <div class="page">
 <main id="main">
@@ -108,17 +108,16 @@
   <tr><td><code>issues</code></td><td><code>on</code>, <code>off</code>, or numbers like <code>6,24</code></td><td>Which built-in problems are on. that move or change on their own (19, 24, 33, 34, 35) and the two "Add to cart" problems (3, 21).</td></tr>
   <tr><td><code>today</code></td><td>a date like <code>2026-11-02</code>, or <code>now</code></td><td>Pins the store's date, so delivery dates are the same on every run. <code>now</code> goes back to the real date.</td></tr>
   <tr><td><code>reset</code></td><td><code>1</code></td><td>Empties the cart and the order history.</td></tr>
-  <tr><td><code>try</code></td><td>adapter names joined with commas, like <code>swatch-names,calm-urgency</code>, <code>mine</code>, or <code>none</code></td><td>Which adapters run on the store. <code>mine</code> is the adapter you made in the panel's Build your own tab.</td></tr>
-  <tr><td><code>profile</code></td><td><code>sam</code>, <code>mark</code>, <code>dario</code>, <code>bill</code>, <code>none</code></td><td>Turns on the toolkit's settings for that person.</td></tr>
+  <tr><td><code>try</code></td><td>adaptation names joined with commas, like <code>swatch-names,calm-urgency</code>, or <code>none</code></td><td>Which of the store’s adaptations and the toolkit’s built-in adapters run in the store’s panel.</td></tr>
+  <tr><td><code>profile</code></td><td><code>toolkit</code>, <code>sam</code>, <code>mark</code>, <code>dario</code>, <code>bill</code>, <code>none</code></td><td>Who to shop as. <code>toolkit</code> is your own toolkit profile, once the store is connected to your toolkit.</td></tr>
   <tr><td><code>spotlight</code></td><td><code>on</code>, <code>off</code></td><td>Puts a numbered badge on each problem on the page.</td></tr>
-  <tr><td><code>from</code></td><td>an example adapter's name, like <code>swatch-names</code></td><td>Copies that example into "your adapter" in the panel, so you can change it.</td></tr>
 </table></div>
 
 <script>
 (function () {
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var json = function (k) { try { return JSON.parse(get(k) || 'null'); } catch (e) { return null; } };
-  var PEOPLE = { sam: 'Sam (blind, uses a screen reader)', mark: 'Mark (ADHD and anxiety)', dario: 'Dario (cognitive disability)', bill: 'Bill (older adult)', alex: 'Dario (cognitive disability)', riley: 'Mark (ADHD and anxiety)' };
+  var PEOPLE = { toolkit: 'Your toolkit profile', sam: 'Sam (blind, uses a screen reader)', mark: 'Mark (ADHD and anxiety)', dario: 'Dario (cognitive disability)', bill: 'Bill (older adult)', alex: 'Dario (cognitive disability)', riley: 'Mark (ADHD and anxiety)' };
   var longDate = function (iso) {
     var d = new Date(iso + 'T10:00:00');
     return isNaN(d) ? iso : d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });

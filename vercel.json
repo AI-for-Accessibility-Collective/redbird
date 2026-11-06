@@ -3,17 +3,8 @@
   "functions": {
     "api/ai.js": {
       "maxDuration": 60
-    },
-    "api/gemini.js": {
-      "maxDuration": 120
     }
   },
-  "rewrites": [
-    {
-      "source": "/api/gemini/:path*",
-      "destination": "/api/gemini"
-    }
-  ],
   "redirects": [
     {
       "source": "/workshop",

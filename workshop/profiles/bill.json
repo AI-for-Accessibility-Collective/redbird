@@ -7,12 +7,17 @@
   "freeText": "I'm 78. Small gray text is hard to read, and the little buttons are hard to hit. I worry about clicking the wrong thing and paying for something I didn't want.",
   "fields": {
     "readingLevel": null,
+    "largeTargets": true,
     "needs": [
       {
-        "dimension": "concreteDates",
+        "dimension": "textSize",
+        "value": 1.3,
+        "strength": "preference"
+      },
+      {
+        "dimension": "redbird/real-dates",
         "value": true,
-        "strength": "preference",
-        "unit": "boolean"
+        "strength": "preference"
       }
     ]
   }

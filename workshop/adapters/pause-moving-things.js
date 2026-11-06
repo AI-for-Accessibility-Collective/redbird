@@ -12,93 +12,65 @@
 //   slides a timer moves along (the banner)         moved back, with the banner's own back button
 //   rows a timer scrolls (the product rows)         the timer's scrolling is ignored
 //   videos that play by themselves                  paused, with play controls shown
-// "By themselves" means the person didn't click, tap, scroll or press a key on that thing (or right
-// next to it, like a row's arrow buttons) in the last second.
+// "By themselves" means the person didn't click, tap or press a key on that thing (or right next
+// to it, like a row's arrow buttons) in the last second.
 //
-// Profile: nothing to read. Try it: ?issues=33,34,35&try=pause-moving-things
+// Options: none.
+// Profile: nothing to read.
+// Try it: ?issues=33,34,35&try=pause-moving-things
 
-const PERSON_MS = 1000;
 const CURRENT = /\b(is-current|is-active|current|active|selected)\b/;
 
-function say(text) {
-  // On Redbird the workshop panel gives the page one voice, so messages don't talk over each other.
-  if (window.RB_SAY) return window.RB_SAY(text);
-  let live = document.getElementById('ws-live');
-  if (!live) {
-    live = Object.assign(document.createElement('div'), { id: 'ws-live' });
-    live.setAttribute('aria-live', 'polite');
-    live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)';
-    document.body.appendChild(live);
-  }
-  live.textContent = '';
-  setTimeout(() => { live.textContent = text; }, 60);
-}
-
 export const PauseMovingThings = {
-  styleId: 'ws-pause-styles',
-  enabled: false,
-
-  enable() {
-    if (this.enabled) return;
-    this.enabled = true;
-    this.lastTouch = 0;
-    this.lastTarget = null;
-    this.onPerson = (e) => { this.lastTouch = Date.now(); this.lastTarget = e.target; };
-    for (const type of ['pointerdown', 'keydown', 'wheel', 'touchstart']) document.addEventListener(type, this.onPerson, true);
+  enable(options = {}, toolkit) {
+    if (this.s && !this.s.ended) return;
+    const s = (this.s = toolkit.session());
     // Did the person just do something to this element, or right next to it?
-    const byPerson = (el) => {
-      const t = this.lastTarget;
-      return Date.now() - this.lastTouch < PERSON_MS && t instanceof Node && (el.contains(t) || !!el.parentElement?.contains(t));
-    };
-    const ours = (el) => el.closest('#ws-root, [id^="ai4a11y"], [class^="ws-"]');
+    const byPerson = (el) => s.watch.byPerson(el) || (!!el.parentElement && s.watch.byPerson(el.parentElement));
+    const ours = (el) => s.page.isOurs(el) || !!el.closest('#ws-root, [id^="ai4a11y"], [class^="ws-"]');
 
     // 1. Animations that never end, like a scrolling deals bar.
-    const style = document.createElement('style');
-    style.id = this.styleId;
-    style.textContent = '.ws-paused, .ws-paused * { animation-play-state: paused !important; }';
-    document.head.appendChild(style);
-    this.paused = [];
+    s.css('pause', '.ws-paused, .ws-paused * { animation-play-state: paused !important; }');
+    let paused = 0;
     for (const el of document.body.querySelectorAll('*')) {
       if (ours(el)) continue;
       const cs = getComputedStyle(el);
       if (cs.animationName !== 'none' && cs.animationIterationCount === 'infinite') {
-        el.classList.add('ws-paused');
-        this.paused.push(el);
+        s.addClass(el, 'ws-paused');
+        paused++;
       }
     }
 
     // 2. Slides a timer moves along: one slide in a group has a class like "is-current", and the
     // class moves to the next slide every few seconds. When it moves and the person didn't do it,
     // press the group's own back button, so the page's count of where it is stays right. With no
-    // back button, put the class back by hand.
-    this.slides = [];
+    // back button, put the class back by hand. Both are what the person would do to go back, so
+    // disable() leaves the banner on the slide it shows then.
+    const slides = [];
     for (const cur of document.body.querySelectorAll('[class]')) {
       const word = String(cur.className?.baseVal ?? cur.className ?? '').match(CURRENT);
       const group = cur.parentElement;
-      if (!word || !group || ours(cur) || group.children.length < 2 || this.slides.some((s) => s.group === group)) continue;
+      if (!word || !group || ours(cur) || group.children.length < 2 || slides.some((x) => x.group === group)) continue;
       const box = group.closest('section, [class*="carousel"], [class*="slider"], [class*="hero"]') || group.parentElement;
       const back = box && [...box.querySelectorAll('button, [role="button"]')]
         .find((b) => /prev|back|left/i.test(b.className + ' ' + (b.getAttribute('aria-label') || '')));
-      this.slides.push({ group, box, word: word[1], held: cur, back });
+      slides.push({ group, box, word: word[1], held: cur, back });
     }
-    this.observer = new MutationObserver((records) => {
-      for (const s of this.slides) {
-        if (!records.some((r) => r.target.parentElement === s.group)) continue;
-        const now = [...s.group.children].find((c) => c.classList.contains(s.word));
-        if (!now || now === s.held) continue;
-        if (byPerson(s.box)) { s.held = now; continue; }
-        if (s.back) s.back.click();
-        else { now.classList.remove(s.word); s.held.classList.add(s.word); }
-        this.observer.takeRecords(); // our own change isn't a new one to undo
-      }
-    });
-    for (const s of this.slides) this.observer.observe(s.group, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    for (const x of slides) {
+      s.watch.added(x.group, (els) => {
+        if (!els.some((el) => el.parentElement === x.group)) return;
+        const now = [...x.group.children].find((c) => c.classList.contains(x.word));
+        if (!now || now === x.held) return;
+        if (byPerson(x.box)) { x.held = now; return; }
+        if (x.back) x.back.click();
+        else { now.classList.remove(x.word); x.held.classList.add(x.word); }
+      }, { types: ['attributes'], batch: true });
+    }
 
     // 3. Rows a timer scrolls. The page's timer sets scrollLeft; this row ignores that unless the
     // person just did something. Scrolling with a mouse, finger or keyboard doesn't go through
-    // scrollLeft, so it still works.
+    // scrollLeft, so it still works. disable() gives each row its own scrollLeft back.
     const native = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollLeft');
-    this.rows = [];
     for (const el of document.body.querySelectorAll('*')) {
       if (ours(el) || el.scrollWidth <= el.clientWidth + 1) continue;
       if (/visible|clip/.test(getComputedStyle(el).overflowX)) continue; // can't be scrolled from code
@@ -107,45 +79,27 @@ export const PauseMovingThings = {
         get() { return native.get.call(this); },
         set(v) { if (byPerson(this)) native.set.call(this, v); },
       });
-      this.rows.push(el);
+      s.onEnd(() => { delete el.scrollLeft; });
     }
 
     // 4. Videos that play by themselves. They're paused, and their controls are shown so the
-    // person can start one. A video the person starts keeps playing.
-    this.videos = new Map(); // video → whether it had controls
-    this.onPlaying = (e) => {
-      const v = e.target;
+    // person can start one. A video the person starts keeps playing. disable() plays again
+    // only what was playing, and only if the person hasn't paused or played it since.
+    const videos = new Set();
+    const onPlaying = (v) => {
       if (!(v instanceof HTMLVideoElement) || byPerson(v) || ours(v)) return;
-      if (!this.videos.has(v)) this.videos.set(v, v.controls);
-      v.controls = true;
-      v.pause();
+      videos.add(v);
+      s.media.pause(v, { showControls: true });
     };
-    document.addEventListener('playing', this.onPlaying, true);
-    for (const v of document.querySelectorAll('video')) if (!v.paused) this.onPlaying({ target: v });
+    s.listen(document, 'playing', (e) => onPlaying(e.target), true);
+    for (const v of document.querySelectorAll('video')) if (!v.paused) onPlaying(v);
 
-    const n = this.paused.length + this.slides.length + this.videos.size;
-    say(n ? 'Paused things that move by themselves. You can still move them yourself.' : 'Watching for things that move by themselves');
+    const n = paused + slides.length + videos.size;
+    s.announce(n ? 'Paused things that move by themselves. You can still move them yourself.' : 'Watching for things that move by themselves');
   },
 
   disable() {
-    if (!this.enabled) return;
-    this.enabled = false;
-    for (const type of ['pointerdown', 'keydown', 'wheel', 'touchstart']) document.removeEventListener(type, this.onPerson, true);
-    document.removeEventListener('playing', this.onPlaying, true);
-    this.observer.disconnect();
-    this.paused.forEach((el) => el.classList.remove('ws-paused'));
-    this.rows.forEach((el) => { delete el.scrollLeft; });
-    for (const [v, hadControls] of this.videos) {
-      v.controls = hadControls;
-      if (v.autoplay) v.play().catch(() => {});
-    }
-    this.videos.clear();
-    document.getElementById(this.styleId)?.remove();
-    say('Moving things are back as the store showed them');
-  },
-
-  toggle(options) {
-    if (this.enabled) this.disable();
-    else this.enable(options);
+    this.s?.end();
+    this.s = null;
   },
 };
